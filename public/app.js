@@ -2,11 +2,23 @@ import { SHOP, ANNOUNCEMENTS, ANNOUNCEMENTS_SHORT, CHARS, COLORS, COLOR_BY_ID, P
 import { REVIEWS } from "./reviews.js";
 
 const $ = (s) => document.querySelector(s);
-const PREVIEW = !!window.FILAMOUR_PREVIEW; // in der Claude-Vorschau gibt es keinen Server
 const store = {
   get(k, d) { try { const v = JSON.parse(localStorage.getItem(k) || "null"); return v ?? d; } catch { return d; } },
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
 };
+
+// JSON an den eigenen Server schicken; wirft einen Fehler mit verständlicher Meldung
+async function postJSON(url, data) {
+  let res;
+  try {
+    res = await fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(data) });
+  } catch {
+    throw new Error("Keine Verbindung. Bitte prüfe dein Internet und versuche es nochmals.");
+  }
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(body.error || "Das hat leider nicht geklappt. Bitte versuch es nochmals.");
+  return body;
+}
 
 /* ---------- Buchstaben zeichnen ---------- */
 const widthCache = {};
@@ -53,10 +65,10 @@ let state = store.get("filamour-studio", null) || { text: "HALLO MIA", colors: [
 if (!Array.isArray(state.colors) || !state.colors.length) state.colors = [...state.text].map((_, i) => EXAMPLE[i % EXAMPLE.length]);
 state.colors = state.colors.map((id) => (COLOR_BY_ID[id] ? id : "pt-sakura"));
 if (!COLOR_BY_ID[state.fill]) state.fill = "pt-sakura";
-let sel = -1;           // gewählter Buchstabe
+let sel = -1;         // gewählter Buchstabe
 let qty = 1;
-let editing = null;
-let popIdx = -1;      // zuletzt eingefärbter Buchstabe (kleine Animation)     // id eines Warenkorb-Eintrags, der gerade bearbeitet wird
+let editing = null;   // id eines Warenkorb-Eintrags, der gerade bearbeitet wird
+let popIdx = -1;      // zuletzt eingefärbter Buchstabe (kleine Animation)
 
 const validIdx = () => [...state.text.toUpperCase()].map((c, i) => (CHARS.includes(c) ? i : -1)).filter((i) => i >= 0);
 
@@ -249,12 +261,15 @@ $("#cartBody").addEventListener("click", (e) => {
 });
 
 let lastFocus = null;
+const background = () => document.querySelectorAll("body > header, body > main, body > footer, body > .announce, #chatFab, #chat");
 function openCart() {
   lastFocus = document.activeElement;
+  background().forEach((el) => (el.inert = true));
   $("#scrim").hidden = false; $("#drawer").hidden = false;
   requestAnimationFrame(() => { $("#scrim").classList.add("on"); $("#drawer").classList.add("on"); $("#closeCart").focus(); });
 }
 function closeCart() {
+  background().forEach((el) => (el.inert = false));
   $("#scrim").classList.remove("on"); $("#drawer").classList.remove("on");
   setTimeout(() => { $("#scrim").hidden = true; $("#drawer").hidden = true; }, 220);
   lastFocus?.focus?.();
@@ -268,19 +283,13 @@ document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("#dra
 $("#checkout").onclick = async () => {
   const btn = $("#checkout"), msg = $("#checkoutMsg");
   msg.textContent = "";
-  if (PREVIEW) { msg.textContent = "Das ist die Vorschau. Die Zahlung mit Stripe funktioniert, sobald der Shop online ist."; return; }
   btn.disabled = true; btn.textContent = "Einen Moment …";
   try {
-    const res = await fetch("/api/checkout", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ items: cart.map(({ type, text, colors, variant, style, color, qty }) => ({ type, text, colors, variant, style, color, qty })) }),
-    });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok || !data.url) throw new Error(data.error || "Die Zahlung konnte nicht gestartet werden. Bitte versuche es nochmals.");
+    const data = await postJSON("/api/checkout", { items: cart.map(({ type, text, colors, variant, style, color, qty }) => ({ type, text, colors, variant, style, color, qty })) });
+    if (!data.url) throw new Error("Die Zahlung konnte nicht gestartet werden. Bitte versuche es nochmals.");
     location.href = data.url;
   } catch (err) {
-    msg.textContent = err.message.startsWith("Failed") ? "Keine Verbindung. Bitte prüfe dein Internet und versuche es nochmals." : err.message;
+    msg.textContent = err.message;
     btn.disabled = false; btn.textContent = "Zur Kasse";
   }
 };
@@ -431,13 +440,6 @@ function renderReviews() {
     $("#reviewSummary").textContent = `${avg.toFixed(1).replace(".0", "")} von 5 Sternen aus ${list.length} ${list.length === 1 ? "Bewertung" : "Bewertungen"}`;
     $("#reviews").innerHTML = list.map((r) => `<article class="review"><span class="stars" aria-label="${r.stars || 5} von 5 Sternen">${stars(r.stars || 5)}</span><blockquote>${esc(r.text)}</blockquote><div><div class="who">${esc(r.name)}${r.place ? ", " + esc(r.place) : ""}</div>${r.product ? `<div class="tag">${esc(r.product)}</div>` : ""}</div></article>`).join("");
     sec.hidden = false;
-  } else if (PREVIEW) {
-    // Nur in der Vorschau: zeigt, wo die Bewertungen erscheinen werden
-    $("#reviewSummary").textContent = "";
-    $("#reviews").innerHTML = [1, 2, 3].map(() => `<article class="review placeholder"><span class="stars">★★★★★</span><blockquote class="muted">Hier erscheint eine echte Bewertung einer Kundin oder eines Kunden.</blockquote><div class="who">Vorname, Ort</div></article>`).join("")
-      + "";
-    $("#reviews").insertAdjacentHTML("afterend", `<p class="placeholder-note">Platzhalter: Der Bereich ist im echten Shop ausgeblendet, bis ihr in reviews.js die ersten Bewertungen eintragt.</p>`);
-    sec.hidden = false;
   }
 }
 
@@ -465,17 +467,14 @@ $("#newsForm").addEventListener("submit", async (e) => {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) { note.textContent = "Bitte gib eine gültige E-Mail-Adresse ein."; note.classList.add("err"); f.email.focus(); return; }
   note.classList.remove("err"); btn.disabled = true; btn.textContent = "Einen Moment …";
   try {
-    if (!PREVIEW) {
-      const r = await fetch("/", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({ "form-name": "newsletter", email, "bot-field": "" }) });
-      if (!r.ok) throw new Error();
-    }
+    await postJSON("/api/newsletter", { email, website: f.website.value });
     f.hidden = true;
-    note.textContent = PREVIEW ? "Vorschau: Im echten Shop wird deine Adresse jetzt gespeichert." : `Danke! ${email} ist angemeldet.`;
+    note.textContent = `Danke! ${email} ist angemeldet.`;
     $("#newsCodeValue").textContent = NEWSLETTER.code;
     $("#newsCodeHint").textContent = `Gib den Code beim Bezahlen im Feld «Aktionscode» ein. Er gilt für ${NEWSLETTER.percent} % auf deine erste Bestellung.`;
     $("#newsCode").hidden = false;
-  } catch {
-    note.textContent = "Das hat leider nicht geklappt. Bitte versuch es nochmals."; note.classList.add("err");
+  } catch (err) {
+    note.textContent = err.message || "Das hat leider nicht geklappt. Bitte versuch es nochmals."; note.classList.add("err");
     btn.disabled = false; btn.textContent = "Code erhalten";
   }
 });
@@ -690,6 +689,7 @@ if (document.fonts) {
       <input type="text" name="name" placeholder="Vorname (optional)" autocomplete="given-name">
       <input type="email" name="email" placeholder="Deine E-Mail-Adresse" required autocomplete="email">
       <textarea name="frage" placeholder="Worum geht es?">${esc(question)}</textarea>
+      <input class="hp" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
       <button class="btn primary" type="submit">Absenden</button>
       <small>Wir verwenden deine E-Mail nur, um dir zu antworten.</small>
     </form>`;
@@ -700,11 +700,8 @@ if (document.fonts) {
       const data = Object.fromEntries(new FormData(f));
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(data.email || "")) { f.email.focus(); f.email.style.borderColor = "var(--error)"; return; }
       const btn = f.querySelector("button"); btn.disabled = true; btn.textContent = "Wird gesendet …";
-      if (PREVIEW) { wrap.remove(); botSay("Das ist die Vorschau, hier wird nichts verschickt. Im echten Shop geht deine Nachricht jetzt an uns, und wir melden uns per E-Mail.", { chips: MAIN() }); return; }
       try {
-        const body = new URLSearchParams({ "form-name": "kontakt", name: data.name || "", email: data.email, frage: data.frage || "", verlauf: history.join("\n").slice(-4000), "bot-field": "" });
-        const r = await fetch("/", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body });
-        if (!r.ok) throw new Error();
+        await postJSON("/api/contact", { name: data.name || "", email: data.email, question: data.frage || "", history: history.join("\n").slice(-4000), website: data.website || "" });
         wrap.remove();
         botSay(`Danke${data.name ? ", " + data.name : ""}! Deine Nachricht ist bei uns angekommen. Wir melden uns so bald wie möglich an ${data.email}.`, { chips: MAIN() });
       } catch {

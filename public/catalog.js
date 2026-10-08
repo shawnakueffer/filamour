@@ -94,7 +94,8 @@ export function describeItem(it) {
     if (!list.length) return { error: "Ein Design enthält keine bestellbaren Buchstaben." };
     if (list.length > SHOP.maxLettersPerDesign) return { error: `Maximal ${SHOP.maxLettersPerDesign} Buchstaben pro Design.` };
     if (list.some((p) => !COLOR_BY_ID[p.color])) return { error: "Eine gewählte Farbe ist nicht mehr verfügbar. Bitte das Design neu einfärben." };
-    const text = String(it.text).toUpperCase().trim();
+    // nur, was auch gedruckt wird (z. B. «HALLO 123» → «HALLO»)
+    const text = [...String(it.text).toUpperCase()].filter((c) => c === " " || CHARS.includes(c)).join("").replace(/\s+/g, " ").trim();
     return {
       type, unit: list.length * SHOP.pricePerLetter,
       name: `Bubble Letters «${text}» (${list.length} Teile)`,

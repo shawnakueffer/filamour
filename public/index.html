@@ -3,16 +3,24 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Filamour</title>
+<title>Filamour – Bubble Letters in deinen Farben</title>
 <meta name="description" content="3D-gedruckte Bubble Letters in deinen Farben. Für die Zimmertür, über dem Kinderbett, im Bilderrahmen. Selbst zusammenstellen und bestellen.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Figtree:wght@400;500;600&display=swap">
+<link rel="canonical" href="{{SITE_URL}}/">
+<link rel="icon" href="images/favicon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#fbfafa">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="de_CH">
+<meta property="og:site_name" content="Filamour">
+<meta property="og:title" content="Filamour – Bubble Letters in deinen Farben">
+<meta property="og:description" content="3D-gedruckte Bubble Letters in deinen Farben. Für die Zimmertür, über dem Kinderbett, im Bilderrahmen. Selbst zusammenstellen und bestellen.">
+<meta property="og:url" content="{{SITE_URL}}/">
+<meta property="og:image" content="{{SITE_URL}}/images/kian.jpg">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="preload" href="fonts/cherry-bomb-one.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/figtree-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-<!--INLINE-->
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <defs>
@@ -373,9 +381,10 @@
           <form class="news-form" id="newsForm" novalidate>
             <label class="sr-only" for="newsEmail">E-Mail-Adresse</label>
             <input type="email" id="newsEmail" name="email" placeholder="Deine E-Mail-Adresse" autocomplete="email" required>
+            <input class="hp" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
             <button class="btn primary" type="submit">Code erhalten</button>
           </form>
-          <p class="news-note" id="newsNote">Kein Spam. Abmelden geht jederzeit mit einem Klick oder einer kurzen Mail.</p>
+          <p class="news-note" id="newsNote">Kein Spam. Abmelden geht jederzeit mit einem Klick oder einer kurzen Mail. Mehr dazu im <a href="rechtliches.html#datenschutz">Datenschutz</a>.</p>
           <div class="news-code" id="newsCode" hidden>
             <span>Dein Code</span>
             <b id="newsCodeValue"></b>
@@ -466,11 +475,6 @@
   </form>
 </section>
 
-<!-- Für Netlify Forms: damit die Formulare erkannt werden -->
-<form name="newsletter" data-netlify="true" netlify-honeypot="bot-field" hidden><input type="email" name="email"><input name="bot-field"></form>
-<form name="kontakt" data-netlify="true" netlify-honeypot="bot-field" hidden>
-  <input type="email" name="email"><input type="text" name="name"><textarea name="frage"></textarea><textarea name="verlauf"></textarea><input name="bot-field">
-</form>
 
 <script type="module" src="app.js"></script>
 </body>

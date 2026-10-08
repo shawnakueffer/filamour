@@ -1,11 +1,6 @@
-// POST /api/checkout
-// Nimmt den Warenkorb entgegen, prüft ihn gegen den Katalog und erstellt eine Stripe-Checkout-Session.
+// Warenkorb prüfen und daraus die Stripe-Checkout-Session bauen.
 // Preise kommen ausschliesslich aus public/catalog.js – Werte aus dem Browser werden ignoriert.
-import Stripe from "stripe";
-import { SHOP, describeItem, shippingFor } from "../../public/catalog.js";
-
-const json = (data, status = 200) =>
-  new Response(JSON.stringify(data), { status, headers: { "content-type": "application/json" } });
+import { SHOP, describeItem, shippingFor } from "../public/catalog.js";
 
 // Stripe-Metadaten: max. 50 Schlüssel, je Wert max. 500 Zeichen
 function addMeta(meta, key, value) {
@@ -25,7 +20,7 @@ export function validateCart(body) {
     const item = {
       type: String(raw?.type || "letters"),
       text: String(raw?.text ?? "").slice(0, 80),
-      colors: Array.isArray(raw?.colors) ? raw.colors.map(String) : [],
+      colors: Array.isArray(raw?.colors) ? raw.colors.slice(0, 80).map(String) : [],
       variant: String(raw?.variant ?? ""),
       style: String(raw?.style ?? ""),
       color: String(raw?.color ?? ""),
@@ -81,25 +76,16 @@ export function buildSession(items, origin) {
   };
 }
 
-export default async (req) => {
-  if (req.method !== "POST") return json({ error: "Nur POST erlaubt." }, 405);
-  if (!process.env.STRIPE_SECRET_KEY) return json({ error: "Der Shop ist noch nicht mit Stripe verbunden." }, 500);
+// Kurzfassung einer bezahlten Session für die Danke-Seite
+export function summarizeSession(s) {
+  return {
+    paid: s.payment_status === "paid",
+    number: s.id.slice(-8).toUpperCase(),
+    firstName: (s.customer_details?.name || "").split(" ")[0],
+    total: s.amount_total,
+    shipping: s.shipping_cost?.amount_total ?? 0,
+    items: (s.line_items?.data || []).map((li) => ({ name: li.description, qty: li.quantity, amount: li.amount_total })),
+  };
+}
 
-  let body;
-  try { body = await req.json(); } catch { return json({ error: "Ungültige Anfrage." }, 400); }
-
-  const cart = validateCart(body);
-  if (cart.error) return json({ error: cart.error }, 400);
-
-  const origin = process.env.URL || new URL(req.url).origin;
-  try {
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { httpClient: Stripe.createFetchHttpClient() });
-    const session = await stripe.checkout.sessions.create(buildSession(cart.items, origin));
-    return json({ url: session.url });
-  } catch (err) {
-    console.error("Stripe-Fehler:", err?.message);
-    return json({ error: "Die Zahlung konnte gerade nicht gestartet werden. Bitte versuche es in einer Minute nochmals." }, 502);
-  }
-};
-
-export const config = { path: "/api/checkout" };
+export const SESSION_ID = /^cs_(test|live)_[A-Za-z0-9]+$/;
