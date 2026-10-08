@@ -1,0 +1,130 @@
+// Filamour – Sortiment und Preise
+// Diese Datei wird vom Shop (Browser) UND von der Checkout-Funktion (Server) gelesen.
+// Preise immer hier ändern: Der Server rechnet mit diesen Werten, nicht mit dem, was der Browser schickt.
+
+export const SHOP = {
+  name: "Filamour",
+  currency: "chf",
+  pricePerLetter: 450,        // Rappen pro Buchstabe/Zeichen (450 = CHF 4.50)
+  shipping: 900,              // Rappen Versand pro Bestellung (CHF 9.00)
+  freeShippingFrom: 6000,     // ab diesem Warenwert gratis Versand (0 = nie)
+  shippingCountries: ["CH", "LI"],
+  maxLettersPerDesign: 40,
+  maxQuantity: 20,
+  maxDesignsPerOrder: 20,
+  letterHeightCm: 6.5,        // Höhe eines Buchstabens
+  letterDepthCm: 2.5,         // Dicke eines Buchstabens
+};
+
+// Newsletter: Rabattcode für die erste Bestellung.
+// Den gleichen Code in Stripe als Aktionscode anlegen (Produkte → Gutscheine), siehe README.
+export const NEWSLETTER = { code: "WILLKOMMEN10", percent: 10 };
+
+// Hinweise: die ersten drei stehen in der schwarzen Leiste ganz oben
+export const ANNOUNCEMENTS = [
+  "Personalisierbare Geschenke",
+  "Gratisversand ab CHF 60",
+  "Aus pflanzenbasiertem PLA",
+  "Gedruckt in der Schweiz",
+];
+// Kurzfassungen der ersten drei für schmale Handy-Bildschirme
+export const ANNOUNCEMENTS_SHORT = ["Personalisierbar", "Gratis ab CHF 60", "PLA aus Pflanzen"];
+
+// Zeichen, die auf der Druckplatte vorhanden sind
+export const CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZÄÃ&!?-.,:~";
+
+// Filamente (Farbtöne sind Bildschirm-Annäherungen)
+export const COLORS = [
+  { id: "bl-green",   name: "Bambu Green",     hex: "#00AE42" },
+  { id: "bl-mistle",  name: "Mistletoe Green", hex: "#3F8E43" },
+  { id: "bl-yellow",  name: "Yellow",          hex: "#F4EE2A" },
+  { id: "bl-orange",  name: "Orange",          hex: "#FF6A13" },
+  { id: "bl-red",     name: "Red",             hex: "#C12E1F" },
+  { id: "bl-magenta", name: "Magenta",         hex: "#EC008C" },
+  { id: "bl-cocoa",   name: "Cocoa Brown",     hex: "#6F5034" },
+  { id: "bl-gray",    name: "Gray",            hex: "#8E9089" },
+  { id: "bl-bluegrey",name: "Blue Grey",       hex: "#5B6579" },
+  { id: "bl-black",   name: "Black",           hex: "#1A1A1A" },
+  { id: "pt-white",   name: "Cotton White",    hex: "#EEE8DF" },
+  { id: "pt-peanut",  name: "Peanut",          hex: "#D1A574" },
+  { id: "pt-sakura",  name: "Sakura Pink",     hex: "#F1B3C5" },
+  { id: "pt-sapph",   name: "Sapphire Blue",   hex: "#22509F" },
+  { id: "bm-ice",     name: "Ice Blue",        hex: "#A6D7E2" },
+];
+
+export const COLOR_BY_ID = Object.fromEntries(COLORS.map((c) => [c.id, c]));
+
+// Weitere Produkte. Preise in Rappen.
+export const PRODUCTS = {
+  poster: { name: "Wandbild", price: 3950, size: "50 × 60 cm" },
+  frame:  { name: "Fotorahmen", price: 1900 },   // PLATZHALTER: Preis bestätigen
+};
+
+// Wandbild-Sujets: Hintergrund (bg) und Buchstaben (fg) in einem Farbton
+export const POSTERS = [
+  { id: "positive", title: "ONLY POSITIVE VIBES", lines: ["ONLY", "POSITIVE", "VIBES"], colorName: "Rosa",     bg: "#f2c4d1", fg: "#fbe1e8" },
+  { id: "happy",    title: "MY HAPPY PLACE",      lines: ["MY", "HAPPY", "PLACE"],      colorName: "Bordeaux", bg: "#6b1f2d", fg: "#a1404f" },
+  { id: "no",       title: "HOW ABOUT NO",        lines: ["HOW", "ABOUT", "NO"],        colorName: "Gelb",     bg: "#eccc5c", fg: "#f8e59a" },
+];
+export const POSTER_BY_ID = Object.fromEntries(POSTERS.map((p) => [p.id, p]));
+
+// Fotorahmen: Form, Farbe aus der Filament-Liste
+export const FRAME_STYLES = [
+  { id: "wave", title: "Wellen" },
+  { id: "dots", title: "Punkte" },
+];
+export const FRAME_BY_ID = Object.fromEntries(FRAME_STYLES.map((s) => [s.id, s]));
+
+// Nur druckbare Zeichen zählen (Leerzeichen und unbekannte Zeichen nicht)
+export function pieces(text, colors) {
+  const up = String(text || "").toUpperCase();
+  const out = [];
+  [...up].forEach((ch, i) => {
+    if (CHARS.includes(ch)) out.push({ ch, color: colors?.[i] });
+  });
+  return out;
+}
+
+// Ein Warenkorb-Eintrag → Preis und Beschreibung. Wird von Shop und Server gleich verwendet.
+// Gibt { error } zurück, wenn der Eintrag ungültig ist.
+export function describeItem(it) {
+  const type = it?.type || "letters";
+  if (type === "letters") {
+    const list = pieces(it.text, it.colors);
+    if (!list.length) return { error: "Ein Design enthält keine bestellbaren Buchstaben." };
+    if (list.length > SHOP.maxLettersPerDesign) return { error: `Maximal ${SHOP.maxLettersPerDesign} Buchstaben pro Design.` };
+    if (list.some((p) => !COLOR_BY_ID[p.color])) return { error: "Eine gewählte Farbe ist nicht mehr verfügbar. Bitte das Design neu einfärben." };
+    const text = String(it.text).toUpperCase().trim();
+    return {
+      type, unit: list.length * SHOP.pricePerLetter,
+      name: `Bubble Letters «${text}» (${list.length} Teile)`,
+      description: list.map((p) => `${p.ch} ${COLOR_BY_ID[p.color].name}`).join(" · "),
+      meta: `${list.length} Buchstaben à ${chf(SHOP.pricePerLetter)}`,
+    };
+  }
+  if (type === "poster") {
+    const p = POSTER_BY_ID[it.variant];
+    if (!p) return { error: "Dieses Wandbild gibt es nicht mehr." };
+    return { type, unit: PRODUCTS.poster.price, name: `Wandbild «${p.title}»`, description: p.colorName, meta: `Farbe ${p.colorName}` };
+  }
+  if (type === "frame") {
+    const s = FRAME_BY_ID[it.style], col = COLOR_BY_ID[it.color];
+    if (!s || !col) return { error: "Dieser Fotorahmen ist nicht mehr verfügbar." };
+    return { type, unit: PRODUCTS.frame.price, name: `Fotorahmen ${s.title}`, description: col.name, meta: `Farbe ${col.name}` };
+  }
+  return { error: "Unbekannter Artikel." };
+}
+
+export function designPrice(text, colors) {
+  return pieces(text, colors).length * SHOP.pricePerLetter;
+}
+
+export function shippingFor(subtotal) {
+  if (subtotal <= 0) return 0;
+  if (SHOP.freeShippingFrom && subtotal >= SHOP.freeShippingFrom) return 0;
+  return SHOP.shipping;
+}
+
+export function chf(rappen) {
+  return "CHF " + (rappen / 100).toFixed(2);
+}
