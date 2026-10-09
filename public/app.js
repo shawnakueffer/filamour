@@ -62,6 +62,7 @@ function wordsHTML(text, colors, px, opts = {}) {
 /* ---------- Studio ---------- */
 const EXAMPLE = ["pt-sakura", "bm-ice", "pt-peanut"]; // Startfarben für «MIA»
 let state = store.get("filamour-studio", null) || { text: "MIA", colors: [], bg: "wand", fill: "pt-sakura" };
+if (String(state.text).trim().toUpperCase() === "HALLO MIA") { state.text = "MIA"; state.colors = []; } // alter Standardtext → neuer Standard
 if (!Array.isArray(state.colors) || !state.colors.length) state.colors = [...state.text].map((_, i) => EXAMPLE[i % EXAMPLE.length]);
 state.colors = state.colors.map((id) => (COLOR_BY_ID[id] ? id : "pt-sakura"));
 if (!COLOR_BY_ID[state.fill]) state.fill = "pt-sakura";
