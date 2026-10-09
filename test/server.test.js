@@ -79,8 +79,7 @@ test("Seiten, 404, Sicherheits-Header und SITE_URL", async () => {
     const html = await home.text();
     assert.match(html, /<link rel="canonical" href="https:\/\/filamour\.ch\/">/);
     assert.ok(!html.includes("{{SITE_URL}}"));
-    assert.match(html, /<script src="theme\.js"><\/script>[\s\S]*<link rel="stylesheet" href="styles\.css">/, "Theme vor dem CSS laden, sonst blitzt die Seite hell auf");
-    assert.match(html, /data-theme-toggle/);
+    assert.match(html, /<meta name="color-scheme" content="only light">/, "Shop bleibt immer hell");
     assert.match(home.headers.get("content-security-policy"), /script-src 'self'/);
     assert.match(home.headers.get("strict-transport-security"), /max-age/);
     assert.equal(home.headers.get("x-powered-by"), null);

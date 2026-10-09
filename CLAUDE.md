@@ -7,4 +7,5 @@ Onlineshop (Deutsch, Schweizer Schreibweise mit «ss», Anrede «du»). Node/Exp
 - Der Server vertraut nie Preisen aus dem Browser; `server/checkout.js` rechnet alles aus `catalog.js` neu.
 - Strenge CSP: keine Inline-Skripte, keine externen Skripte/Schriften/Bilder. Neues JS als Datei in `public/`.
 - `{{SITE_URL}}` in den HTML-Seiten ersetzt der Server beim Ausliefern (siehe `server/app.js`).
+- Nur helles Design: kein Dark Mode, kein Umschalter (bewusst so entschieden).
 - Texte für Kundschaft kurz und freundlich halten, keine Fachbegriffe.

@@ -57,28 +57,12 @@
   --hover: #e9e3e3;
   --hover-line: #dbd3d3;
   --error: #b3261e;
-  --scene-dim: 1;             /* Deko-Illustrationen im Dunkeln leicht abdunkeln */
-  --visual-bg: #fbf9f8;
-  --icon-moon: block;         /* Umschalter zeigt den Modus, zu dem er wechselt */
-  --icon-sun: none;
-  color-scheme: light;
   --font-letter: "Cherry Bomb One", "Arial Rounded MT Bold", sans-serif;
   --font-body: "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-display: "Cormorant Garamond", "Garamond", "Times New Roman", serif;
   --radius: 14px;
   --maxw: 1080px;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #141213; --surface: #1d1a1c; --fg: #f3eff0; --muted: #a59b9e; --line: #322c2f;
-    --accent: #f0618a; --accent-ink: #1a1214; --soft: #241f22; --band: #1b1819; --studio-bg: #1f1b1d; --studio-line: #302b2d; --hover: #2c2729; --hover-line: #3d3639; --error: #ff8a80; color-scheme: dark;
-    --scene-dim: .86; --visual-bg: #1f1b1d; --icon-moon: none; --icon-sun: block;
-  }
-}
-:root[data-theme="dark"] {
-  --bg: #141213; --surface: #1d1a1c; --fg: #f3eff0; --muted: #a59b9e; --line: #322c2f;
-  --accent: #f0618a; --accent-ink: #1a1214; --soft: #241f22; --band: #1b1819; --studio-bg: #1f1b1d; --studio-line: #302b2d; --hover: #2c2729; --hover-line: #3d3639; --error: #ff8a80; color-scheme: dark;
-    --scene-dim: .86; --visual-bg: #1f1b1d; --icon-moon: none; --icon-sun: block;
+  color-scheme: only light; /* nur helles Design, auch wenn das Gerät dunkel eingestellt ist */
 }
 
 * { box-sizing: border-box; }
@@ -111,12 +95,6 @@ p { margin: 0; }
 .nav a:hover { color: var(--fg); }
 @media (max-width: 640px) { .nav a { display: none; } }
 .cart-btn { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 7px 14px; cursor: pointer; font-size: 15px; font-weight: 500; }
-.theme-btn { flex: none; width: 36px; height: 36px; display: inline-grid; place-items: center; border: 1px solid var(--line); background: var(--surface); color: var(--fg); border-radius: 50%; cursor: pointer; padding: 0; transition: background-color .15s, border-color .15s; }
-.theme-btn:hover { background: var(--hover); border-color: var(--hover-line); }
-.theme-btn svg { width: 18px; height: 18px; }
-.theme-btn .moon { display: var(--icon-moon); }
-.theme-btn .sun { display: var(--icon-sun); }
-.idea .scene, .hero-visual, .size-photo img { filter: brightness(var(--scene-dim)); }
 .cart-btn:hover { background: var(--hover); border-color: var(--hover-line); }
 .cart-count { min-width: 22px; height: 22px; padding: 0 6px; border-radius: 11px; background: var(--fg); color: var(--bg); font-size: 12px; font-weight: 600; display: inline-grid; place-items: center; font-variant-numeric: tabular-nums; }
 .cart-count[data-n="0"] { background: var(--soft); color: var(--muted); }
@@ -140,7 +118,7 @@ p { margin: 0; }
 .stage[data-bg="dunkel"] .empty-hint { color: rgba(255,255,255,.55); }
 .stage-tools { position: absolute; top: 14px; right: 14px; display: flex; gap: 6px; }
 .bgbtn { width: 26px; height: 26px; border-radius: 50%; border: 2px solid rgba(255,255,255,.9); box-shadow: 0 1px 4px rgba(0,0,0,.25); cursor: pointer; padding: 0; }
-.bgbtn[aria-pressed="true"] { outline: 2px solid var(--fg); outline-offset: 2px; }
+.bgbtn[aria-pressed="true"] { outline: 2px solid #1c191a; outline-offset: 2px; }
 .stage-hint { position: absolute; left: 18px; bottom: 14px; right: 18px; text-align: center; font-size: 13px; color: rgba(0,0,0,.5); }
 .stage[data-bg="dunkel"] .stage-hint { color: rgba(255,255,255,.55); }
 
@@ -325,7 +303,7 @@ section.block.alt { background: var(--band); }
 .facts li:first-child { border-top-color: var(--accent); }
 .facts p { font-size: 15px; color: var(--muted); }
 .safety { margin-top: 24px; font-size: 13px; color: var(--muted); }
-.material-visual { position: relative; aspect-ratio: 1; max-width: 100%; width: 100%; border-radius: 24px; background: var(--visual-bg); overflow: hidden; }
+.material-visual { position: relative; aspect-ratio: 1; max-width: 100%; width: 100%; border-radius: 24px; background: #fbf9f8; overflow: hidden; }
 .material-visual .spool { position: absolute; left: 8%; top: 8%; width: 64%; height: auto; aspect-ratio: 1; overflow: visible; }
 .material-visual .art { position: absolute; right: 9%; bottom: 8%; }
 
