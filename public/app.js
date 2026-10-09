@@ -60,8 +60,8 @@ function wordsHTML(text, colors, px, opts = {}) {
 }
 
 /* ---------- Studio ---------- */
-const EXAMPLE = ["pt-sakura", "bm-ice", "pt-white", "pt-peanut", "bm-ice", "pt-sakura", "pt-white", "pt-peanut", "bl-magenta"];
-let state = store.get("filamour-studio", null) || { text: "HALLO MIA", colors: [], bg: "wand", fill: "pt-sakura" };
+const EXAMPLE = ["pt-sakura", "bm-ice", "pt-peanut"]; // Startfarben für «MIA»
+let state = store.get("filamour-studio", null) || { text: "MIA", colors: [], bg: "wand", fill: "pt-sakura" };
 if (!Array.isArray(state.colors) || !state.colors.length) state.colors = [...state.text].map((_, i) => EXAMPLE[i % EXAMPLE.length]);
 state.colors = state.colors.map((id) => (COLOR_BY_ID[id] ? id : "pt-sakura"));
 if (!COLOR_BY_ID[state.fill]) state.fill = "pt-sakura";
