@@ -5,8 +5,8 @@
 export const SHOP = {
   name: "Filamour",
   currency: "chf",
-  pricePerLetter: 450,        // Rappen pro Buchstabe/Zeichen (450 = CHF 4.50)
-  shipping: 900,              // Rappen Versand pro Bestellung (CHF 9.00)
+  pricePerLetter: 490,        // Rappen pro Buchstabe/Zeichen (490 = CHF 4.90)
+  shipping: 700,              // Rappen Versand pro Bestellung (CHF 7.00)
   freeShippingFrom: 6000,     // ab diesem Warenwert gratis Versand (0 = nie)
   shippingCountries: ["CH", "LI"],
   maxLettersPerDesign: 40,
@@ -62,7 +62,7 @@ export const COLOR_BY_ID = Object.fromEntries(COLORS.map((c) => [c.id, c]));
 
 // Weitere Produkte. Preise in Rappen.
 export const PRODUCTS = {
-  poster: { name: "Wandbild", price: 3950, size: "50 × 60 cm" },
+  poster: { name: "Wandbild", price: 3950, size: "50 × 60 cm", pickupOnly: true }, // vorerst kein Versand
   frame:  { name: "Fotorahmen", price: 1900 },   // PLATZHALTER: Preis bestätigen
 };
 
@@ -126,8 +126,14 @@ export function designPrice(text, colors) {
   return pieces(text, colors).length * SHOP.pricePerLetter;
 }
 
-export function shippingFor(subtotal) {
-  if (subtotal <= 0) return 0;
+// Enthält die Bestellung einen Artikel, der nur abgeholt werden kann, wird die ganze Bestellung abgeholt
+export const PICKUP_NOTE = "Wandbilder gibt es vorerst nur zur Abholung. Wir melden uns nach der Bestellung per E-Mail für einen Termin.";
+export function isPickup(items) {
+  return (items || []).some((it) => Object.hasOwn(PRODUCTS, it?.type) && PRODUCTS[it.type].pickupOnly);
+}
+
+export function shippingFor(subtotal, pickup = false) {
+  if (pickup || subtotal <= 0) return 0;
   if (SHOP.freeShippingFrom && subtotal >= SHOP.freeShippingFrom) return 0;
   return SHOP.shipping;
 }

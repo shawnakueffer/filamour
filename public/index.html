@@ -284,6 +284,7 @@
             <div>
               <h3>Wandbild</h3>
               <p class="muted">Ein Spruch aus glänzenden Bubble Letters auf farbigem Grund, fertig zum Aufhängen. Grösse <b class="price-inline" id="posterSize"></b>.</p>
+              <p class="pickup-tag">Vorerst nur zur Abholung</p>
             </div>
             <div class="opts" role="radiogroup" aria-label="Sujet" id="posterOpts"></div>
             <div class="product-buy">
@@ -444,13 +445,14 @@
   </div>
   <div class="drawer-body" id="cartBody"></div>
   <div class="drawer-foot" id="cartFoot">
+    <p class="pickup-note" id="pickupNote" hidden></p>
     <div class="freeship" id="freeship"><p id="freeshipText"></p><div class="bar"><span id="freeshipBar"></span></div></div>
     <div class="tline"><span>Zwischensumme</span><span id="tSub">CHF 0.00</span></div>
     <div class="tline"><span>Versand</span><span id="tShip">CHF 0.00</span></div>
     <div class="tline total"><span>Total</span><span id="tTotal">CHF 0.00</span></div>
     <p class="checkout-msg" id="checkoutMsg" role="alert"></p>
     <button class="btn primary" id="checkout">Zur Kasse</button>
-    <p class="pay-note">Lieferadresse und Zahlung im nächsten Schritt, sicher über Stripe.</p>
+    <p class="pay-note" id="payNote">Lieferadresse und Zahlung im nächsten Schritt, sicher über Stripe.</p>
   </div>
 </aside>
 

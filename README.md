@@ -87,7 +87,8 @@ Der Checkout zeigt automatisch alle Zahlungsmittel, die im Stripe-Dashboard akti
 
 ## Anpassen
 
-- **Preis, Versand, Gratisversand-Grenze, Lieferländer:** `public/catalog.js` → `SHOP`
+- **Preis, Versand, Gratisversand-Grenze, Lieferländer:** `public/catalog.js` → `SHOP` (aktuell CHF 4.90 pro Buchstabe, Versand CHF 7, gratis ab CHF 60)
+- **Nur Abholung:** `pickupOnly: true` bei einem Produkt in `PRODUCTS` (aktuell Wandbild). Enthält eine Bestellung so ein Produkt, wird die ganze Bestellung abgeholt: keine Adresse, keine Versandkosten, Hinweis im Warenkorb und im Stripe-Checkout. In Stripe steht bei der Zahlung unter Metadaten `lieferung: Abholung`. Für Versand wieder `pickupOnly` entfernen.
 - **Farben hinzufügen/entfernen:** `public/catalog.js` → `COLORS`
 - **Hinweise in der Leiste oben:** `public/catalog.js` → `ANNOUNCEMENTS`
 - **Bewertungen:** in `public/reviews.js` eintragen. Nur echte Bewertungen, mit Einverständnis der Person. Solange die Liste leer ist, ist der Bereich unsichtbar.

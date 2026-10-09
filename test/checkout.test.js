@@ -1,7 +1,8 @@
 // Prüft Warenkorb-Validierung und die Anfrage an Stripe, ohne echtes Stripe-Konto: npm test
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { validateCart, buildSession } from "../server/checkout.js";
+import { validateCart, buildSession, summarizeSession } from "../server/checkout.js";
+import { isPickup } from "../public/catalog.js";
 import { withServer } from "./helpers.js";
 
 const HALLO_MIA = ["pt-sakura", "bm-ice", "pt-white", "pt-peanut", "bm-ice", "pt-sakura", "pt-white", "pt-peanut", "bl-magenta"];
@@ -22,7 +23,7 @@ test("Warenkorb wird geprüft", () => {
 test("Preis kommt vom Server, nicht vom Browser", () => {
   const ok = validateCart({ items: [{ text: "Hallo Mia", colors: HALLO_MIA, qty: 2, price: 1, unit: 1 }] });
   assert.match(ok.items[0].name, /\(8 Teile\)/, "Leerzeichen zählt nicht");
-  assert.equal(ok.items[0].unit, 8 * 450);
+  assert.equal(ok.items[0].unit, 8 * 490, "CHF 4.90 pro Buchstabe");
 });
 
 test("Neue Farben sind bestellbar", () => {
@@ -38,9 +39,25 @@ test("Nicht druckbare Zeichen landen nicht im Produktnamen", () => {
 
 test("Gratisversand ab der Grenze, sonst Versandkosten", () => {
   const small = buildSession(validateCart({ items: [{ text: "AB", colors: ["bl-red", "bl-red"], qty: 1 }] }).items, "https://x.ch");
-  assert.equal(small.shipping_options[0].shipping_rate_data.fixed_amount.amount, 900);
-  const big = buildSession(validateCart({ items: [{ type: "poster", variant: "happy", qty: 2 }] }).items, "https://x.ch");
-  assert.equal(big.shipping_options[0].shipping_rate_data.fixed_amount.amount, 0);
+  assert.equal(small.shipping_options[0].shipping_rate_data.fixed_amount.amount, 700, "Versand CHF 7");
+  const big = buildSession(validateCart({ items: [{ type: "frame", style: "wave", color: "bl-red", qty: 4 }] }).items, "https://x.ch");
+  assert.equal(big.shipping_options[0].shipping_rate_data.fixed_amount.amount, 0, "ab CHF 60 gratis");
+});
+
+test("Wandbild: ganze Bestellung wird abgeholt, ohne Adresse und Versandkosten", () => {
+  assert.equal(isPickup([{ type: "letters" }, { type: "frame" }]), false);
+  assert.equal(isPickup([{ type: "letters" }, { type: "poster" }]), true);
+  assert.equal(isPickup([{ type: "__proto__" }, { type: "constructor" }]), false);
+  const s = buildSession(validateCart({ items: [
+    { text: "AB", colors: ["bl-red", "bl-red"], qty: 1 },
+    { type: "poster", variant: "happy", qty: 1 },
+  ] }).items, "https://x.ch");
+  assert.equal(s.line_items[1].price_data.unit_amount, 3950);
+  assert.equal(s.shipping_address_collection, undefined, "keine Lieferadresse");
+  assert.equal(s.shipping_options, undefined, "keine Versandkosten");
+  assert.match(s.custom_text.submit.message, /Abholung/);
+  assert.equal(s.metadata.lieferung, "Abholung");
+  assert.equal(summarizeSession({ id: "cs_test_x", metadata: s.metadata }).pickup, true);
 });
 
 test("POST /api/checkout erstellt die Stripe-Session mit Server-Preisen", async () => {
@@ -53,7 +70,6 @@ test("POST /api/checkout erstellt die Stripe-Session mit Server-Preisen", async 
       body: JSON.stringify({ items: [
         { text: "HALLO MIA", colors: HALLO_MIA, qty: 2 },
         { text: "LEO!", colors: ["pt-sapph", "bl-yellow", "bl-green", "bl-red"], qty: 1 },
-        { type: "poster", variant: "happy", qty: 1 },
         { type: "frame", style: "dots", color: "pt-sakura", qty: 2 },
       ] }),
     });
@@ -64,16 +80,15 @@ test("POST /api/checkout erstellt die Stripe-Session mit Server-Preisen", async 
   const li = sent.line_items;
   assert.equal(sent.mode, "payment");
   assert.equal(sent.allow_promotion_codes, true);
-  assert.equal(li[0].price_data.unit_amount, 3600);
+  assert.equal(li[0].price_data.unit_amount, 3920);
   assert.equal(li[0].quantity, 2);
   assert.equal(li[0].price_data.currency, "chf");
   assert.equal(li[0].price_data.product_data.description, "H Sakura Pink · A Ice Blue · L Cotton White · L Peanut · O Ice Blue · M Cotton White · I Peanut · A Magenta");
-  assert.equal(li[1].price_data.unit_amount, 1800);
-  assert.equal(li[2].price_data.product_data.name, "Wandbild «MY HAPPY PLACE»");
-  assert.equal(li[2].price_data.unit_amount, 3950);
-  assert.equal(li[3].price_data.product_data.name, "Fotorahmen Punkte");
-  assert.equal(li[3].price_data.product_data.description, "Sakura Pink");
-  assert.equal(li[3].quantity, 2);
+  assert.equal(li[1].price_data.unit_amount, 1960);
+  assert.equal(li[2].price_data.product_data.name, "Fotorahmen Punkte");
+  assert.equal(li[2].price_data.product_data.description, "Sakura Pink");
+  assert.equal(li[2].quantity, 2);
+  assert.equal(sent.metadata.lieferung, "Versand");
   assert.equal(sent.shipping_options[0].shipping_rate_data.fixed_amount.amount, 0, "über der Gratisgrenze");
   assert.deepEqual(sent.shipping_address_collection.allowed_countries, ["CH", "LI"]);
   assert.equal(sent.success_url, "https://filamour.ch/success.html?session_id={CHECKOUT_SESSION_ID}");

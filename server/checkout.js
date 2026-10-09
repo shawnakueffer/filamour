@@ -1,6 +1,6 @@
 // Warenkorb prüfen und daraus die Stripe-Checkout-Session bauen.
 // Preise kommen ausschliesslich aus public/catalog.js – Werte aus dem Browser werden ignoriert.
-import { SHOP, describeItem, shippingFor } from "../public/catalog.js";
+import { SHOP, PICKUP_NOTE, describeItem, isPickup, shippingFor } from "../public/catalog.js";
 
 // Stripe-Metadaten: max. 50 Schlüssel, je Wert max. 500 Zeichen
 function addMeta(meta, key, value) {
@@ -34,8 +34,9 @@ export function validateCart(body) {
 
 export function buildSession(items, origin) {
   const subtotal = items.reduce((s, it) => s + it.unit * it.qty, 0);
-  const shipping = shippingFor(subtotal);
-  const metadata = { shop: "filamour", artikel: String(items.length) };
+  const pickup = isPickup(items);
+  const shipping = shippingFor(subtotal, pickup);
+  const metadata = { shop: "filamour", artikel: String(items.length), lieferung: pickup ? "Abholung" : "Versand" };
 
   const line_items = items.map((it, n) => {
     addMeta(metadata, `artikel_${n + 1}`, `${it.qty}× ${it.name} – ${it.description}`);
@@ -56,14 +57,17 @@ export function buildSession(items, origin) {
     allow_promotion_codes: true, // Feld für Rabattcodes (z. B. Newsletter) im Checkout
     metadata,
     payment_intent_data: { metadata },
-    shipping_address_collection: { allowed_countries: SHOP.shippingCountries },
-    shipping_options: [{
-      shipping_rate_data: {
-        type: "fixed_amount",
-        display_name: shipping === 0 ? "Gratis Versand" : "Versand mit der Post",
-        fixed_amount: { amount: shipping, currency: SHOP.currency },
-      },
-    }],
+    // Abholung: keine Adresse, keine Versandkosten, dafür ein Hinweis über dem Bezahlknopf
+    ...(pickup ? { custom_text: { submit: { message: PICKUP_NOTE } } } : {
+      shipping_address_collection: { allowed_countries: SHOP.shippingCountries },
+      shipping_options: [{
+        shipping_rate_data: {
+          type: "fixed_amount",
+          display_name: shipping === 0 ? "Gratis Versand" : "Versand mit der Post",
+          fixed_amount: { amount: shipping, currency: SHOP.currency },
+        },
+      }],
+    }),
     custom_fields: [{
       key: "bemerkung",
       label: { type: "custom", custom: "Bemerkung (optional)" },
@@ -84,6 +88,7 @@ export function summarizeSession(s) {
     firstName: (s.customer_details?.name || "").split(" ")[0],
     total: s.amount_total,
     shipping: s.shipping_cost?.amount_total ?? 0,
+    pickup: s.metadata?.lieferung === "Abholung",
     items: (s.line_items?.data || []).map((li) => ({ name: li.description, qty: li.quantity, amount: li.amount_total })),
   };
 }

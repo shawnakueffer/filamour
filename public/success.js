@@ -12,10 +12,11 @@ if (id) {
       const el = document.getElementById("order");
       const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
       el.innerHTML = d.items.map((i) => `<div class="tline"><span>${i.qty}× ${esc(i.name)}</span><span>${chf(i.amount)}</span></div>`).join("")
-        + `<div class="tline"><span>Versand</span><span>${d.shipping ? chf(d.shipping) : "gratis"}</span></div>`
+        + `<div class="tline"><span>Versand</span><span>${d.pickup ? "Abholung" : d.shipping ? chf(d.shipping) : "gratis"}</span></div>`
         + `<div class="tline total"><span>Total</span><span>${chf(d.total)}</span></div>`
         + `<div class="tline"><span class="muted">Bestellnummer</span><span class="muted">${esc(d.number)}</span></div>`;
       el.hidden = false;
+      if (d.pickup) document.getElementById("next").innerHTML = 'Wir melden uns in den nächsten Tagen per E-Mail für einen Abholtermin. Fragen? Schreib an <a href="mailto:hallo@filamour.ch">hallo@filamour.ch</a>.';
     }
   } catch {}
 }

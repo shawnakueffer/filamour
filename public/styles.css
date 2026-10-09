@@ -333,6 +333,8 @@ section.block.alt { background: var(--band); }
 }
 
 /* Gratisversand-Hinweis im Warenkorb */
+.pickup-note { font-size: 14px; color: var(--fg); background: var(--soft); border-radius: 10px; padding: 10px 12px; }
+.pickup-tag { display: inline-block; margin-top: 8px; font-size: 13px; font-weight: 600; color: var(--accent); }
 .freeship { display: grid; gap: 6px; padding-bottom: 6px; font-size: 14px; }
 .freeship .bar { height: 5px; background: var(--soft); border-radius: 3px; overflow: hidden; }
 .freeship .bar span { display: block; height: 100%; background: var(--accent); border-radius: 3px; transition: width .3s; }

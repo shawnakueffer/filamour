@@ -1,4 +1,4 @@
-import { SHOP, ANNOUNCEMENTS, ANNOUNCEMENTS_SHORT, CHARS, COLORS, COLOR_BY_ID, PRODUCTS, NEWSLETTER, POSTERS, POSTER_BY_ID, FRAME_STYLES, FRAME_BY_ID, describeItem, pieces, designPrice, shippingFor, chf } from "./catalog.js";
+import { SHOP, ANNOUNCEMENTS, ANNOUNCEMENTS_SHORT, CHARS, COLORS, COLOR_BY_ID, PRODUCTS, NEWSLETTER, POSTERS, POSTER_BY_ID, FRAME_STYLES, FRAME_BY_ID, describeItem, pieces, designPrice, shippingFor, isPickup, PICKUP_NOTE, chf } from "./catalog.js";
 import { REVIEWS } from "./reviews.js";
 
 const $ = (s) => document.querySelector(s);
@@ -200,8 +200,9 @@ function addProduct(item, msgEl) {
 
 function totals() {
   const sub = cart.reduce((s, it) => s + describeItem(it).unit * it.qty, 0);
-  const ship = shippingFor(sub);
-  return { sub, ship, total: sub + ship };
+  const pickup = isPickup(cart);
+  const ship = shippingFor(sub, pickup);
+  return { sub, ship, pickup, total: sub + ship };
 }
 
 function renderCart() {
@@ -233,10 +234,13 @@ function renderCart() {
   }).join("");
   const t = totals();
   $("#tSub").textContent = chf(t.sub);
-  $("#tShip").textContent = t.ship ? chf(t.ship) : "gratis";
+  $("#tShip").textContent = t.pickup ? "Abholung" : t.ship ? chf(t.ship) : "gratis";
+  $("#pickupNote").hidden = !t.pickup;
+  $("#pickupNote").textContent = PICKUP_NOTE;
+  $("#payNote").textContent = t.pickup ? "Zahlung im nächsten Schritt, sicher über Stripe." : "Lieferadresse und Zahlung im nächsten Schritt, sicher über Stripe.";
   const fs = $("#freeship");
-  fs.hidden = !SHOP.freeShippingFrom;
-  if (SHOP.freeShippingFrom) {
+  fs.hidden = !SHOP.freeShippingFrom || t.pickup;
+  if (SHOP.freeShippingFrom && !t.pickup) {
     const left = SHOP.freeShippingFrom - t.sub;
     $("#freeshipText").textContent = left > 0 ? `Noch ${chf(left)} bis zum Gratisversand` : "Du hast Gratisversand.";
     $("#freeshipBar").style.width = Math.min(100, (t.sub / SHOP.freeShippingFrom) * 100) + "%";
@@ -456,9 +460,9 @@ function renderAnnounce() {
 }
 
 $("#faqPrice").textContent = `${chf(SHOP.pricePerLetter)} pro Buchstabe oder Zeichen. Ein Name mit vier Buchstaben kostet also ${chf(SHOP.pricePerLetter * 4)}. Der Preis wird im Studio laufend angezeigt.`;
-$("#faqShip").textContent = `In die Schweiz und nach Liechtenstein. Der Versand kostet ${chf(SHOP.shipping)}${SHOP.freeShippingFrom ? `, ab einem Bestellwert von ${chf(SHOP.freeShippingFrom)} ist er gratis` : ""}.`;
+$("#faqShip").textContent = `In die Schweiz und nach Liechtenstein. Der Versand kostet ${chf(SHOP.shipping)}${SHOP.freeShippingFrom ? `, ab einem Bestellwert von ${chf(SHOP.freeShippingFrom)} ist er gratis` : ""}. Wandbilder gibt es vorerst nur zur Abholung.`;
 $("#year").textContent = new Date().getFullYear();
-$("#footShip").textContent = `Lieferung in die Schweiz und nach Liechtenstein. Versand ${chf(SHOP.shipping)}${SHOP.freeShippingFrom ? `, ab ${chf(SHOP.freeShippingFrom)} gratis` : ""}.`;
+$("#footShip").textContent = `Lieferung in die Schweiz und nach Liechtenstein. Versand ${chf(SHOP.shipping)}${SHOP.freeShippingFrom ? `, ab ${chf(SHOP.freeShippingFrom)} gratis` : ""}. Wandbilder vorerst nur zur Abholung.`;
 $("#footChat").onclick = () => $("#chatFab").click();
 
 /* ---------- Newsletter ---------- */
@@ -538,7 +542,7 @@ if (document.fonts) {
     poster: {
       label: "Wandbild", keys: ["wandbild", "poster", "bild ", "bilder", "spruch", "positive", "happy", "how about", "vibes"],
       topics: {
-        preis:     { label: "Preis", text: () => `Ein Wandbild (${PRODUCTS.poster.size}) kostet ${chf(PRODUCTS.poster.price)}.`, actions: [["Wandbilder ansehen", "#p-poster"]] },
+        preis:     { label: "Preis", text: () => `Ein Wandbild (${PRODUCTS.poster.size}) kostet ${chf(PRODUCTS.poster.price)}. Wandbilder gibt es vorerst nur zur Abholung, den Termin vereinbaren wir nach der Bestellung per E-Mail.`, actions: [["Wandbilder ansehen", "#p-poster"]] },
         varianten: { label: "Sujets", text: () => `Es gibt drei Sujets: ${POSTERS.map((p) => `«${p.title}» in ${p.colorName}`).join(", ")}.`, actions: [["Wandbilder ansehen", "#p-poster"]] },
         farben:    { label: "Farben", text: () => `Jedes Sujet hat seinen eigenen Farbton: ${POSTERS.map((p) => `${p.colorName} für «${p.title}»`).join(", ")}. Hintergrund und Buchstaben sind Ton in Ton. Wünschst du eine andere Farbe, frag uns gern.` },
         groesse:   { label: "Grösse", text: () => `Das Wandbild ist ${PRODUCTS.poster.size} gross.`, actions: [["Wandbilder ansehen", "#p-poster"]] },
@@ -563,7 +567,7 @@ if (document.fonts) {
 
   // ---- Allgemeine Themen rund um Bestellung
   const ORDER_TOPICS = {
-    versand:    { label: "Versand", text: () => `Wir liefern in die Schweiz und nach Liechtenstein. Der Versand kostet ${chf(SHOP.shipping)}${free}.` },
+    versand:    { label: "Versand", text: () => `Wir liefern in die Schweiz und nach Liechtenstein. Der Versand kostet ${chf(SHOP.shipping)}${free}. Wandbilder gibt es vorerst nur zur Abholung, den Termin vereinbaren wir per E-Mail.` },
     dauer:      { label: "Lieferzeit", text: () => "Jede Bestellung wird nach Eingang für dich gedruckt und danach so schnell wie möglich verschickt. Brauchst du sie bis zu einem bestimmten Datum? Hinterlass mir deine E-Mail, dann sagen wir dir, ob es klappt.", lead: true },
     zahlung:    { label: "Zahlung", text: () => "Bezahlt wird nach dem Warenkorb auf der sicheren Zahlungsseite von Stripe. Dort siehst du alle verfügbaren Zahlungsarten. Danach bekommst du eine Bestätigung per E-Mail." },
     retour:     { label: "Rückgabe", text: () => "Personalisierte Artikel werden extra für dich gedruckt und sind deshalb vom Umtausch ausgeschlossen. Ist etwas beschädigt oder falsch angekommen, finden wir eine Lösung. Hinterlass mir deine E-Mail, dann melden wir uns.", lead: true },
