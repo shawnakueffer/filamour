@@ -489,7 +489,7 @@ $("#sizeLead").textContent = `Jeder Buchstabe ist ${fmt(SHOP.letterHeightCm)} cm
 $("#specH").textContent = `${fmt(SHOP.letterHeightCm)} cm`;
 $("#specD").textContent = `${fmt(SHOP.letterDepthCm)} cm`;
 $("#faqSize").textContent = `Jeder Buchstabe ist ${fmt(SHOP.letterHeightCm)} cm hoch und ${fmt(SHOP.letterDepthCm)} cm dick. Die Breite hängt vom Buchstaben ab: Ein I ist schmal, ein M oder W breiter.`;
-$("#studioNote").textContent = `Jeder Buchstabe ist ${fmt(SHOP.letterHeightCm)} cm hoch und matt. Die Farben am Bildschirm sind Annäherungen an das echte Filament.`;
+$("#studioNote").textContent = `Jeder Buchstabe ist ${fmt(SHOP.letterHeightCm)} cm hoch. Die Farben am Bildschirm sind Annäherungen an das echte Filament.`;
 $("#letterPrice").textContent = chf(SHOP.pricePerLetter);
 renderAnnounce(); renderReviews(); stripeSections();
 window.addEventListener("scroll", () => $("#top").classList.toggle("scrolled", scrollY > 8), { passive: true });
@@ -527,7 +527,7 @@ if (document.fonts) {
         preis:     { label: "Preis", text: () => `Ein Buchstabe kostet ${chf(SHOP.pricePerLetter)}. Ein Name mit vier Buchstaben kommt also auf ${chf(SHOP.pricePerLetter * 4)}. Leerzeichen kosten nichts.`, actions: [["Zum Studio", "#studio"]] },
         varianten: { label: "Gestalten", text: () => "Im Studio tippst du deinen Text ein, tippst auf einen Buchstaben und wählst seine Farbe. Du siehst sofort, wie es aussieht, und legst es dann in den Warenkorb.", actions: [["Zum Studio", "#studio"]] },
         groesse:   { label: "Grösse", text: () => `Jeder Buchstabe ist ${fmt(SHOP.letterHeightCm)} cm hoch und ${fmt(SHOP.letterDepthCm)} cm dick. Die Breite hängt vom Buchstaben ab: Ein I ist schmal, ein M oder W breiter.`, actions: [["Grösse ansehen", "#groesse"]] },
-        farben:    { label: "Farben", text: () => `Es gibt ${COLORS.length} Farben, alle matt, zum Beispiel ${colorSample()}. Jeder Buchstabe kann eine eigene Farbe haben.`, actions: [["Farben im Studio", "#studio"]] },
+        farben:    { label: "Farben", text: () => `Es gibt ${COLORS.length} Farben, zum Beispiel ${colorSample()}. Jeder Buchstabe kann eine eigene Farbe haben.`, actions: [["Farben im Studio", "#studio"]] },
         zeichen:   { label: "Zeichen", text: () => "Es gibt alle Buchstaben von A bis Z, Ä, Ã und die Zeichen & ! ? - . , : ~. Zahlen und Kleinbuchstaben haben wir noch nicht." },
         anbringen: { label: "Anbringen", text: () => "Die Rückseite ist flach. Am einfachsten halten die Buchstaben mit Klebepads oder doppelseitigem Klebeband an Tür und Wand. Für den Kühlschrank klebst du einen kleinen Magneten auf die Rückseite, im Bilderrahmen genügt ein Tropfen Leim.", actions: [["Ideen ansehen", "#ideen"]] },
         material:  { label: "Material", text: () => "Die Buchstaben sind aus PLA. " + PLA, actions: [["Mehr zum Material", "#material"]] },
@@ -551,7 +551,7 @@ if (document.fonts) {
       topics: {
         preis:     { label: "Preis", text: () => `Ein Fotorahmen kostet ${chf(PRODUCTS.frame.price)}.`, actions: [["Rahmen ansehen", "#p-frame"]] },
         varianten: { label: "Formen", text: () => `Den Fotorahmen gibt es mit ${FRAME_STYLES.map((s) => s.title).join(" oder mit ")}.`, actions: [["Rahmen ansehen", "#p-frame"]] },
-        farben:    { label: "Farben", text: () => `Die Rahmen gibt es in allen ${COLORS.length} Filamentfarben, alle matt, zum Beispiel ${colorSample()}.`, actions: [["Farbe wählen", "#p-frame"]] },
+        farben:    { label: "Farben", text: () => `Die Rahmen gibt es in allen ${COLORS.length} Filamentfarben, zum Beispiel ${colorSample()}.`, actions: [["Farbe wählen", "#p-frame"]] },
         groesse:   { label: "Fotogrösse", text: () => "Für welches Fotoformat der Rahmen passt und wie gross er ist, sagen wir dir gern persönlich. Hinterlass mir deine E-Mail-Adresse, dann melden wir uns.", lead: true },
         anbringen: { label: "Aufhängen", text: () => "Wie du den Rahmen aufhängst oder hinstellst, erklären wir dir gern persönlich. Hinterlass mir deine E-Mail, dann melden wir uns.", lead: true },
         material:  { label: "Material", text: () => "Die Rahmen sind aus PLA. " + PLA },
