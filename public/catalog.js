@@ -50,6 +50,12 @@ export const COLORS = [
   { id: "pt-sakura",  name: "Sakura Pink",     hex: "#F1B3C5" },
   { id: "pt-sapph",   name: "Sapphire Blue",   hex: "#22509F" },
   { id: "bm-ice",     name: "Ice Blue",        hex: "#A6D7E2" },
+  { id: "es-matcha",  name: "Matcha Green",    hex: "#BFD080" },   // eSUN PLA-Matte
+  { id: "es-apricot", name: "Apricot",         hex: "#EA9A45" },   // eSUN PLA+HS
+  { id: "sp-lemon",   name: "Lemon Cream",     hex: "#FBEEB2" },   // Spectrum Pastello
+  { id: "sp-mauve",   name: "Cosmetic Mauve",  hex: "#E3CFDF" },   // Spectrum Pastello
+  { id: "sp-flamingo",name: "Flamingo Red",    hex: "#F6A49A" },   // Spectrum Pastello
+  { id: "pm-purple",  name: "Muted Purple",    hex: "#9E88B2" },   // Polymaker PolyTerra
 ];
 
 export const COLOR_BY_ID = Object.fromEntries(COLORS.map((c) => [c.id, c]));

@@ -25,6 +25,12 @@ test("Preis kommt vom Server, nicht vom Browser", () => {
   assert.equal(ok.items[0].unit, 8 * 450);
 });
 
+test("Neue Farben sind bestellbar", () => {
+  const ok = validateCart({ items: [{ text: "MIA", colors: ["es-matcha", "sp-flamingo", "pm-purple"], qty: 1 }] });
+  assert.equal(ok.items[0].description, "M Matcha Green · I Flamingo Red · A Muted Purple");
+  assert.equal(validateCart({ items: [{ type: "frame", style: "wave", color: "sp-lemon", qty: 1 }] }).items[0].description, "Lemon Cream");
+});
+
 test("Nicht druckbare Zeichen landen nicht im Produktnamen", () => {
   const ok = validateCart({ items: [{ text: "Leo 2<b>", colors: ["bl-red", "bl-red", "bl-red", "bl-red", "bl-red", "bl-red", "bl-red", "bl-red"], qty: 1 }] });
   assert.equal(ok.items[0].name, "Bubble Letters «LEO B» (4 Teile)");

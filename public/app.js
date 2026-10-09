@@ -516,6 +516,7 @@ if (document.fonts) {
   const norm = (t) => t.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/ß/g, "ss");
   const history = [];
   const SAFETY = "Unsere Produkte sind Dekoration und kein Spielzeug. Wegen verschluckbarer Kleinteile gehören sie nicht in die Hände von Kindern unter 3 Jahren.";
+  const colorSample = () => ["pt-sakura", "bm-ice", "es-matcha", "sp-lemon", "pm-purple"].map((id) => COLOR_BY_ID[id]?.name).filter(Boolean).join(", ");
   const PLA = "PLA ist ein Kunststoff aus nachwachsenden Rohstoffen wie Maisstärke oder Zuckerrohr und in industriellen Kompostieranlagen biologisch abbaubar. Jedes Stück wird erst gedruckt, wenn du bestellst.";
 
   // ---- Produkte und ihre Themen. lead: true = danach Kontaktformular anbieten
@@ -526,7 +527,7 @@ if (document.fonts) {
         preis:     { label: "Preis", text: () => `Ein Buchstabe kostet ${chf(SHOP.pricePerLetter)}. Ein Name mit vier Buchstaben kommt also auf ${chf(SHOP.pricePerLetter * 4)}. Leerzeichen kosten nichts.`, actions: [["Zum Studio", "#studio"]] },
         varianten: { label: "Gestalten", text: () => "Im Studio tippst du deinen Text ein, tippst auf einen Buchstaben und wählst seine Farbe. Du siehst sofort, wie es aussieht, und legst es dann in den Warenkorb.", actions: [["Zum Studio", "#studio"]] },
         groesse:   { label: "Grösse", text: () => `Jeder Buchstabe ist ${fmt(SHOP.letterHeightCm)} cm hoch und ${fmt(SHOP.letterDepthCm)} cm dick. Die Breite hängt vom Buchstaben ab: Ein I ist schmal, ein M oder W breiter.`, actions: [["Grösse ansehen", "#groesse"]] },
-        farben:    { label: "Farben", text: () => `Es gibt ${COLORS.length} Farben, alle matt, zum Beispiel ${COLORS.slice(10).map((c) => c.name).join(", ")}. Jeder Buchstabe kann eine eigene Farbe haben.`, actions: [["Farben im Studio", "#studio"]] },
+        farben:    { label: "Farben", text: () => `Es gibt ${COLORS.length} Farben, alle matt, zum Beispiel ${colorSample()}. Jeder Buchstabe kann eine eigene Farbe haben.`, actions: [["Farben im Studio", "#studio"]] },
         zeichen:   { label: "Zeichen", text: () => "Es gibt alle Buchstaben von A bis Z, Ä, Ã und die Zeichen & ! ? - . , : ~. Zahlen und Kleinbuchstaben haben wir noch nicht." },
         anbringen: { label: "Anbringen", text: () => "Die Rückseite ist flach. Am einfachsten halten die Buchstaben mit Klebepads oder doppelseitigem Klebeband an Tür und Wand. Für den Kühlschrank klebst du einen kleinen Magneten auf die Rückseite, im Bilderrahmen genügt ein Tropfen Leim.", actions: [["Ideen ansehen", "#ideen"]] },
         material:  { label: "Material", text: () => "Die Buchstaben sind aus PLA. " + PLA, actions: [["Mehr zum Material", "#material"]] },
@@ -550,7 +551,7 @@ if (document.fonts) {
       topics: {
         preis:     { label: "Preis", text: () => `Ein Fotorahmen kostet ${chf(PRODUCTS.frame.price)}.`, actions: [["Rahmen ansehen", "#p-frame"]] },
         varianten: { label: "Formen", text: () => `Den Fotorahmen gibt es mit ${FRAME_STYLES.map((s) => s.title).join(" oder mit ")}.`, actions: [["Rahmen ansehen", "#p-frame"]] },
-        farben:    { label: "Farben", text: () => `Die Rahmen gibt es in allen ${COLORS.length} Filamentfarben, alle matt, zum Beispiel ${COLORS.slice(10).map((c) => c.name).join(", ")}.`, actions: [["Farbe wählen", "#p-frame"]] },
+        farben:    { label: "Farben", text: () => `Die Rahmen gibt es in allen ${COLORS.length} Filamentfarben, alle matt, zum Beispiel ${colorSample()}.`, actions: [["Farbe wählen", "#p-frame"]] },
         groesse:   { label: "Fotogrösse", text: () => "Für welches Fotoformat der Rahmen passt und wie gross er ist, sagen wir dir gern persönlich. Hinterlass mir deine E-Mail-Adresse, dann melden wir uns.", lead: true },
         anbringen: { label: "Aufhängen", text: () => "Wie du den Rahmen aufhängst oder hinstellst, erklären wir dir gern persönlich. Hinterlass mir deine E-Mail, dann melden wir uns.", lead: true },
         material:  { label: "Material", text: () => "Die Rahmen sind aus PLA. " + PLA },
