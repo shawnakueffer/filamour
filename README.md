@@ -87,7 +87,8 @@ Der Checkout zeigt automatisch alle Zahlungsmittel, die im Stripe-Dashboard akti
 
 ## Anpassen
 
-- **Preis, Versand, Gratisversand-Grenze, Lieferländer:** `public/catalog.js` → `SHOP` (aktuell CHF 4.90 pro Buchstabe, Versand CHF 7, gratis ab CHF 60)
+- **Versand, Gratisversand-Grenze, Lieferländer:** `public/catalog.js` → `SHOP` (aktuell Versand CHF 7, gratis ab CHF 60)
+- **Buchstaben-Grössen und Preise:** `public/catalog.js` → `LETTER_SIZES` (aktuell gross 6,5 cm für CHF 4.90, klein 2,5 cm für CHF 2.90). Die Grösse steht in Stripe im Artikelnamen, z. B. `Bubble Letters «MIA» (3 Teile, Klein 2,5 cm)`.
 - **Nur Abholung:** `pickupOnly: true` bei einem Produkt in `PRODUCTS` (aktuell Wandbild). Enthält eine Bestellung so ein Produkt, wird die ganze Bestellung abgeholt: keine Adresse, keine Versandkosten, Hinweis im Warenkorb und im Stripe-Checkout. In Stripe steht bei der Zahlung unter Metadaten `lieferung: Abholung`. Für Versand wieder `pickupOnly` entfernen.
 - **Farben hinzufügen/entfernen:** `public/catalog.js` → `COLORS`
 - **Hinweise in der Leiste oben:** `public/catalog.js` → `ANNOUNCEMENTS`

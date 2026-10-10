@@ -1,4 +1,4 @@
-import { SHOP, ANNOUNCEMENTS, ANNOUNCEMENTS_SHORT, CHARS, COLORS, COLOR_BY_ID, PRODUCTS, NEWSLETTER, POSTERS, POSTER_BY_ID, FRAME_STYLES, FRAME_BY_ID, describeItem, pieces, designPrice, shippingFor, isPickup, PICKUP_NOTE, chf } from "./catalog.js";
+import { SHOP, ANNOUNCEMENTS, ANNOUNCEMENTS_SHORT, CHARS, COLORS, COLOR_BY_ID, PRODUCTS, NEWSLETTER, POSTERS, POSTER_BY_ID, FRAME_STYLES, FRAME_BY_ID, LETTER_SIZES, letterSize, describeItem, pieces, designPrice, shippingFor, isPickup, PICKUP_NOTE, chf, cm } from "./catalog.js";
 import { REVIEWS } from "./reviews.js";
 
 const $ = (s) => document.querySelector(s);
@@ -66,6 +66,7 @@ if (String(state.text).trim().toUpperCase() === "HALLO MIA") { state.text = "MIA
 if (!Array.isArray(state.colors) || !state.colors.length) state.colors = [...state.text].map((_, i) => EXAMPLE[i % EXAMPLE.length]);
 state.colors = state.colors.map((id) => (COLOR_BY_ID[id] ? id : "pt-sakura"));
 if (!COLOR_BY_ID[state.fill]) state.fill = "pt-sakura";
+if (!letterSize(state.size)) state.size = LETTER_SIZES[0].id;
 let sel = -1;         // gewählter Buchstabe
 let qty = 1;
 let editing = null;   // id eines Warenkorb-Eintrags, der gerade bearbeitet wird
@@ -113,10 +114,12 @@ function render() {
     ? Object.entries(groups).map(([id, chars]) => `<div class="srow"><span class="dot" style="background:${COLOR_BY_ID[id].hex}"></span><span>${COLOR_BY_ID[id].name} <code>${chars.join(" ")}</code></span><span class="n">${chars.length}×</span></div>`).join("")
     : `<span class="muted" style="font-size:14px">Noch keine Buchstaben.</span>`;
 
-  // Preis
+  // Grösse und Preis
+  const size = letterSize(state.size);
+  document.querySelectorAll("#sizeOpts [data-id]").forEach((b) => b.setAttribute("aria-checked", b.dataset.id === size.id));
   const n = validIdx().length;
-  const unit = designPrice(state.text, state.colors);
-  $("#pieceInfo").textContent = n ? `${n} ${n === 1 ? "Buchstabe" : "Buchstaben"} à ${chf(SHOP.pricePerLetter)}${qty > 1 ? ` · ${qty}×` : ""}` : "";
+  const unit = designPrice(state.text, state.colors, size.id);
+  $("#pieceInfo").textContent = n ? `${n} ${n === 1 ? "Buchstabe" : "Buchstaben"} à ${chf(size.price)}${qty > 1 ? ` · ${qty}×` : ""}` : "";
   $("#price").textContent = chf(unit * qty);
   $("#qtyVal").textContent = qty;
   $("#qtyMinus").disabled = qty <= 1;
@@ -135,6 +138,10 @@ function render() {
 
   store.set("filamour-studio", state);
   popIdx = -1;
+}
+
+function buildSizes() {
+  $("#sizeOpts").innerHTML = LETTER_SIZES.map((z) => `<button class="opt plain" role="radio" aria-checked="false" data-id="${z.id}">${z.name} · ${cm(z.heightCm)} · ${chf(z.price)}</button>`).join("");
 }
 
 function buildShelf() {
@@ -162,6 +169,7 @@ $("#shelf").addEventListener("click", (e) => {
   render();
 });
 $("#toAll").onclick = () => { if (sel < 0) return; const id = state.colors[sel]; validIdx().forEach((i) => (state.colors[i] = id)); state.fill = id; sel = -1; render(); $("#line").classList.remove("wave"); void $("#line").offsetWidth; $("#line").classList.add("wave"); };
+$("#sizeOpts").addEventListener("click", (e) => { const b = e.target.closest("[data-id]"); if (!b) return; state.size = b.dataset.id; $("#added").textContent = ""; render(); });
 document.querySelectorAll(".bgbtn").forEach((b) => (b.onclick = () => { state.bg = b.dataset.bg; render(); }));
 $("#qtyMinus").onclick = () => { qty = Math.max(1, qty - 1); render(); };
 $("#qtyPlus").onclick = () => { qty = Math.min(SHOP.maxQuantity, qty + 1); render(); };
@@ -173,7 +181,7 @@ const saveCart = () => store.set("filamour-cart", cart);
 const uid = () => Math.random().toString(36).slice(2, 10);
 
 $("#addToCart").onclick = () => {
-  const item = { type: "letters", text: state.text.toUpperCase().trim(), colors: [], qty };
+  const item = { type: "letters", text: state.text.toUpperCase().trim(), colors: [], size: state.size, qty };
   // führende Leerzeichen entfernen, damit Farben zum Text passen
   const lead = state.text.length - state.text.trimStart().length;
   item.colors = state.colors.slice(lead, lead + item.text.length);
@@ -256,7 +264,7 @@ $("#cartBody").addEventListener("click", (e) => {
   if (act === "minus") it.qty = Math.max(1, it.qty - 1);
   if (act === "remove") cart = cart.filter((c) => c !== it);
   if (act === "edit") {
-    state.text = it.text; state.colors = it.colors.slice(); editing = it.id; qty = it.qty; sel = -1;
+    state.text = it.text; state.colors = it.colors.slice(); state.size = letterSize(it.size).id; editing = it.id; qty = it.qty; sel = -1;
     $("#txt").value = it.text; $("#added").textContent = "Du bearbeitest ein Design aus dem Warenkorb.";
     closeCart(); render(); $("#studio").scrollIntoView(); return;
   }
@@ -290,7 +298,7 @@ $("#checkout").onclick = async () => {
   msg.textContent = "";
   btn.disabled = true; btn.textContent = "Einen Moment …";
   try {
-    const data = await postJSON("/api/checkout", { items: cart.map(({ type, text, colors, variant, style, color, qty }) => ({ type, text, colors, variant, style, color, qty })) });
+    const data = await postJSON("/api/checkout", { items: cart.map(({ type, text, colors, size, variant, style, color, qty }) => ({ type, text, colors, size, variant, style, color, qty })) });
     if (!data.url) throw new Error("Die Zahlung konnte nicht gestartet werden. Bitte versuche es nochmals.");
     location.href = data.url;
   } catch (err) {
@@ -407,7 +415,6 @@ $("#frameAdd").onclick = () => addProduct({ type: "frame", style: frameStyle, co
 
 function renderDims() {
   const el = $("#dims"); if (!el) return;
-  const H = SHOP.letterHeightCm, D = SHOP.letterDepthCm, cm = (v) => `${String(v).replace(".", ",")} cm`;
   // tatsächliche Höhe des Buchstabens A in der Schrift messen
   let asc = 70, wA = 80;
   try {
@@ -417,21 +424,26 @@ function renderDims() {
     if (m.actualBoundingBoxAscent) asc = m.actualBoundingBoxAscent + (m.actualBoundingBoxDescent || 0);
     wA = m.width;
   } catch {}
-  const s = 120 / asc;              // A wird 120 Einheiten hoch gezeichnet
-  const top = 30, base = top + 120, depth = 120 * (D / H);
-  const col = COLOR_BY_ID["bm-ice"].hex;
-  const ax = 70, sideX = ax + wA * s + 90;
-  el.innerHTML = `<svg viewBox="0 0 ${sideX + depth + 70} ${base + 46}">
-    <text class="sub" x="${ax}" y="14">Vorne</text>
-    <text x="${ax}" y="${base}" font-family="'Cherry Bomb One'" font-size="${100 * s}" fill="${col}" stroke="${col}" stroke-width="2.5" paint-order="stroke" filter="url(#puff)">A</text>
-    <line x1="${ax - 22}" y1="${top}" x2="${ax - 22}" y2="${base}"/>
-    <line x1="${ax - 28}" y1="${top}" x2="${ax - 16}" y2="${top}"/><line x1="${ax - 28}" y1="${base}" x2="${ax - 16}" y2="${base}"/>
-    <text class="cap" x="${ax - 30}" y="${(top + base) / 2 + 4}" text-anchor="end">${cm(H)}</text>
-    <text class="sub" x="${sideX}" y="14">Seite</text>
-    <path d="M${sideX} ${top} H${sideX + depth * 0.5} C ${sideX + depth * 1.1667} ${top}, ${sideX + depth * 1.1667} ${base}, ${sideX + depth * 0.5} ${base} H${sideX} Z" fill="${col}" filter="url(#puff)"/>
+  // alle Grössen im echten Verhältnis: die grösste wird 120 Einheiten hoch gezeichnet
+  const unit = 120 / Math.max(...LETTER_SIZES.map((z) => z.heightCm));
+  const top = 30, base = top + 120, col = COLOR_BY_ID["bm-ice"].hex;
+  let x = 70, svg = "";
+  for (const z of LETTER_SIZES) {
+    const h = z.heightCm * unit, depth = z.depthCm * unit, s = h / asc, t = base - h;
+    const sideX = x + wA * s + 56;
+    svg += `
+    <text class="sub" x="${x}" y="14">${z.name}</text>
+    <text x="${x}" y="${base}" font-family="'Cherry Bomb One'" font-size="${100 * s}" fill="${col}" stroke="${col}" stroke-width="2.5" paint-order="stroke" filter="url(#puff)">A</text>
+    <line x1="${x - 14}" y1="${t}" x2="${x - 14}" y2="${base}"/>
+    <line x1="${x - 20}" y1="${t}" x2="${x - 8}" y2="${t}"/><line x1="${x - 20}" y1="${base}" x2="${x - 8}" y2="${base}"/>
+    <text class="cap" x="${x - 22}" y="${(t + base) / 2 + 4}" text-anchor="end">${cm(z.heightCm)}</text>
+    <path d="M${sideX} ${t} H${sideX + depth * 0.5} C ${sideX + depth * 1.1667} ${t}, ${sideX + depth * 1.1667} ${base}, ${sideX + depth * 0.5} ${base} H${sideX} Z" fill="${col}" filter="url(#puff)"/>
     <line x1="${sideX}" y1="${base + 18}" x2="${sideX + depth}" y2="${base + 18}"/>
     <line x1="${sideX}" y1="${base + 12}" x2="${sideX}" y2="${base + 24}"/><line x1="${sideX + depth}" y1="${base + 12}" x2="${sideX + depth}" y2="${base + 24}"/>
-    <text class="cap" x="${sideX + depth * 0.5}" y="${base + 40}" text-anchor="middle">${cm(D)}</text>
+    <text class="cap" x="${sideX + depth * 0.5}" y="${base + 40}" text-anchor="middle">${cm(z.depthCm)}</text>`;
+    x = sideX + depth + 100;
+  }
+  el.innerHTML = `<svg viewBox="0 0 ${x - 60} ${base + 46}">${svg}
   </svg>`;
 }
 
@@ -459,7 +471,10 @@ function renderAnnounce() {
   $("#announceTrack").innerHTML = ANNOUNCEMENTS.slice(0, 3).map((t, i) => `<span><b class="long">${t}</b><b class="short">${ANNOUNCEMENTS_SHORT[i] || t}</b></span>`).join("");
 }
 
-$("#faqPrice").textContent = `${chf(SHOP.pricePerLetter)} pro Buchstabe oder Zeichen. Ein Name mit vier Buchstaben kostet also ${chf(SHOP.pricePerLetter * 4)}. Der Preis wird im Studio laufend angezeigt.`;
+// Texte zu den zwei Grössen (gross = Standard, klein)
+const [BIG, SMALL] = LETTER_SIZES;
+function sizeDims() { return `Grosse Buchstaben sind ${cm(BIG.heightCm)} hoch und ${cm(BIG.depthCm)} dick, kleine ${cm(SMALL.heightCm)} hoch und ${cm(SMALL.depthCm)} dick`; }
+$("#faqPrice").textContent = `Grosse Buchstaben kosten ${chf(BIG.price)}, kleine ${chf(SMALL.price)}, jeweils pro Buchstabe oder Zeichen. Ein Name mit vier Buchstaben kostet also ${chf(BIG.price * 4)} (gross) oder ${chf(SMALL.price * 4)} (klein). Der Preis wird im Studio laufend angezeigt.`;
 $("#faqShip").textContent = `In die Schweiz und nach Liechtenstein. Der Versand kostet ${chf(SHOP.shipping)}${SHOP.freeShippingFrom ? `, ab einem Bestellwert von ${chf(SHOP.freeShippingFrom)} ist er gratis` : ""}. Wandbilder gibt es vorerst nur zur Abholung.`;
 $("#year").textContent = new Date().getFullYear();
 $("#footShip").textContent = `Lieferung in die Schweiz und nach Liechtenstein. Versand ${chf(SHOP.shipping)}${SHOP.freeShippingFrom ? `, ab ${chf(SHOP.freeShippingFrom)} gratis` : ""}. Wandbilder vorerst nur zur Abholung.`;
@@ -489,19 +504,18 @@ $("#newsCopy").onclick = async () => {
   catch { const r = document.createRange(); r.selectNodeContents($("#newsCodeValue")); getSelection().removeAllRanges(); getSelection().addRange(r); b.textContent = "Markiert"; }
   setTimeout(() => (b.textContent = "Kopieren"), 1600);
 };
-const fmt = (v) => String(v).replace(".", ",");
-$("#sizeLead").textContent = `Jeder Buchstabe ist ${fmt(SHOP.letterHeightCm)} cm hoch und ${fmt(SHOP.letterDepthCm)} cm dick. Gross genug für eine Tür oder die Wand, klein genug für einen Bilderrahmen.`;
-$("#specH").textContent = `${fmt(SHOP.letterHeightCm)} cm`;
-$("#specD").textContent = `${fmt(SHOP.letterDepthCm)} cm`;
-$("#faqSize").textContent = `Jeder Buchstabe ist ${fmt(SHOP.letterHeightCm)} cm hoch und ${fmt(SHOP.letterDepthCm)} cm dick. Die Breite hängt vom Buchstaben ab: Ein I ist schmal, ein M oder W breiter.`;
-$("#studioNote").textContent = `Jeder Buchstabe ist ${fmt(SHOP.letterHeightCm)} cm hoch. Die Farben am Bildschirm sind Annäherungen an das echte Filament.`;
-$("#letterPrice").textContent = chf(SHOP.pricePerLetter);
+$("#sizeLead").textContent = `Es gibt zwei Grössen: ${sizeDims()}. Die grossen passen an Tür und Wand, die kleinen in einen Bilderrahmen oder auf ein Geschenk.`;
+$("#specH").textContent = LETTER_SIZES.map((z) => `${z.name} ${cm(z.heightCm)}`).join(" · ");
+$("#specD").textContent = LETTER_SIZES.map((z) => `${z.name} ${cm(z.depthCm)}`).join(" · ");
+$("#faqSize").textContent = `Es gibt zwei Grössen: ${sizeDims()}. Die Breite hängt vom Buchstaben ab: Ein I ist schmal, ein M oder W breiter.`;
+$("#studioNote").textContent = `Grosse Buchstaben sind ${cm(BIG.heightCm)} hoch, kleine ${cm(SMALL.heightCm)}. Die Farben am Bildschirm sind Annäherungen an das echte Filament.`;
+$("#letterPrice").textContent = chf(Math.min(...LETTER_SIZES.map((z) => z.price)));
 renderAnnounce(); renderReviews(); stripeSections();
 window.addEventListener("scroll", () => $("#top").classList.toggle("scrolled", scrollY > 8), { passive: true });
 
 $("#txt").value = state.text;
 renderPoster(); renderFrame();
-buildShelf(); render(); renderCart();
+buildSizes(); buildShelf(); render(); renderCart();
 if (location.hash === "#warenkorb" && cart.length) openCart();
 try { motion(); } catch (e) { console.warn(e); } // Animationen dürfen den Shop nie blockieren
 
@@ -516,7 +530,6 @@ if (document.fonts) {
 (function chat() {
   const fab = $("#chatFab"), box = $("#chat"), log = $("#chatLog"), chips = $("#chatChips"), form = $("#chatForm"), input = $("#chatText");
   if (!fab) return;
-  const fmt = (v) => String(v).replace(".", ",");
   const free = SHOP.freeShippingFrom ? `, ab ${chf(SHOP.freeShippingFrom)} Bestellwert ist er gratis` : "";
   const norm = (t) => t.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/ß/g, "ss");
   const history = [];
@@ -529,9 +542,9 @@ if (document.fonts) {
     letters: {
       label: "Bubble Letters", keys: ["buchstab", "letter", "bubble", "name", "studio", "namen"],
       topics: {
-        preis:     { label: "Preis", text: () => `Ein Buchstabe kostet ${chf(SHOP.pricePerLetter)}. Ein Name mit vier Buchstaben kommt also auf ${chf(SHOP.pricePerLetter * 4)}. Leerzeichen kosten nichts.`, actions: [["Zum Studio", "#studio"]] },
+        preis:     { label: "Preis", text: () => `Ein grosser Buchstabe kostet ${chf(BIG.price)}, ein kleiner ${chf(SMALL.price)}. Ein Name mit vier Buchstaben kommt also auf ${chf(BIG.price * 4)} (gross) oder ${chf(SMALL.price * 4)} (klein). Leerzeichen kosten nichts.`, actions: [["Zum Studio", "#studio"]] },
         varianten: { label: "Gestalten", text: () => "Im Studio tippst du deinen Text ein, tippst auf einen Buchstaben und wählst seine Farbe. Du siehst sofort, wie es aussieht, und legst es dann in den Warenkorb.", actions: [["Zum Studio", "#studio"]] },
-        groesse:   { label: "Grösse", text: () => `Jeder Buchstabe ist ${fmt(SHOP.letterHeightCm)} cm hoch und ${fmt(SHOP.letterDepthCm)} cm dick. Die Breite hängt vom Buchstaben ab: Ein I ist schmal, ein M oder W breiter.`, actions: [["Grösse ansehen", "#groesse"]] },
+        groesse:   { label: "Grösse", text: () => `Es gibt zwei Grössen: ${sizeDims()}. Die Breite hängt vom Buchstaben ab: Ein I ist schmal, ein M oder W breiter.`, actions: [["Grösse ansehen", "#groesse"]] },
         farben:    { label: "Farben", text: () => `Es gibt ${COLORS.length} Farben, zum Beispiel ${colorSample()}. Jeder Buchstabe kann eine eigene Farbe haben.`, actions: [["Farben im Studio", "#studio"]] },
         zeichen:   { label: "Zeichen", text: () => "Es gibt alle Buchstaben von A bis Z, Ä, Ã und die Zeichen & ! ? - . , : ~. Zahlen und Kleinbuchstaben haben wir noch nicht." },
         anbringen: { label: "Anbringen", text: () => "Die Rückseite ist flach. Am einfachsten halten die Buchstaben mit Klebepads oder doppelseitigem Klebeband an Tür und Wand. Für den Kühlschrank klebst du einen kleinen Magneten auf die Rückseite, im Bilderrahmen genügt ein Tropfen Leim.", actions: [["Ideen ansehen", "#ideen"]] },

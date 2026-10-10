@@ -24,6 +24,7 @@ export function validateCart(body) {
       variant: String(raw?.variant ?? ""),
       style: String(raw?.style ?? ""),
       color: String(raw?.color ?? ""),
+      size: String(raw?.size ?? ""),
     };
     const d = describeItem(item);
     if (d.error) return { error: d.error };

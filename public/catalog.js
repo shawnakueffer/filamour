@@ -5,16 +5,25 @@
 export const SHOP = {
   name: "Filamour",
   currency: "chf",
-  pricePerLetter: 490,        // Rappen pro Buchstabe/Zeichen (490 = CHF 4.90)
   shipping: 700,              // Rappen Versand pro Bestellung (CHF 7.00)
   freeShippingFrom: 6000,     // ab diesem Warenwert gratis Versand (0 = nie)
   shippingCountries: ["CH", "LI"],
   maxLettersPerDesign: 40,
   maxQuantity: 20,
   maxDesignsPerOrder: 20,
-  letterHeightCm: 6.5,        // Höhe eines Buchstabens
-  letterDepthCm: 2.5,         // Dicke eines Buchstabens
 };
+
+// Buchstaben-Grössen, die erste ist der Standard. price = Rappen pro Buchstabe/Zeichen (490 = CHF 4.90)
+export const LETTER_SIZES = [
+  { id: "gross", name: "Gross", heightCm: 6.5, depthCm: 2.5, price: 490 },
+  { id: "klein", name: "Klein", heightCm: 2.5, depthCm: 1,   price: 290 },
+];
+export const SIZE_BY_ID = Object.fromEntries(LETTER_SIZES.map((s) => [s.id, s]));
+// Grösse eines Designs; ältere Warenkörbe ohne Grösse sind «gross». Unbekannt → null
+export function letterSize(id) {
+  const key = id || LETTER_SIZES[0].id;
+  return Object.hasOwn(SIZE_BY_ID, key) ? SIZE_BY_ID[key] : null;
+}
 
 // Newsletter: Rabattcode für die erste Bestellung.
 // Den gleichen Code in Stripe als Aktionscode anlegen (Produkte → Gutscheine), siehe README.
@@ -100,13 +109,15 @@ export function describeItem(it) {
     if (!list.length) return { error: "Ein Design enthält keine bestellbaren Buchstaben." };
     if (list.length > SHOP.maxLettersPerDesign) return { error: `Maximal ${SHOP.maxLettersPerDesign} Buchstaben pro Design.` };
     if (list.some((p) => !COLOR_BY_ID[p.color])) return { error: "Eine gewählte Farbe ist nicht mehr verfügbar. Bitte das Design neu einfärben." };
+    const size = letterSize(it.size);
+    if (!size) return { error: "Diese Buchstaben-Grösse gibt es nicht mehr." };
     // nur, was auch gedruckt wird (z. B. «HALLO 123» → «HALLO»)
     const text = [...String(it.text).toUpperCase()].filter((c) => c === " " || CHARS.includes(c)).join("").replace(/\s+/g, " ").trim();
     return {
-      type, unit: list.length * SHOP.pricePerLetter,
-      name: `Bubble Letters «${text}» (${list.length} Teile)`,
+      type, unit: list.length * size.price,
+      name: `Bubble Letters «${text}» (${list.length} Teile, ${size.name} ${cm(size.heightCm)})`,
       description: list.map((p) => `${p.ch} ${COLOR_BY_ID[p.color].name}`).join(" · "),
-      meta: `${list.length} Buchstaben à ${chf(SHOP.pricePerLetter)}`,
+      meta: `${size.name}, ${list.length} Buchstaben à ${chf(size.price)}`,
     };
   }
   if (type === "poster") {
@@ -122,8 +133,8 @@ export function describeItem(it) {
   return { error: "Unbekannter Artikel." };
 }
 
-export function designPrice(text, colors) {
-  return pieces(text, colors).length * SHOP.pricePerLetter;
+export function designPrice(text, colors, sizeId) {
+  return pieces(text, colors).length * (letterSize(sizeId)?.price ?? 0);
 }
 
 // Enthält die Bestellung einen Artikel, der nur abgeholt werden kann, wird die ganze Bestellung abgeholt
@@ -140,4 +151,8 @@ export function shippingFor(subtotal, pickup = false) {
 
 export function chf(rappen) {
   return "CHF " + (rappen / 100).toFixed(2);
+}
+
+export function cm(value) {
+  return String(value).replace(".", ",") + " cm";
 }

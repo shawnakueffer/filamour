@@ -104,7 +104,7 @@
       <div class="block-head">
         <p class="eyebrow studio-tag">Letter Studio</p>
         <h2>Deine Buchstaben gestalten</h2>
-        <p class="muted">Text eintippen, auf einen Buchstaben tippen, Farbe wählen. Du siehst sofort, wie es aussieht. Jeder Buchstabe kostet <b class="price-inline" id="letterPrice"></b>.</p>
+        <p class="muted">Text eintippen, auf einen Buchstaben tippen, Farbe wählen. Du siehst sofort, wie es aussieht. Zwei Grössen, ab <b class="price-inline" id="letterPrice"></b> pro Buchstabe.</p>
       </div>
       <div class="stage" id="stage" data-bg="wand">
         <p class="stage-hint" id="stageHint">Buchstaben antippen zum Einfärben</p>
@@ -123,6 +123,10 @@
             <label class="label" for="txt">Dein Text</label>
             <input type="text" id="txt" value="MIA" maxlength="60" autocomplete="off" spellcheck="false">
             <div class="warn" id="warn" role="status"></div>
+          </div>
+          <div class="field">
+            <span class="label" id="sizeLabel">Grösse</span>
+            <div class="opts" role="radiogroup" aria-labelledby="sizeLabel" id="sizeOpts"></div>
           </div>
           <div class="field">
             <span class="label">Zusammenstellung</span>

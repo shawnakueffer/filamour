@@ -22,8 +22,21 @@ test("Warenkorb wird geprüft", () => {
 
 test("Preis kommt vom Server, nicht vom Browser", () => {
   const ok = validateCart({ items: [{ text: "Hallo Mia", colors: HALLO_MIA, qty: 2, price: 1, unit: 1 }] });
-  assert.match(ok.items[0].name, /\(8 Teile\)/, "Leerzeichen zählt nicht");
+  assert.match(ok.items[0].name, /\(8 Teile, /, "Leerzeichen zählt nicht");
   assert.equal(ok.items[0].unit, 8 * 490, "CHF 4.90 pro Buchstabe");
+});
+
+test("Kleine Buchstaben kosten CHF 2.90, ohne Grösse gilt gross", () => {
+  const item = { text: "MIA", colors: ["bl-red", "bl-red", "bl-red"], qty: 1 };
+  const big = validateCart({ items: [item] }).items[0];
+  assert.equal(big.unit, 3 * 490);
+  assert.equal(big.name, "Bubble Letters «MIA» (3 Teile, Gross 6,5 cm)");
+  assert.equal(validateCart({ items: [{ ...item, size: "gross" }] }).items[0].unit, 3 * 490);
+  const small = validateCart({ items: [{ ...item, size: "klein", price: 1 }] }).items[0];
+  assert.equal(small.unit, 3 * 290);
+  assert.equal(small.name, "Bubble Letters «MIA» (3 Teile, Klein 2,5 cm)");
+  assert.match(validateCart({ items: [{ ...item, size: "riesig" }] }).error, /Grösse/);
+  assert.match(validateCart({ items: [{ ...item, size: "__proto__" }] }).error, /Grösse/);
 });
 
 test("Neue Farben sind bestellbar", () => {
@@ -34,7 +47,7 @@ test("Neue Farben sind bestellbar", () => {
 
 test("Nicht druckbare Zeichen landen nicht im Produktnamen", () => {
   const ok = validateCart({ items: [{ text: "Leo 2<b>", colors: ["bl-red", "bl-red", "bl-red", "bl-red", "bl-red", "bl-red", "bl-red", "bl-red"], qty: 1 }] });
-  assert.equal(ok.items[0].name, "Bubble Letters «LEO B» (4 Teile)");
+  assert.equal(ok.items[0].name, "Bubble Letters «LEO B» (4 Teile, Gross 6,5 cm)");
 });
 
 test("Gratisversand ab der Grenze, sonst Versandkosten", () => {
