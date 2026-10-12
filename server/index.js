@@ -5,6 +5,7 @@ import Stripe from "stripe";
 import { createApp } from "./app.js";
 import { createPgStore, createFileStore } from "./store.js";
 import { createMailer } from "./mail.js";
+import { createBrevo } from "./brevo.js";
 
 const env = process.env;
 const production = env.NODE_ENV === "production" || Boolean(env.RAILWAY_ENVIRONMENT);
@@ -32,10 +33,13 @@ const mailer = createMailer({ apiKey: env.RESEND_API_KEY, from: env.MAIL_FROM, t
 if (!mailer) console.log("ℹ Keine E-Mail-Benachrichtigung (RESEND_API_KEY, MAIL_FROM, NOTIFY_EMAIL).");
 if (!env.ADMIN_PASSWORD) console.log("ℹ ADMIN_PASSWORD fehlt – /admin ist ausgeschaltet.");
 
+const brevo = createBrevo({ apiKey: env.BREVO_API_KEY, listId: env.BREVO_LIST_ID, templateId: env.BREVO_DOI_TEMPLATE_ID });
+console.log(brevo ? "✓ Newsletter über Brevo (Double-Opt-in)." : "ℹ Kein Brevo (BREVO_API_KEY, BREVO_LIST_ID, BREVO_DOI_TEMPLATE_ID) – Newsletter-Anmeldungen landen in der Datenbank.");
+
 const webhookSecret = env.STRIPE_WEBHOOK_SECRET || "";
 if (stripe && !webhookSecret) console.log("ℹ STRIPE_WEBHOOK_SECRET fehlt – nach Bestellungen gehen keine E-Mails raus.");
 
-const app = createApp({ stripe, store, mailer, webhookSecret, adminPassword: env.ADMIN_PASSWORD || "", siteUrl, production });
+const app = createApp({ stripe, store, mailer, brevo, webhookSecret, adminPassword: env.ADMIN_PASSWORD || "", siteUrl, production });
 const server = app.listen(port, () => console.log(`Filamour läuft auf ${siteUrl || `http://localhost:${port}`}`));
 
 // Railway beendet alte Versionen mit SIGTERM: laufende Anfragen fertig machen, dann schliessen

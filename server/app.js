@@ -2,7 +2,7 @@
 //   POST /api/checkout    Warenkorb prüfen, Stripe Checkout starten
 //   GET  /api/order       Zusammenfassung für die Danke-Seite
 //   POST /api/stripe-webhook  Stripe meldet bezahlte Bestellungen → E-Mails an Kundschaft und Shop
-//   POST /api/newsletter  Newsletter-Anmeldung
+//   POST /api/newsletter  Newsletter-Anmeldung (mit Brevo: Double-Opt-in, sonst eigene Datenbank)
 //   POST /api/contact     Kontaktanfrage aus dem Chat
 //   GET  /admin           Anmeldungen und Anfragen ansehen (ADMIN_PASSWORD)
 import fs from "node:fs/promises";
@@ -20,7 +20,7 @@ import { adminRouter } from "./admin.js";
 const PUBLIC = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "public");
 const PAGES = { "/": "index.html", "/index.html": "index.html", "/success.html": "success.html", "/rechtliches.html": "rechtliches.html" };
 
-export function createApp({ stripe = null, store = null, mailer = null, webhookSecret = "", adminPassword = "", siteUrl = "", production = false } = {}) {
+export function createApp({ stripe = null, store = null, mailer = null, brevo = null, webhookSecret = "", adminPassword = "", siteUrl = "", production = false } = {}) {
   const app = express();
   app.disable("x-powered-by");
   app.set("trust proxy", 1); // Railway steht vor der App; nötig für die echte IP beim Rate-Limit
@@ -122,9 +122,19 @@ export function createApp({ stripe = null, store = null, mailer = null, webhookS
   });
 
   api.post("/newsletter", limit(10, 8), async (req, res) => {
-    if (isBot(req.body)) return res.json({ ok: true });
+    if (isBot(req.body)) return res.json({ ok: true, confirm: Boolean(brevo) });
     const v = validateNewsletter(req.body);
     if (v.error) return res.status(400).json({ error: v.error });
+    // Brevo schickt die Bestätigungsmail; nach dem Klick geht es zurück auf den Shop, dort erscheint der Code
+    if (brevo) {
+      try {
+        await brevo.subscribe(v.email, `${origin(req)}/?newsletter=bestaetigt#newsletter`);
+        return res.json({ ok: true, confirm: true });
+      } catch (err) {
+        console.error("Brevo-Fehler (newsletter):", err?.message);
+        return res.status(502).json({ error: "Das hat leider nicht geklappt. Bitte versuch es in einer Minute nochmals." });
+      }
+    }
     if (!store) return res.status(503).json({ error: "Die Anmeldung ist gerade nicht möglich. Bitte versuch es später nochmals." });
     try {
       await store.addNewsletter(v.email);
@@ -166,7 +176,7 @@ export function createApp({ stripe = null, store = null, mailer = null, webhookS
   });
   app.use("/api", api);
 
-  app.use("/admin", limit(15, 60), adminRouter({ store, password: adminPassword }));
+  app.use("/admin", limit(15, 60), adminRouter({ store, password: adminPassword, newsletterInBrevo: Boolean(brevo) }));
 
   /* ---------- Seiten ---------- */
   const raw = new Map();

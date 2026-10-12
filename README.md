@@ -20,8 +20,10 @@ server/
   app.js                 Webserver: Seiten, API, Sicherheits-Header, Spamschutz
   checkout.js            Warenkorb prüfen, Stripe-Session bauen
   forms.js               Newsletter- und Kontaktformular prüfen
+  brevo.js               Newsletter-Anmeldung bei Brevo (Double-Opt-in)
   store.js               Speicher (PostgreSQL)
-  mail.js                E-Mail-Benachrichtigung (Resend, optional)
+  mail.js                E-Mails über Resend
+  orders.js              Mails nach einer Bestellung (Bestätigung an Kundschaft, Bestellung an den Shop)
   admin.js               /admin: Anmeldungen und Anfragen ansehen, CSV-Export
 test/                    Tests ohne echte Konten (npm test)
 railway.json             Start-Befehl und Healthcheck für Railway
@@ -81,7 +83,7 @@ Die Quittungen von Stripe selbst (Einstellungen → Kunden-E-Mails) braucht es d
 
 Unten rechts gibt es einen Chat. Er fragt zuerst, worum es geht, und bietet dann passende Themen an. Freie Fragen versteht er über Stichwörter. Weiss er keine Antwort, bittet er um die E-Mail-Adresse.
 
-- **Alles ansehen:** `https://filamour.ch/admin` öffnen, Benutzername beliebig, Passwort = `ADMIN_PASSWORD`. Dort stehen alle Kontaktanfragen (mit Chatverlauf) und Newsletter-Anmeldungen, beide auch als **CSV-Download** (z. B. zum Import in Brevo oder Mailchimp).
+- **Alles ansehen:** `https://filamour.ch/admin` öffnen, Benutzername beliebig, Passwort = `ADMIN_PASSWORD`. Dort stehen alle Kontaktanfragen (mit Chatverlauf) und Newsletter-Anmeldungen, beide auch als **CSV-Download**. Ist Brevo eingerichtet (siehe unten), stehen neue Newsletter-Anmeldungen nur noch in Brevo.
 - **E-Mail bei neuer Anfrage und Bestellung (empfohlen):** Konto bei [resend.com](https://resend.com) (Gratis-Plan reicht), dort die Domain `filamour.ch` bestätigen und einen API-Schlüssel erstellen. Dann in Railway setzen:
   `RESEND_API_KEY` = der Schlüssel, `MAIL_FROM` = `Filamour Shop <shop@filamour.ch>`, `NOTIFY_EMAIL` = `hello@filamour.ch`.
   Mit «Antworten» im Mailprogramm schreibst du direkt der Kundin oder dem Kunden. (Railway sperrt klassisches SMTP auf den günstigen Plänen, deshalb Resend.)
@@ -89,12 +91,26 @@ Unten rechts gibt es einen Chat. Er fragt zuerst, worum es geht, und bietet dann
 
 ### Newsletter und 10 % Rabatt
 
-Wer sich unten auf der Seite anmeldet, bekommt sofort den Code **WILLKOMMEN10** angezeigt.
+Wer sich unten auf der Seite anmeldet, bekommt den Code **WILLKOMMEN10** angezeigt. Mit Brevo erst nach der Bestätigung (Double-Opt-in), ohne Brevo sofort.
 
 1. **Code in Stripe anlegen:** Stripe → Produktkatalog → Gutscheine → «Gutschein erstellen»: 10 % Rabatt, Dauer «Einmalig». Danach beim Gutschein einen **Aktionscode** `WILLKOMMEN10` hinzufügen und «Nur für Erstbestellungen» aktivieren. Der Checkout zeigt das Feld «Aktionscode» automatisch.
 2. Code oder Prozentsatz ändern: `public/catalog.js` → `NEWSLETTER` (und den Aktionscode in Stripe gleich nennen).
 
-Hinweis: Der Code wird direkt auf der Seite angezeigt. Wer ihn weitergibt, kann ihn auch ohne Anmeldung nutzen. «Nur für Erstbestellungen» in Stripe begrenzt ihn auf eine Bestellung pro Kunde. Für den Versand von Newslettern die CSV in ein Newsletter-Tool importieren; dieses kümmert sich um Abmelde-Links.
+Hinweis: Der Code wird auf der Seite angezeigt. Wer ihn weitergibt, kann ihn auch ohne Anmeldung nutzen. «Nur für Erstbestellungen» in Stripe begrenzt ihn auf eine Bestellung pro Kunde.
+
+### Newsletter über Brevo (Double-Opt-in)
+
+Ablauf: Anmeldung auf der Seite → Brevo schickt eine Bestätigungsmail → nach dem Klick steht die Adresse in der Brevo-Liste und Brevo leitet zurück auf `https://filamour.ch/?newsletter=bestaetigt`, dort erscheint der Rabattcode. Newsletter verschickst du dann direkt in Brevo; Abmelde-Links fügt Brevo selbst ein.
+
+1. Konto bei [brevo.com](https://www.brevo.com) (Gratis-Plan reicht).
+2. **Absender-Domain:** Einstellungen → Absender, Domains und dedizierte IPs → Domains → `filamour.ch` hinzufügen und die angezeigten DNS-Einträge bei Hostinger setzen. Als Absender z. B. `hello@filamour.ch` anlegen.
+3. **Liste:** Kontakte → Listen → «Liste erstellen», z. B. «Newsletter». Die **ID** der Liste (Zahl in der Übersicht) merken.
+4. **Bestätigungsmail (Double-Opt-in-Vorlage):** Marketing/Kampagnen → Vorlagen → neue Vorlage. Als Link des Bestätigungsknopfs `{{ doubleoptin }}` eintragen, bei den Vorlagen-Einstellungen das Tag `optin` setzen und die Vorlage aktivieren. Die **ID** der Vorlage merken.
+5. **API-Schlüssel:** Einstellungen → SMTP & API → API-Schlüssel → neuen Schlüssel erstellen.
+6. **IP-Sperre:** Brevo blockiert API-Aufrufe von unbekannten IP-Adressen. Railway hat wechselnde Adressen, darum unter Sicherheit → Autorisierte IPs die Sperre ausschalten. Sonst steht im Railway-Log `Brevo-Fehler (newsletter): Brevo 401`.
+7. In Railway setzen: `BREVO_API_KEY`, `BREVO_LIST_ID` (Listen-ID), `BREVO_DOI_TEMPLATE_ID` (Vorlagen-ID). Im Log steht danach beim Start `✓ Newsletter über Brevo`.
+
+Ältere Anmeldungen aus `/admin` (CSV) haben noch nicht bestätigt. Vor dem Import in Brevo am besten einmal um Bestätigung bitten oder sie weglassen.
 
 ## Zahlungsmittel
 

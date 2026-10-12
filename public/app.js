@@ -481,18 +481,30 @@ $("#footShip").textContent = `Lieferung in die Schweiz und nach Liechtenstein. V
 $("#footChat").onclick = () => $("#chatFab").click();
 
 /* ---------- Newsletter ---------- */
+function showNewsCode(text) {
+  $("#newsForm").hidden = true;
+  $("#newsNote").textContent = text;
+  $("#newsCodeValue").textContent = NEWSLETTER.code;
+  $("#newsCodeHint").textContent = `Gib den Code beim Bezahlen im Feld «Aktionscode» ein. Er gilt für ${NEWSLETTER.percent} % auf deine erste Bestellung.`;
+  $("#newsCode").hidden = false;
+}
+// Zurück vom Bestätigungslink in der Mail von Brevo
+if (new URLSearchParams(location.search).get("newsletter") === "bestaetigt") {
+  showNewsCode("Danke, deine Anmeldung ist bestätigt! Hier ist dein Code.");
+  history.replaceState(null, "", location.pathname + location.hash);
+  requestAnimationFrame(() => $("#newsCode").scrollIntoView({ block: "center" }));
+}
 $("#newsForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   const f = e.target, email = f.email.value.trim(), note = $("#newsNote"), btn = f.querySelector("button");
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) { note.textContent = "Bitte gib eine gültige E-Mail-Adresse ein."; note.classList.add("err"); f.email.focus(); return; }
   note.classList.remove("err"); btn.disabled = true; btn.textContent = "Einen Moment …";
   try {
-    await postJSON("/api/newsletter", { email, website: f.website.value });
-    f.hidden = true;
-    note.textContent = `Danke! ${email} ist angemeldet.`;
-    $("#newsCodeValue").textContent = NEWSLETTER.code;
-    $("#newsCodeHint").textContent = `Gib den Code beim Bezahlen im Feld «Aktionscode» ein. Er gilt für ${NEWSLETTER.percent} % auf deine erste Bestellung.`;
-    $("#newsCode").hidden = false;
+    const r = await postJSON("/api/newsletter", { email, website: f.website.value });
+    if (r?.confirm) {
+      f.hidden = true;
+      note.textContent = `Fast geschafft! Wir haben dir eine E-Mail an ${email} geschickt. Klick auf den Link darin, dann bekommst du deinen Code.`;
+    } else showNewsCode(`Danke! ${email} ist angemeldet.`);
   } catch (err) {
     note.textContent = err.message || "Das hat leider nicht geklappt. Bitte versuch es nochmals."; note.classList.add("err");
     btn.disabled = false; btn.textContent = "Code erhalten";

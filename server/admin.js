@@ -19,7 +19,7 @@ function sameSecret(a, b) {
   return crypto.timingSafeEqual(h(a), h(b));
 }
 
-export function adminRouter({ store, password }) {
+export function adminRouter({ store, password, newsletterInBrevo = false }) {
   const r = express.Router();
 
   r.use((req, res, next) => {
@@ -62,6 +62,7 @@ ${contacts.length ? `<table><thead><tr><th>Datum</th><th>Von</th><th>Frage</th><
   <td><div class="q">${esc(c.question) || '<span class="empty">–</span>'}</div>${c.history ? `<details><summary>Chatverlauf</summary><pre>${esc(c.history)}</pre></details>` : ""}</td>
 </tr>`).join("")}</tbody></table>` : `<p class="empty">Noch keine Anfragen.</p>`}
 <h2>Newsletter (${news.length}) <a href="/admin/newsletter.csv">CSV herunterladen</a></h2>
+${newsletterInBrevo ? `<p class="store">Neue Anmeldungen gehen an Brevo (mit Bestätigung per E-Mail) und stehen dort unter Kontakte. Hier stehen nur ältere Anmeldungen.</p>` : ""}
 ${news.length ? `<table><thead><tr><th>E-Mail</th><th>Angemeldet</th></tr></thead><tbody>${news.map((n) => `<tr><td>${esc(n.email)}</td><td class="nowrap">${esc(when(n.created_at))}</td></tr>`).join("")}</tbody></table>` : `<p class="empty">Noch keine Anmeldungen.</p>`}
 </body></html>`);
   });

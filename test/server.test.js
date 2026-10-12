@@ -2,6 +2,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createMemoryStore } from "../server/store.js";
+import { createBrevo } from "../server/brevo.js";
 import { withServer } from "./helpers.js";
 
 const post = (url, body) => fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
@@ -16,6 +17,32 @@ test("Newsletter: speichert gültige Adressen einmal, lehnt ungültige ab", asyn
   });
   const list = await store.listNewsletter();
   assert.deepEqual(list.map((n) => n.email), ["mia@example.ch"], "… wird aber nicht gespeichert");
+});
+
+test("Newsletter mit Brevo: Double-Opt-in statt eigener Datenbank", async () => {
+  const calls = [];
+  const fetchImpl = async (url, opts) => { calls.push({ url, opts }); return { ok: true, text: async () => "" }; };
+  assert.equal(createBrevo({ apiKey: "xkeysib-x", listId: "", templateId: "7", fetchImpl }), null, "ohne Liste aus");
+  const brevo = createBrevo({ apiKey: "xkeysib-x", listId: "3", templateId: "7", fetchImpl });
+  const store = createMemoryStore();
+  await withServer({ store, brevo, siteUrl: "https://filamour.ch" }, async (base) => {
+    assert.equal((await post(`${base}/api/newsletter`, { email: "keine-mail" })).status, 400);
+    const res = await post(`${base}/api/newsletter`, { email: "Mia@Example.ch" });
+    assert.deepEqual(await res.json(), { ok: true, confirm: true });
+  });
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].url, "https://api.brevo.com/v3/contacts/doubleOptinConfirmation");
+  assert.equal(calls[0].opts.headers["api-key"], "xkeysib-x");
+  assert.deepEqual(JSON.parse(calls[0].opts.body), {
+    email: "mia@example.ch", includeListIds: [3], templateId: 7,
+    redirectionUrl: "https://filamour.ch/?newsletter=bestaetigt#newsletter",
+  });
+  assert.equal((await store.listNewsletter()).length, 0, "nichts in der eigenen Datenbank");
+
+  const broken = { subscribe: async () => { throw new Error("Brevo 400"); } };
+  await withServer({ brevo: broken }, async (base) => {
+    assert.equal((await post(`${base}/api/newsletter`, { email: "mia@example.ch" })).status, 502);
+  });
 });
 
 test("Newsletter ohne Datenbank meldet sich sauber", async () => {
