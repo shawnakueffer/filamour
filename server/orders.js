@@ -1,4 +1,4 @@
-// E-Mails nach einer bezahlten Bestellung: Bestätigung an die Kundschaft (gestaltet + Text), Bestellung an den Shop (Text).
+// E-Mails nach einer bezahlten Bestellung: Bestätigung an die Kundschaft und Bestellung an den Shop, je gestaltet + als Text.
 // Grundlage ist die Stripe-Checkout-Session (mit line_items), die der Webhook nachlädt.
 import { COLORS, POSTERS, PICKUP_NOTE, chf } from "../public/catalog.js";
 
@@ -78,6 +78,7 @@ export function orderEmails(s, { siteUrl = "" } = {}) {
       `Bemerkung: ${note || "–"}`,
       `In Stripe: ${dashboard}`,
     ].join("\n\n"),
+    html: shopHtml({ number, customer, name: customer.name || ship?.name || "", list, rows, pickup, address, note, dashboard, test: !s.livemode, siteUrl }),
   };
 
   return { toCustomer, toShop };
@@ -112,8 +113,12 @@ function swatches(description) {
   return `<div style="font:14px/1.5 ${SANS};color:${C.muted}">${hex ? `<span style="display:inline-block;width:12px;height:12px;margin-right:6px;border-radius:50%;border:1px solid rgba(0,0,0,.08);background:${hex};vertical-align:-1px"></span>` : ""}${esc(description)}</div>`;
 }
 
-function customerHtml({ number, firstName, list, rows, pickup, address, note, siteUrl }) {
-  const home = siteUrl || "https://filamour.ch";
+const label = (t) => `<div style="font:600 13px/1.4 ${SANS};letter-spacing:.08em;text-transform:uppercase;color:${C.muted};margin-bottom:6px">${t}</div>`;
+const box = (title, inner) => `<div style="margin-top:12px;padding:18px 20px;border-radius:14px;background:${C.soft}">${label(title)}<div style="font:15px/1.6 ${SANS};color:${C.fg}">${inner}</div></div>`;
+const p = (html, top = 16) => `<p style="margin:${top}px 0 0;font:15px/1.6 ${SANS};color:${C.fg}">${html}</p>`;
+
+// Artikel mit farbigen Buchstaben, darunter die Summen
+function orderTable(list, rows) {
   const items = list.map((a) => `
           <tr><td style="padding:16px 0;border-bottom:1px solid ${C.line}">
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
@@ -123,14 +128,16 @@ function customerHtml({ number, firstName, list, rows, pickup, address, note, si
             ${swatches(a.description)}
           </td></tr>`).join("");
   const sums = rows.map(([k, v], i) => {
-    const last = i === rows.length - 1;
-    const style = last ? `font:700 17px/1.4 ${SANS};color:${C.fg};padding-top:10px` : `font:15px/1.4 ${SANS};color:${C.muted};padding-top:6px`;
+    const style = i === rows.length - 1 ? `font:700 17px/1.4 ${SANS};color:${C.fg};padding-top:10px` : `font:15px/1.4 ${SANS};color:${C.muted};padding-top:6px`;
     return `<tr><td style="${style}">${esc(k)}</td><td align="right" style="${style}">${esc(v)}</td></tr>`;
   }).join("");
-  const delivery = pickup
-    ? `<div style="font:600 13px/1.4 ${SANS};letter-spacing:.08em;text-transform:uppercase;color:${C.muted};margin-bottom:6px">Abholung</div><div style="font:15px/1.6 ${SANS};color:${C.fg}">${esc(PICKUP_NOTE)}</div>`
-    : `<div style="font:600 13px/1.4 ${SANS};letter-spacing:.08em;text-transform:uppercase;color:${C.muted};margin-bottom:6px">Lieferadresse</div><div style="font:15px/1.6 ${SANS};color:${C.fg}">${address.map(esc).join("<br>")}</div>`;
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid ${C.line}">${items}
+        </table>
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:10px">${sums}</table>`;
+}
 
+// Grundgerüst beider Mails: Schriftzug, weisse Karte, Fusszeile
+function layout({ title, preheader, eyebrow, heading, intro, body, home }) {
   return `<!doctype html>
 <html lang="de-CH">
 <head>
@@ -138,10 +145,10 @@ function customerHtml({ number, firstName, list, rows, pickup, address, note, si
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light only">
 <meta name="supported-color-schemes" content="light">
-<title>Danke für deine Bestellung</title>
+<title>${title}</title>
 </head>
 <body style="margin:0;padding:0;background:${C.bg}">
-<div style="display:none;max-height:0;overflow:hidden">Bestellung ${number}: Wir haben deine Zahlung erhalten und machen uns an die Arbeit.</div>
+<div style="display:none;max-height:0;overflow:hidden">${preheader}</div>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${C.bg}">
   <tr><td align="center" style="padding:32px 16px">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px">
@@ -149,16 +156,10 @@ function customerHtml({ number, firstName, list, rows, pickup, address, note, si
         <a href="${esc(home)}" style="font:500 26px/1 ${SERIF};letter-spacing:.14em;color:${C.fg};text-decoration:none">FILAMOUR</a>
       </td></tr>
       <tr><td style="background:${C.card};border-radius:18px;padding:36px 32px 28px">
-        <div style="font:600 12px/1.4 ${SANS};letter-spacing:.12em;text-transform:uppercase;color:${C.accent}">Bestellung ${number}</div>
-        <h1 style="margin:10px 0 12px;font:500 30px/1.2 ${SERIF};color:${C.fg}">Danke für deine Bestellung${firstName ? `, ${esc(firstName)}` : ""}!</h1>
-        <p style="margin:0 0 20px;font:16px/1.6 ${SANS};color:${C.muted}">Wir haben deine Zahlung erhalten und machen uns an die Arbeit. Hier ist alles, was du bestellt hast.</p>
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid ${C.line}">${items}
-        </table>
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:10px">${sums}</table>
-        <div style="margin-top:24px;padding:18px 20px;border-radius:14px;background:${C.soft}">${delivery}</div>
-        ${note ? `<div style="margin-top:12px;padding:18px 20px;border-radius:14px;background:${C.soft}"><div style="font:600 13px/1.4 ${SANS};letter-spacing:.08em;text-transform:uppercase;color:${C.muted};margin-bottom:6px">Deine Bemerkung</div><div style="font:15px/1.6 ${SANS};color:${C.fg}">${esc(note).replace(/\n/g, "<br>")}</div></div>` : ""}
-        <p style="margin:24px 0 0;font:15px/1.6 ${SANS};color:${C.fg}">Hast du eine Frage? Antworte einfach auf diese E-Mail.</p>
-        <p style="margin:16px 0 0;font:15px/1.6 ${SANS};color:${C.fg}">Liebe Grüsse<br>Lynn von Filamour</p>
+        <div style="font:600 12px/1.4 ${SANS};letter-spacing:.12em;text-transform:uppercase;color:${C.accent}">${eyebrow}</div>
+        <h1 style="margin:10px 0 12px;font:500 30px/1.2 ${SERIF};color:${C.fg}">${heading}</h1>
+        <p style="margin:0 0 20px;font:16px/1.6 ${SANS};color:${C.muted}">${intro}</p>
+        ${body}
       </td></tr>
       <tr><td align="center" style="padding:20px 8px 0;font:13px/1.6 ${SANS};color:${C.muted}">
         Personalisierbare Geschenke, gedruckt in der Schweiz<br>
@@ -169,4 +170,44 @@ function customerHtml({ number, firstName, list, rows, pickup, address, note, si
 </table>
 </body>
 </html>`;
+}
+
+function customerHtml({ number, firstName, list, rows, pickup, address, note, siteUrl }) {
+  return layout({
+    title: "Danke für deine Bestellung",
+    preheader: `Bestellung ${number}: Wir haben deine Zahlung erhalten und machen uns an die Arbeit.`,
+    eyebrow: `Bestellung ${number}`,
+    heading: `Danke für deine Bestellung${firstName ? `, ${esc(firstName)}` : ""}!`,
+    intro: "Wir haben deine Zahlung erhalten und machen uns an die Arbeit. Hier ist alles, was du bestellt hast.",
+    home: siteUrl || "https://filamour.ch",
+    body: orderTable(list, rows)
+      + `<div style="margin-top:12px"></div>`
+      + (pickup ? box("Abholung", esc(PICKUP_NOTE)) : box("Lieferadresse", address.map(esc).join("<br>")))
+      + (note ? box("Deine Bemerkung", esc(note).replace(/\n/g, "<br>")) : "")
+      + p("Hast du eine Frage? Antworte einfach auf diese E-Mail.", 24)
+      + p("Liebe Grüsse<br>Lynn von Filamour"),
+  });
+}
+
+function shopHtml({ number, customer, name, list, rows, pickup, address, note, dashboard, test, siteUrl }) {
+  const contact = [
+    name ? esc(name) : "",
+    customer.email ? `<a href="mailto:${esc(customer.email)}" style="color:${C.fg}">${esc(customer.email)}</a>` : "",
+    customer.phone ? `<a href="tel:${esc(customer.phone)}" style="color:${C.fg}">${esc(customer.phone)}</a>` : "",
+  ].filter(Boolean).join("<br>") || "–";
+  const total = rows[rows.length - 1][1];
+  return layout({
+    title: `Neue Bestellung ${number}`,
+    preheader: `${esc(name || "Neue Bestellung")}: ${total}${pickup ? ", Abholung" : ""}`,
+    eyebrow: `Bestellung ${number}${test ? " · Test" : ""}`,
+    heading: `Neue Bestellung: ${esc(total)}`,
+    intro: `${name ? `${esc(name)} hat` : "Es wurde"} gerade bezahlt.${pickup ? " Die Bestellung wird abgeholt." : ""} Mit «Antworten» schreibst du direkt der Kundschaft.`,
+    home: siteUrl || "https://filamour.ch",
+    body: orderTable(list, rows)
+      + `<div style="margin-top:12px"></div>`
+      + box("Kundschaft", contact)
+      + (pickup ? box("Abholung", "Termin per E-Mail vereinbaren.") : box("Lieferadresse", address.map(esc).join("<br>")))
+      + box("Bemerkung", note ? esc(note).replace(/\n/g, "<br>") : "–")
+      + `<div style="margin-top:24px"><a href="${esc(dashboard)}" style="display:inline-block;padding:12px 20px;border-radius:999px;background:${C.fg};color:#ffffff;font:600 15px/1 ${SANS};text-decoration:none">In Stripe öffnen</a></div>`,
+  });
 }
