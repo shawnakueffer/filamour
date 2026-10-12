@@ -65,7 +65,7 @@ export function orderEmails(s, { siteUrl = "" } = {}) {
     html: customerHtml({ number, firstName, list, rows, pickup, address, note, siteUrl }),
   } : null;
 
-  const dashboard = `https://dashboard.stripe.com/${s.livemode ? "" : "test/"}checkout/sessions/${s.id}`;
+  // bewusst ohne Link zu Stripe: «Zahlung erhalten» plus Stripe-Link sieht für Spamfilter wie Phishing aus
   const toShop = {
     subject: `Neue Bestellung ${number}: ${chf(s.amount_total ?? 0)}${pickup ? " (Abholung)" : ""}${s.livemode ? "" : " [TEST]"}`,
     replyTo: customer.email || undefined,
@@ -76,9 +76,8 @@ export function orderEmails(s, { siteUrl = "" } = {}) {
       sums,
       pickup ? "Abholung: Termin per E-Mail vereinbaren." : delivery,
       `Bemerkung: ${note || "–"}`,
-      `In Stripe: ${dashboard}`,
     ].join("\n\n"),
-    html: shopHtml({ number, customer, name: customer.name || ship?.name || "", list, rows, pickup, address, note, dashboard, test: !s.livemode, siteUrl }),
+    html: shopHtml({ number, customer, name: customer.name || ship?.name || "", list, rows, pickup, address, note, test: !s.livemode, siteUrl }),
   };
 
   return { toCustomer, toShop };
@@ -189,7 +188,7 @@ function customerHtml({ number, firstName, list, rows, pickup, address, note, si
   });
 }
 
-function shopHtml({ number, customer, name, list, rows, pickup, address, note, dashboard, test, siteUrl }) {
+function shopHtml({ number, customer, name, list, rows, pickup, address, note, test, siteUrl }) {
   const contact = [
     name ? esc(name) : "",
     customer.email ? `<a href="mailto:${esc(customer.email)}" style="color:${C.fg}">${esc(customer.email)}</a>` : "",
@@ -207,7 +206,6 @@ function shopHtml({ number, customer, name, list, rows, pickup, address, note, d
       + `<div style="margin-top:12px"></div>`
       + box("Kundschaft", contact)
       + (pickup ? box("Abholung", "Termin per E-Mail vereinbaren.") : box("Lieferadresse", address.map(esc).join("<br>")))
-      + box("Bemerkung", note ? esc(note).replace(/\n/g, "<br>") : "–")
-      + `<div style="margin-top:24px"><a href="${esc(dashboard)}" style="display:inline-block;padding:12px 20px;border-radius:999px;background:${C.fg};color:#ffffff;font:600 15px/1 ${SANS};text-decoration:none">In Stripe öffnen</a></div>`,
+      + box("Bemerkung", note ? esc(note).replace(/\n/g, "<br>") : "–"),
   });
 }

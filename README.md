@@ -65,7 +65,7 @@ Jeder Push auf `main` auf GitHub wird automatisch neu veröffentlicht. Die Logs 
 
 Nach jeder bezahlten Bestellung meldet Stripe sie an den Shop (Webhook). Der Shop schickt dann über Resend zwei E-Mails:
 eine **Bestätigung an die Kundschaft** (Artikel mit Farben, Total, Lieferadresse; Antworten landen bei `NOTIFY_EMAIL`)
-und eine **Bestellung an `NOTIFY_EMAIL`** (alles zum Herstellen und Versenden, mit Link zur Bestellung in Stripe; «Antworten» schreibt der Kundschaft).
+und eine **Bestellung an `NOTIFY_EMAIL`** (alles zum Herstellen und Versenden; «Antworten» schreibt der Kundschaft). Bewusst ohne Link zu Stripe, sonst sortiert der Spamfilter von Hostinger sie aus. Falls sie trotzdem im Spam landet: im hPanel `shop@filamour.ch` als vertrauenswürdigen Absender eintragen.
 
 1. **Resend** einrichten wie unter «Chat, Kontaktanfragen und Newsletter» beschrieben (`RESEND_API_KEY`, `MAIL_FROM`, `NOTIFY_EMAIL`).
 2. **Webhook in Stripe:** Entwickler → Webhooks → «Ziel hinzufügen»

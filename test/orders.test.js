@@ -46,12 +46,11 @@ test("Bestell-Mails enthalten Artikel, Farben, Adresse und Bemerkung", () => {
   assert.equal(toShop.replyTo, "mia@example.ch");
   assert.equal(toShop.subject, "Neue Bestellung E5F6G7H8: CHF 21.60 [TEST]");
   assert.match(toShop.text, /Fotorahmen Wellen – Sakura Pink/);
-  assert.match(toShop.text, /dashboard\.stripe\.com\/test\/checkout\/sessions\/cs_test_/);
   assert.match(toShop.html, /Neue Bestellung: CHF 21\.60/);
   assert.match(toShop.html, /Bestellung E5F6G7H8 · Test/);
   assert.match(toShop.html, /href="mailto:mia@example\.ch"/);
   assert.match(toShop.html, /background:#F1B3C5;color:#1c191a;[^>]*>M<\/span>/);
-  assert.match(toShop.html, /href="https:\/\/dashboard\.stripe\.com\/test\/checkout\/sessions\/cs_test_[^"]*"[^>]*>In Stripe öffnen/);
+  assert.doesNotMatch(toShop.text + toShop.html, /stripe\.com/, "kein Stripe-Link, sonst landet die Mail im Spam");
 });
 
 test("Gestaltete Mail: Eingaben der Kundschaft werden nicht als HTML ausgeführt", () => {
