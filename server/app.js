@@ -81,7 +81,7 @@ export function createApp({ stripe = null, store = null, mailer = null, webhookS
       return res.json({ received: true });
     }
     // Jede Mail für sich: scheitert eine, kommt die andere trotzdem an. Keine Wiederholung, sonst gäbe es doppelte Mails.
-    const { toCustomer, toShop } = orderEmails(session);
+    const { toCustomer, toShop } = orderEmails(session, { siteUrl: origin(req) });
     for (const [label, mail] of [["Shop", toShop], ["Kundschaft", toCustomer]]) {
       if (!mail) continue;
       try { await mailer.send(mail); } catch (err) { console.error(`Bestell-Mail an ${label} (${obj.id}):`, err?.message); }

@@ -37,12 +37,26 @@ test("Bestell-Mails enthalten Artikel, Farben, Adresse und Bemerkung", () => {
   assert.match(toCustomer.text, /Total: CHF 21\.60/);
   assert.match(toCustomer.text, /Bahnhofstrasse 1\n8001 Zürich/);
   assert.match(toCustomer.text, /Geschenk verpacken/);
+  assert.match(toCustomer.html, /^<!doctype html>/);
+  assert.match(toCustomer.html, /Danke für deine Bestellung, Mia!/);
+  assert.match(toCustomer.html, /background:#F1B3C5;color:#1c191a;[^>]*>M<\/span>/, "M in Sakura Pink");
+  assert.match(toCustomer.html, /Bahnhofstrasse 1<br>8001 Zürich/);
 
   assert.equal(toShop.to, undefined, "geht an NOTIFY_EMAIL");
   assert.equal(toShop.replyTo, "mia@example.ch");
   assert.equal(toShop.subject, "Neue Bestellung E5F6G7H8: CHF 21.60 [TEST]");
   assert.match(toShop.text, /Fotorahmen Wellen – Sakura Pink/);
   assert.match(toShop.text, /dashboard\.stripe\.com\/test\/checkout\/sessions\/cs_test_/);
+});
+
+test("Gestaltete Mail: Eingaben der Kundschaft werden nicht als HTML ausgeführt", () => {
+  const { toCustomer } = orderEmails({
+    ...SESSION,
+    customer_details: { name: "<b>Mia</b>", email: "mia@example.ch" },
+    custom_fields: [{ key: "bemerkung", text: { value: "<script>alert(1)</script>" } }],
+  });
+  assert.doesNotMatch(toCustomer.html, /<script>|<b>Mia/);
+  assert.match(toCustomer.html, /&lt;script&gt;/);
 });
 
 test("Abholung: Hinweis statt Adresse, lange Artikel werden wieder zusammengesetzt", () => {
