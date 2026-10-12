@@ -73,9 +73,11 @@ export const COLORS = [
 export const COLOR_BY_ID = byId(COLORS);
 
 // Weitere Produkte. Preise in Rappen.
+// active: false blendet ein Produkt im Shop aus und der Server nimmt keine Bestellungen dafür an.
+// Zum Wiedereinblenden auf true setzen (und in rechtliches.html den Satz zur Abholung von Wandbildern ergänzen).
 export const PRODUCTS = {
-  poster: { name: "Wandbild", price: 3950, size: "50 × 60 cm", pickupOnly: true }, // vorerst kein Versand
-  frame:  { name: "Fotorahmen", price: 1900 },   // PLATZHALTER: Preis bestätigen
+  poster: { name: "Wandbild", price: 3950, size: "50 × 60 cm", pickupOnly: true, active: false }, // vorerst kein Versand
+  frame:  { name: "Fotorahmen", price: 1900, active: false },   // PLATZHALTER: Preis bestätigen
 };
 
 // Wandbild-Sujets: Hintergrund (bg) und Buchstaben (fg) in einem Farbton
@@ -124,11 +126,13 @@ export function describeItem(it) {
     };
   }
   if (type === "poster") {
+    if (!PRODUCTS.poster.active) return { error: "Wandbilder gibt es im Moment nicht." };
     const p = POSTER_BY_ID[it.variant];
     if (!p) return { error: "Dieses Wandbild gibt es nicht mehr." };
     return { type, unit: PRODUCTS.poster.price, name: `Wandbild «${p.title}»`, description: p.colorName, meta: `Farbe ${p.colorName}` };
   }
   if (type === "frame") {
+    if (!PRODUCTS.frame.active) return { error: "Fotorahmen gibt es im Moment nicht." };
     const s = FRAME_BY_ID[it.style], col = COLOR_BY_ID[it.color];
     if (!s || !col) return { error: "Dieser Fotorahmen ist nicht mehr verfügbar." };
     return { type, unit: PRODUCTS.frame.price, name: `Fotorahmen ${s.title}`, description: col.name, meta: `Farbe ${col.name}` };

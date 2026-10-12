@@ -484,9 +484,16 @@ function renderAnnounce() {
 const [BIG, SMALL] = LETTER_SIZES;
 function sizeDims() { return `Grosse Buchstaben sind ${cm(BIG.heightCm)} hoch und ${cm(BIG.depthCm)} dick, kleine ${cm(SMALL.heightCm)} hoch und ${cm(SMALL.depthCm)} dick`; }
 $("#faqPrice").textContent = `Grosse Buchstaben kosten ${chf(BIG.price)}, kleine ${chf(SMALL.price)}, jeweils pro Buchstabe oder Zeichen. Ein Name mit vier Buchstaben kostet also ${chf(BIG.price * 4)} (gross) oder ${chf(SMALL.price * 4)} (klein). Der Preis wird im Studio laufend angezeigt.`;
-$("#faqShip").textContent = `In die Schweiz und nach Liechtenstein. Der Versand kostet ${chf(SHOP.shipping)}${SHOP.freeShippingFrom ? `, ab einem Bestellwert von ${chf(SHOP.freeShippingFrom)} ist er gratis` : ""}. Wandbilder gibt es vorerst nur zur Abholung.`;
+// Wandbild und Fotorahmen: ein- und ausblenden über PRODUCTS.*.active in catalog.js
+const extrasActive = PRODUCTS.poster.active || PRODUCTS.frame.active;
+document.querySelectorAll("[data-product]").forEach((el) => {
+  const id = el.dataset.product;
+  el.hidden = !(id === "extras" ? extrasActive : PRODUCTS[id]?.active);
+});
+const posterPickup = PRODUCTS.poster.active ? " Wandbilder gibt es vorerst nur zur Abholung." : "";
+$("#faqShip").textContent = `In die Schweiz und nach Liechtenstein. Der Versand kostet ${chf(SHOP.shipping)}${SHOP.freeShippingFrom ? `, ab einem Bestellwert von ${chf(SHOP.freeShippingFrom)} ist er gratis` : ""}.${posterPickup}`;
 $("#year").textContent = new Date().getFullYear();
-$("#footShip").textContent = `Lieferung in die Schweiz und nach Liechtenstein. Versand ${chf(SHOP.shipping)}${SHOP.freeShippingFrom ? `, ab ${chf(SHOP.freeShippingFrom)} gratis` : ""}. Wandbilder vorerst nur zur Abholung.`;
+$("#footShip").textContent = `Lieferung in die Schweiz und nach Liechtenstein. Versand ${chf(SHOP.shipping)}${SHOP.freeShippingFrom ? `, ab ${chf(SHOP.freeShippingFrom)} gratis` : ""}.${PRODUCTS.poster.active ? " Wandbilder vorerst nur zur Abholung." : ""}`;
 $("#footChat").onclick = () => $("#chatFab").click();
 
 /* ---------- Newsletter ---------- */
@@ -601,7 +608,7 @@ if (document.fonts) {
 
   // ---- Allgemeine Themen rund um Bestellung
   const ORDER_TOPICS = {
-    versand:    { label: "Versand", text: () => `Wir liefern in die Schweiz und nach Liechtenstein. Der Versand kostet ${chf(SHOP.shipping)}${free}. Wandbilder gibt es vorerst nur zur Abholung, den Termin vereinbaren wir per E-Mail.` },
+    versand:    { label: "Versand", text: () => `Wir liefern in die Schweiz und nach Liechtenstein. Der Versand kostet ${chf(SHOP.shipping)}${free}.${PRODUCTS.poster.active ? " Wandbilder gibt es vorerst nur zur Abholung, den Termin vereinbaren wir per E-Mail." : ""}` },
     dauer:      { label: "Lieferzeit", text: () => "Jede Bestellung wird nach Eingang für dich gedruckt und danach so schnell wie möglich verschickt. Brauchst du sie bis zu einem bestimmten Datum? Hinterlass mir deine E-Mail, dann sagen wir dir, ob es klappt.", lead: true },
     zahlung:    { label: "Zahlung", text: () => "Bezahlt wird nach dem Warenkorb auf der sicheren Zahlungsseite von Stripe. Dort siehst du alle verfügbaren Zahlungsarten. Danach bekommst du eine Bestätigung per E-Mail." },
     retour:     { label: "Rückgabe", text: () => "Personalisierte Artikel werden extra für dich gedruckt und sind deshalb vom Umtausch ausgeschlossen. Ist etwas beschädigt oder falsch angekommen, finden wir eine Lösung. Hinterlass mir deine E-Mail, dann melden wir uns.", lead: true },
@@ -629,6 +636,7 @@ if (document.fonts) {
 
   const prep = (text) => " " + norm(text).replace(/[^a-z0-9& ]+/g, " ") + " ";
   const hits = (t, keys) => keys.reduce((n, k) => n + (t.includes(" " + norm(k)) ? (k.trim().includes(" ") ? 2 : 1) : 0), 0);
+  for (const id of ["poster", "frame"]) if (!PRODUCTS[id].active) delete PRODUCTS_CHAT[id]; // ausgeblendete Produkte nicht im Chat
   function detectProduct(t) {
     let best = null, s = 0;
     for (const [id, p] of Object.entries(PRODUCTS_CHAT)) { const h = hits(t, p.keys); if (h > s) { s = h; best = id; } }

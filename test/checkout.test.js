@@ -2,10 +2,23 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { validateCart, buildSession, summarizeSession } from "../server/checkout.js";
-import { isPickup } from "../public/catalog.js";
+import { isPickup, PRODUCTS } from "../public/catalog.js";
 import { withServer } from "./helpers.js";
 
 const HALLO_MIA = ["pt-sakura", "bm-ice", "pt-white", "pt-peanut", "bm-ice", "pt-sakura", "pt-white", "pt-peanut", "bl-magenta"];
+
+test("Ausgeblendete Produkte lassen sich nicht bestellen", () => {
+  const before = [PRODUCTS.poster.active, PRODUCTS.frame.active];
+  PRODUCTS.poster.active = PRODUCTS.frame.active = false;
+  try {
+    assert.match(validateCart({ items: [{ type: "poster", variant: "happy", qty: 1 }] }).error, /Wandbilder gibt es im Moment nicht/);
+    assert.match(validateCart({ items: [{ type: "frame", style: "wave", color: "bl-red", qty: 1 }] }).error, /Fotorahmen gibt es im Moment nicht/);
+    assert.equal(validateCart({ items: [{ text: "AB", colors: ["bl-red", "bl-red"], qty: 1 }] }).error, undefined, "Buchstaben gehen weiter");
+  } finally { [PRODUCTS.poster.active, PRODUCTS.frame.active] = before; }
+});
+
+// Die übrigen Tests prüfen Wandbild und Fotorahmen eingeblendet, damit sie beim Wiedereinblenden funktionieren
+PRODUCTS.poster.active = PRODUCTS.frame.active = true;
 
 test("Warenkorb wird geprüft", () => {
   assert.equal(validateCart({ items: [] }).error, "Der Warenkorb ist leer.");
