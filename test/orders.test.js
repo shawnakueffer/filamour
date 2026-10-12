@@ -46,11 +46,8 @@ test("Bestell-Mails enthalten Artikel, Farben, Adresse und Bemerkung", () => {
   assert.equal(toShop.replyTo, "mia@example.ch");
   assert.equal(toShop.subject, "Neue Bestellung E5F6G7H8: CHF 21.60 [TEST]");
   assert.match(toShop.text, /Fotorahmen Wellen – Sakura Pink/);
-  assert.match(toShop.html, /Neue Bestellung: CHF 21\.60/);
-  assert.match(toShop.html, /Bestellung E5F6G7H8 · Test/);
-  assert.match(toShop.html, /href="mailto:mia@example\.ch"/);
-  assert.match(toShop.html, /background:#F1B3C5;color:#1c191a;[^>]*>M<\/span>/);
-  assert.doesNotMatch(toShop.text + toShop.html, /stripe\.com/, "kein Stripe-Link, sonst landet die Mail im Spam");
+  assert.match(toShop.text, /dashboard\.stripe\.com\/test\/checkout\/sessions\/cs_test_/);
+  assert.equal(toShop.html, undefined, "nur Text, gestaltet landete sie bei Hostinger im Spam");
 });
 
 test("Gestaltete Mail: Eingaben der Kundschaft werden nicht als HTML ausgeführt", () => {
@@ -60,7 +57,6 @@ test("Gestaltete Mail: Eingaben der Kundschaft werden nicht als HTML ausgeführt
     custom_fields: [{ key: "bemerkung", text: { value: "<script>alert(1)</script>" } }],
   });
   assert.doesNotMatch(toCustomer.html, /<script>|<b>Mia/);
-  assert.doesNotMatch(orderEmails({ ...SESSION, customer_details: { name: "<b>Mia</b>", email: "mia@example.ch" }, custom_fields: [{ key: "bemerkung", text: { value: "<script>x</script>" } }] }).toShop.html, /<script>|<b>Mia/);
   assert.match(toCustomer.html, /&lt;script&gt;/);
 });
 

@@ -1,4 +1,4 @@
-// E-Mails nach einer bezahlten Bestellung: Bestätigung an die Kundschaft und Bestellung an den Shop, je gestaltet + als Text.
+// E-Mails nach einer bezahlten Bestellung: Bestätigung an die Kundschaft (gestaltet + Text), Bestellung an den Shop (nur Text).
 // Grundlage ist die Stripe-Checkout-Session (mit line_items), die der Webhook nachlädt.
 import { COLORS, POSTERS, PICKUP_NOTE, chf } from "../public/catalog.js";
 
@@ -65,7 +65,8 @@ export function orderEmails(s, { siteUrl = "" } = {}) {
     html: customerHtml({ number, firstName, list, rows, pickup, address, note, siteUrl }),
   } : null;
 
-  // bewusst ohne Link zu Stripe: «Zahlung erhalten» plus Stripe-Link sieht für Spamfilter wie Phishing aus
+  // Bewusst nur Text: die gestaltete Version sortierte der Spamfilter von Hostinger (Cloudmark) aus, die Textversion kommt an
+  const dashboard = `https://dashboard.stripe.com/${s.livemode ? "" : "test/"}checkout/sessions/${s.id}`;
   const toShop = {
     subject: `Neue Bestellung ${number}: ${chf(s.amount_total ?? 0)}${pickup ? " (Abholung)" : ""}${s.livemode ? "" : " [TEST]"}`,
     replyTo: customer.email || undefined,
@@ -76,8 +77,8 @@ export function orderEmails(s, { siteUrl = "" } = {}) {
       sums,
       pickup ? "Abholung: Termin per E-Mail vereinbaren." : delivery,
       `Bemerkung: ${note || "–"}`,
+      `In Stripe: ${dashboard}`,
     ].join("\n\n"),
-    html: shopHtml({ number, customer, name: customer.name || ship?.name || "", list, rows, pickup, address, note, test: !s.livemode, siteUrl }),
   };
 
   return { toCustomer, toShop };
@@ -185,27 +186,5 @@ function customerHtml({ number, firstName, list, rows, pickup, address, note, si
       + (note ? box("Deine Bemerkung", esc(note).replace(/\n/g, "<br>")) : "")
       + p("Hast du eine Frage? Antworte einfach auf diese E-Mail.", 24)
       + p("Liebe Grüsse<br>Lynn von Filamour"),
-  });
-}
-
-function shopHtml({ number, customer, name, list, rows, pickup, address, note, test, siteUrl }) {
-  const contact = [
-    name ? esc(name) : "",
-    customer.email ? `<a href="mailto:${esc(customer.email)}" style="color:${C.fg}">${esc(customer.email)}</a>` : "",
-    customer.phone ? `<a href="tel:${esc(customer.phone)}" style="color:${C.fg}">${esc(customer.phone)}</a>` : "",
-  ].filter(Boolean).join("<br>") || "–";
-  const total = rows[rows.length - 1][1];
-  return layout({
-    title: `Neue Bestellung ${number}`,
-    preheader: `${esc(name || "Neue Bestellung")}: ${total}${pickup ? ", Abholung" : ""}`,
-    eyebrow: `Bestellung ${number}${test ? " · Test" : ""}`,
-    heading: `Neue Bestellung: ${esc(total)}`,
-    intro: `${name ? `${esc(name)} hat` : "Es wurde"} gerade bezahlt.${pickup ? " Die Bestellung wird abgeholt." : ""} Mit «Antworten» schreibst du direkt der Kundschaft.`,
-    home: siteUrl || "https://filamour.ch",
-    body: orderTable(list, rows)
-      + `<div style="margin-top:12px"></div>`
-      + box("Kundschaft", contact)
-      + (pickup ? box("Abholung", "Termin per E-Mail vereinbaren.") : box("Lieferadresse", address.map(esc).join("<br>")))
-      + box("Bemerkung", note ? esc(note).replace(/\n/g, "<br>") : "–"),
   });
 }
