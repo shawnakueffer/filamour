@@ -144,3 +144,17 @@ test("Admin: ohne Datenbank verständliche Meldung, nach 10 falschen Passwörter
     assert.equal((await fetch(`${base}/admin`, auth("falsch"))).status, 429);
   });
 });
+
+test("Löschfrist: Kontaktanfragen und Mail-Einträge älter als 12 Monate werden gelöscht", async () => {
+  const store = createMemoryStore();
+  const old = new Date(Date.now() - 400 * 86_400_000), fresh = new Date(Date.now() - 300 * 86_400_000);
+  await store.addContact({ name: "Alt", email: "alt@example.ch", question: "", history: "", created_at: old });
+  await store.addContact({ name: "Neu", email: "neu@example.ch", question: "", history: "", created_at: fresh });
+  await store.claimOrderMail("cs_alt", "shop", old);
+  await store.claimOrderMail("cs_neu", "shop", fresh);
+  const removed = await store.purgeOld();
+  assert.deepEqual((await store.listContacts()).map((c) => c.name), ["Neu"]);
+  assert.equal(await store.claimOrderMail("cs_alt", "shop"), true, "alter Eintrag ist weg");
+  assert.equal(await store.claimOrderMail("cs_neu", "shop"), false, "neuer bleibt");
+  assert.deepEqual(removed, { contacts: 1, orderMails: 1 });
+});

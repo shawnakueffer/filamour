@@ -130,7 +130,7 @@ Der Checkout zeigt automatisch alle Zahlungsmittel, die im Stripe-Dashboard akti
 
 ## Vor dem Livegang
 
-- [ ] `rechtliches.html`: Name, Adresse, UID, MWST-Angabe, Reklamationsfrist ausfüllen (gelb markierte Stellen)
+- [x] `rechtliches.html`: Impressum, MWST-Angabe, Reklamationsfrist ausgefüllt, Datenschutz überarbeitet (Stand 12.10.2026). Bei neuen Diensten den Abschnitt «Unsere Dienstleister» nachführen.
 - [ ] `CHARS` prüfen: aktuell **Ä und Ã** (A mit Tilde). Gemeint war vermutlich ein anderer Buchstabe (Ö? Ü?). Die Bubble-Schrift enthält nur die Zeichen, die dort stehen; für neue Zeichen muss die Schriftdatei neu erstellt werden.
 - [ ] Preise in `catalog.js` bestätigen: Fotorahmen CHF 19 ist noch ein **Platzhalter**
 - [ ] Aktionscode GIFT10 in Stripe anlegen (Test- und Live-Modus)

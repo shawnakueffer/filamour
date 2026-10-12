@@ -4,6 +4,9 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import pg from "pg";
 
+// Kontaktanfragen und Einträge zum Mailversand werden nach dieser Frist gelöscht (steht so in der Datenschutzerklärung)
+export const RETENTION_MONTHS = 12;
+
 const SCHEMA = `
 CREATE TABLE IF NOT EXISTS newsletter_signups (
   id         SERIAL PRIMARY KEY,
@@ -55,6 +58,12 @@ export async function createPgStore(connectionString) {
     async addContact(m) {
       await pool.query("INSERT INTO contact_messages (name, email, question, history) VALUES ($1, $2, $3, $4)", [m.name, m.email, m.question, m.history]);
     },
+    async purgeOld() {
+      const cutoff = `${RETENTION_MONTHS} months`;
+      const c = await pool.query("DELETE FROM contact_messages WHERE created_at < now() - $1::interval", [cutoff]);
+      const o = await pool.query("DELETE FROM order_mails WHERE sent_at < now() - $1::interval", [cutoff]);
+      return { contacts: c.rowCount, orderMails: o.rowCount };
+    },
     async listNewsletter() {
       return (await pool.query("SELECT email, created_at FROM newsletter_signups ORDER BY created_at DESC")).rows;
     },
@@ -68,7 +77,8 @@ export async function createPgStore(connectionString) {
 
 // Nur für Tests und lokales Ausprobieren
 export function createMemoryStore() {
-  const newsletter = [], contacts = [], orderMails = new Set();
+  const newsletter = [], contacts = [], orderMails = new Map(); // Schlüssel → Zeitpunkt
+  const cutoff = () => { const d = new Date(); d.setMonth(d.getMonth() - RETENTION_MONTHS); return d; };
   return {
     kind: "memory",
     async addNewsletter(email) {
@@ -76,14 +86,22 @@ export function createMemoryStore() {
       newsletter.unshift({ email, created_at: new Date() });
       return { created: true };
     },
-    async claimOrderMail(sessionId, kind) {
+    async claimOrderMail(sessionId, kind, at = new Date()) {
       const key = `${sessionId} ${kind}`;
       if (orderMails.has(key)) return false;
-      orderMails.add(key);
+      orderMails.set(key, at);
       return true;
     },
     async releaseOrderMail(sessionId, kind) { orderMails.delete(`${sessionId} ${kind}`); },
-    async addContact(m) { contacts.unshift({ ...m, created_at: new Date() }); },
+    async addContact(m) { contacts.unshift({ ...m, created_at: m.created_at || new Date() }); },
+    async purgeOld() {
+      const limit = cutoff();
+      const before = contacts.length;
+      contacts.splice(0, contacts.length, ...contacts.filter((c) => c.created_at >= limit));
+      let orderMailsRemoved = 0;
+      for (const [key, at] of orderMails) if (at < limit) { orderMails.delete(key); orderMailsRemoved++; }
+      return { contacts: before - contacts.length, orderMails: orderMailsRemoved };
+    },
     async listNewsletter() { return newsletter; },
     async listContacts() { return contacts; },
     async ping() {},
@@ -99,7 +117,7 @@ export async function createFileStore(dir) {
   try {
     const saved = JSON.parse(await fs.readFile(file, "utf8"));
     for (const n of saved.newsletter.reverse()) await mem.addNewsletter(n.email);
-    for (const c of saved.contacts.reverse()) await mem.addContact(c);
+    for (const c of saved.contacts.reverse()) await mem.addContact({ ...c, created_at: new Date(c.created_at) });
   } catch {}
   const save = async () => fs.writeFile(file, JSON.stringify({ newsletter: await mem.listNewsletter(), contacts: await mem.listContacts() }, null, 2));
   return {
@@ -107,5 +125,6 @@ export async function createFileStore(dir) {
     kind: "file",
     async addNewsletter(email) { const r = await mem.addNewsletter(email); await save(); return r; },
     async addContact(m) { await mem.addContact(m); await save(); },
+    async purgeOld() { const r = await mem.purgeOld(); await save(); return r; },
   };
 }

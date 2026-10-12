@@ -45,6 +45,16 @@ console.log(brevo ? "✓ Newsletter über Brevo (Double-Opt-in)." : "ℹ Kein Br
 const webhookSecret = env.STRIPE_WEBHOOK_SECRET || "";
 if (stripe && !webhookSecret) console.log("ℹ STRIPE_WEBHOOK_SECRET fehlt – nach Bestellungen gehen keine E-Mails raus.");
 
+// Löschfrist: beim Start und danach täglich alte Kontaktanfragen und Mail-Einträge entfernen
+async function purge() {
+  try {
+    const r = await store?.purgeOld();
+    if (r && (r.contacts || r.orderMails)) console.log(`Gelöscht (älter als 12 Monate): ${r.contacts} Kontaktanfragen, ${r.orderMails} Mail-Einträge.`);
+  } catch (err) { console.error("Löschen alter Daten:", err?.message); }
+}
+purge();
+setInterval(purge, 24 * 60 * 60_000).unref();
+
 const app = createApp({ stripe, store, mailer, brevo, webhookSecret, adminPassword: env.ADMIN_PASSWORD || "", siteUrl, production, redirectToSiteUrl: production && Boolean(env.PUBLIC_URL) });
 const server = app.listen(port, () => console.log(`Filamour läuft auf ${siteUrl || `http://localhost:${port}`}`));
 

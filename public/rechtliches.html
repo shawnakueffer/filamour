@@ -11,8 +11,9 @@
 <style>
   .legal { padding-block: 48px 80px; display: grid; gap: 28px; max-width: 680px; }
   .legal section { display: grid; gap: 10px; }
-  .legal p { color: var(--muted); }
-  .todo { background: var(--soft); border-radius: 4px; padding: 0 4px; color: var(--accent); }
+  .legal p, .legal li { color: var(--muted); }
+  .legal h3 { font: 600 16px/1.4 var(--font-body); color: var(--fg); margin: 14px 0 0; }
+  .legal ul { margin: 0; padding-left: 20px; display: grid; gap: 6px; }
 </style>
 </head>
 <body>
@@ -23,28 +24,84 @@
   <section>
     <h2 style="font-size:22px">Impressum</h2>
     <p>Filamour<br>
-    <span class="todo">[Vorname Nachname / Firma]</span><br>
-    <span class="todo">[Strasse Nr.]</span><br>
-    <span class="todo">[PLZ Ort]</span>, Schweiz<br>
-    E-Mail: hello@filamour.ch<br>
-    <span class="todo">[UID, falls im Handelsregister eingetragen]</span></p>
+    Inhaberin: Lynn Küffer<br>
+    Lerchenweg 11<br>
+    3132 Riggisberg, Schweiz<br>
+    E-Mail: <a href="mailto:hello@filamour.ch">hello@filamour.ch</a></p>
   </section>
 
   <section>
     <h2 style="font-size:22px" id="datenschutz">Datenschutz</h2>
-    <p>Für die Abwicklung einer Bestellung bearbeiten wir Name, Lieferadresse, E-Mail-Adresse und die bestellten Artikel. Diese Daten nutzen wir nur, um die Bestellung herzustellen, zu versenden und bei Fragen mit dir in Kontakt zu treten. Die Bestellbestätigung an dich und die Bestellmeldung an uns verschicken wir über den E-Mail-Dienst Resend (USA).</p>
-    <p>Die Zahlung läuft über Stripe Payments Europe Ltd. (Irland). Zahlungsdaten wie Kartennummern gibst du direkt bei Stripe ein; wir sehen sie nicht. Es gilt zusätzlich die Datenschutzerklärung von Stripe: stripe.com/ch/privacy.</p>
-    <p>Die Website wird bei Railway Corporation (USA) betrieben. Beim Aufruf der Seite werden technisch notwendige Daten wie IP-Adresse und Zeitpunkt kurz in Server-Protokollen verarbeitet. Schriften werden direkt von unserer Website geladen, es werden keine Daten an Google oder andere Dritte übermittelt. Dein Warenkorb und dein Design werden nur in deinem Browser gespeichert (localStorage), bis du bestellst. Wir setzen keine Cookies und keine Tracking-Tools ein.</p>
-    <p>Wenn du dich für den Newsletter anmeldest, schicken wir dir zuerst eine E-Mail mit einem Bestätigungslink. Erst wenn du darauf klickst, bist du angemeldet. Wir speichern deine E-Mail-Adresse und die Zeitpunkte von Anmeldung und Bestätigung, um dir Neuigkeiten und Angebote von Filamour zu schicken. Dafür nutzen wir den Newsletter-Dienst Brevo (Sendinblue SAS, Frankreich). Du kannst dich jederzeit abmelden, eine kurze Mail an hello@filamour.ch genügt.</p>
-    <p>Wenn du uns über den Chat eine Nachricht mit deiner E-Mail-Adresse schickst, speichern wir Name, E-Mail, Frage und den Chatverlauf, um dir zu antworten. Über neue Anfragen werden wir per E-Mail über den Dienst Resend (USA) informiert. Die automatischen Antworten im Chat laufen nur in deinem Browser.</p>
-    <p>Du kannst jederzeit Auskunft, Berichtigung oder Löschung deiner Daten verlangen: hello@filamour.ch.</p>
+    <p>Hier erfährst du, welche Daten wir bearbeiten, wofür und wer sie sonst noch sieht. Es gilt das Schweizer Datenschutzgesetz (DSG). Für Bestellungen aus Liechtenstein gilt zusätzlich die europäische Datenschutz-Grundverordnung (DSGVO).</p>
+
+    <h3>Kurz zusammengefasst</h3>
+    <ul>
+      <li>Wir setzen keine Cookies und keine Tracking- oder Werbe-Tools ein.</li>
+      <li>Wir nutzen deine Daten nur für deine Bestellung, deine Anfrage oder den Newsletter, den du bestellt hast.</li>
+      <li>Wir verkaufen keine Daten und geben sie nur an die unten genannten Dienstleister weiter.</li>
+    </ul>
+
+    <h3>Verantwortlich</h3>
+    <p>Filamour, Inhaberin Lynn Küffer, Lerchenweg 11, 3132 Riggisberg, Schweiz. Für alle Fragen zum Datenschutz: <a href="mailto:hello@filamour.ch">hello@filamour.ch</a>.</p>
+
+    <h3>Wenn du die Website besuchst</h3>
+    <p>Beim Aufruf einer Seite verarbeitet der Server technisch nötige Angaben wie IP-Adresse, Zeitpunkt, aufgerufene Seite und Browser. Wir brauchen sie, damit die Website funktioniert und um Missbrauch abzuwehren, zum Beispiel massenhafte Anfragen. Wir werten sie nicht aus und verknüpfen sie nicht mit anderen Daten. Schriften und Bilder werden direkt von unserer Website geladen, es gehen keine Daten an Google oder andere Dritte.</p>
+
+    <h3>Warenkorb und Design</h3>
+    <p>Dein Warenkorb und dein Design im Studio werden nur in deinem Browser gespeichert (localStorage), nicht bei uns. Du kannst sie jederzeit löschen, indem du den Warenkorb leerst oder die Website-Daten in deinem Browser löschst.</p>
+
+    <h3>Wenn du bestellst</h3>
+    <p>Für eine Bestellung bearbeiten wir deinen Namen, deine Lieferadresse, deine E-Mail-Adresse, die bestellten Artikel samt Text und Farben und eine allfällige Bemerkung. Wir brauchen diese Angaben, um deine Bestellung herzustellen, zu versenden oder für die Abholung vorzubereiten und um dich bei Fragen zu kontaktieren.</p>
+    <p>Die Zahlung läuft über Stripe. Kartennummern und andere Zahlungsdaten gibst du direkt bei Stripe ein, wir sehen sie nicht. Stripe bearbeitet einen Teil der Daten auch selbst, etwa zur Betrugsbekämpfung. Dafür gilt die <a href="https://stripe.com/ch/privacy">Datenschutzerklärung von Stripe</a>.</p>
+    <p>Die Bestellbestätigung an dich und die Bestellmeldung an uns verschicken wir über den E-Mail-Dienst Resend.</p>
+
+    <h3>Wenn du uns schreibst</h3>
+    <p>Schickst du uns über den Chat eine Anfrage, speichern wir Name, E-Mail-Adresse, Frage und den Chatverlauf, um dir zu antworten. Über neue Anfragen werden wir per E-Mail über Resend informiert. Die automatischen Antworten im Chat laufen nur in deinem Browser, dabei wird nichts an uns geschickt. E-Mails an hello@filamour.ch landen in unserem Postfach bei Hostinger.</p>
+
+    <h3>Newsletter</h3>
+    <p>Den Newsletter verschicken wir über Brevo. Wenn du dich anmeldest, bekommst du zuerst eine E-Mail mit einem Bestätigungslink. Erst nach dem Klick bist du angemeldet (Double-Opt-in). Gespeichert werden deine E-Mail-Adresse und als Nachweis die Zeitpunkte von Anmeldung und Bestätigung. Brevo kann erfassen, ob ein Newsletter geöffnet und welche Links angeklickt wurden. Wir nutzen das nur, um den Newsletter zu verbessern. Abmelden kannst du dich jederzeit über den Link in jedem Newsletter oder mit einer kurzen Mail.</p>
+
+    <h3>Unsere Dienstleister</h3>
+    <ul>
+      <li><b>Railway</b> (Railway Corporation, USA): betreibt unsere Website und Datenbank. Die Server stehen in Amsterdam (Niederlande).</li>
+      <li><b>Stripe</b> (Stripe Payments Europe, Limited, Irland): Zahlungsabwicklung.</li>
+      <li><b>Resend</b> (Plus Five Five, Inc., USA): Versand von Bestell- und Benachrichtigungsmails.</li>
+      <li><b>Brevo</b> (Sendinblue SAS, Frankreich): Newsletter.</li>
+      <li><b>Hostinger</b> (Hostinger International Ltd., Zypern): unser E-Mail-Postfach.</li>
+    </ul>
+    <p>Diese Dienstleister bearbeiten die Daten nur in unserem Auftrag und nach unseren Vorgaben. Mit allen haben wir einen Vertrag zur Auftragsbearbeitung.</p>
+
+    <h3>Daten im Ausland</h3>
+    <p>Einige Daten werden ausserhalb der Schweiz bearbeitet, in der EU und in den USA. Die EU bietet nach Einschätzung des Bundesrats einen angemessenen Datenschutz. Für die USA stützen wir uns bei Railway, Stripe und Brevo auf das Data Privacy Framework zwischen der Schweiz und den USA, bei dem die Unternehmen zertifiziert sind. Bei Resend und für allfällige Server von Hostinger ausserhalb der EU gelten die Standardvertragsklauseln der EU-Kommission, die auch der Eidgenössische Datenschutz- und Öffentlichkeitsbeauftragte (EDÖB) anerkennt.</p>
+
+    <h3>Wie lange wir Daten aufbewahren</h3>
+    <ul>
+      <li>Bestellungen und Zahlungsbelege: 10 Jahre, weil wir Geschäftsunterlagen so lange aufbewahren müssen (Art. 958f OR).</li>
+      <li>Anfragen aus dem Chat: 12 Monate, danach werden sie automatisch gelöscht.</li>
+      <li>Newsletter: bis du dich abmeldest. Danach bleibt deine Adresse nur noch gesperrt gespeichert, damit du keine Newsletter mehr bekommst.</li>
+      <li>Warenkorb und Design: nur in deinem Browser, bis du sie löschst.</li>
+    </ul>
+
+    <h3>Deine Rechte</h3>
+    <p>Du kannst jederzeit Auskunft verlangen, welche Daten wir über dich bearbeiten. Du kannst verlangen, dass wir falsche Daten berichtigen, Daten löschen oder dir in einem gängigen Format herausgeben, und du kannst einer Bearbeitung widersprechen oder eine Einwilligung (etwa für den Newsletter) widerrufen. Daten, die wir gesetzlich aufbewahren müssen, löschen wir erst nach Ablauf der Frist. Schreib uns dafür an <a href="mailto:hello@filamour.ch">hello@filamour.ch</a>.</p>
+    <p>Wenn du findest, dass wir deine Daten nicht richtig bearbeiten, kannst du dich beim <a href="https://www.edoeb.admin.ch">Eidgenössischen Datenschutz- und Öffentlichkeitsbeauftragten (EDÖB)</a> beschweren. In Liechtenstein ist die <a href="https://www.datenschutzstelle.li">Datenschutzstelle Fürstentum Liechtenstein</a> zuständig.</p>
+
+    <h3>Rechtsgrundlagen nach DSGVO</h3>
+    <p>Für Kundinnen und Kunden aus Liechtenstein: Bestelldaten bearbeiten wir zur Erfüllung des Vertrags (Art. 6 Abs. 1 lit. b DSGVO), den Newsletter mit deiner Einwilligung (lit. a), Anfragen und Server-Protokolle aufgrund unseres berechtigten Interesses an Kommunikation und sicherem Betrieb (lit. f) und die Aufbewahrung von Geschäftsunterlagen wegen einer gesetzlichen Pflicht (lit. c).</p>
+
+    <h3>Sicherheit</h3>
+    <p>Die Verbindung zur Website ist verschlüsselt (HTTPS). Zugriff auf Bestellungen und Anfragen hat nur die Inhaberin, geschützt durch Passwörter. Automatisierte Einzelentscheidungen oder Profiling finden nicht statt.</p>
+
+    <h3>Änderungen</h3>
+    <p>Wir passen diese Datenschutzerklärung an, wenn sich unsere Website oder unsere Dienstleister ändern. Es gilt die jeweils aktuelle Fassung auf dieser Seite.</p>
+    <p>Stand: 12. Oktober 2026</p>
   </section>
 
   <section>
     <h2 style="font-size:22px" id="verkauf">Verkauf und Lieferung</h2>
-    <p>Alle Artikel werden auf Bestellung nach deinen Angaben hergestellt. Personalisierte Artikel sind deshalb vom Umtausch ausgeschlossen. Bei Mängeln oder Transportschäden melde dich innert <span class="todo">[14]</span> Tagen nach Erhalt, wir finden eine Lösung.</p>
+    <p>Alle Artikel werden auf Bestellung nach deinen Angaben hergestellt. Personalisierte Artikel sind deshalb vom Umtausch ausgeschlossen. Bei Mängeln oder Transportschäden melde dich innert 14 Tagen nach Erhalt, wir finden eine Lösung.</p>
     <p>Versand in die Schweiz und nach Liechtenstein. Wandbilder können vorerst nur abgeholt werden; enthält eine Bestellung ein Wandbild, wird die ganze Bestellung abgeholt. Den Termin vereinbaren wir per E-Mail.</p>
-    <p>Preise in CHF. <span class="todo">[inkl. MWST / keine MWST-Pflicht]</span></p>
+    <p>Preise in CHF. Filamour ist nicht mehrwertsteuerpflichtig, deshalb wird keine MWST ausgewiesen.</p>
   </section>
 </main>
 </body>
