@@ -1,6 +1,7 @@
 // Der Webserver: liefert den Shop aus public/ und stellt die API bereit.
 //   POST /api/checkout    Warenkorb prüfen, Stripe Checkout starten
 //   GET  /api/order       Zusammenfassung für die Danke-Seite
+//   POST /api/stripe-webhook  Stripe meldet bezahlte Bestellungen → E-Mails an Kundschaft und Shop
 //   POST /api/newsletter  Newsletter-Anmeldung
 //   POST /api/contact     Kontaktanfrage aus dem Chat
 //   GET  /admin           Anmeldungen und Anfragen ansehen (ADMIN_PASSWORD)
@@ -13,12 +14,13 @@ import compression from "compression";
 import { rateLimit } from "express-rate-limit";
 import { validateCart, buildSession, summarizeSession, SESSION_ID } from "./checkout.js";
 import { validateNewsletter, validateContact, isBot } from "./forms.js";
+import { orderEmails } from "./orders.js";
 import { adminRouter } from "./admin.js";
 
 const PUBLIC = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "public");
 const PAGES = { "/": "index.html", "/index.html": "index.html", "/success.html": "success.html", "/rechtliches.html": "rechtliches.html" };
 
-export function createApp({ stripe = null, store = null, mailer = null, adminPassword = "", siteUrl = "", production = false } = {}) {
+export function createApp({ stripe = null, store = null, mailer = null, webhookSecret = "", adminPassword = "", siteUrl = "", production = false } = {}) {
   const app = express();
   app.disable("x-powered-by");
   app.set("trust proxy", 1); // Railway steht vor der App; nötig für die echte IP beim Rate-Limit
@@ -52,6 +54,41 @@ export function createApp({ stripe = null, store = null, mailer = null, adminPas
 
   /* ---------- API ---------- */
   const api = express.Router();
+  // Stripe-Webhook: braucht den unveränderten Body für die Signaturprüfung, darum vor express.json()
+  api.post("/stripe-webhook", express.raw({ type: "application/json", limit: "1mb" }), async (req, res) => {
+    if (!stripe || !webhookSecret) return res.status(503).json({ error: "Webhook ist nicht eingerichtet." });
+    let event;
+    try {
+      event = stripe.webhooks.constructEvent(req.body, req.get("stripe-signature") || "", webhookSecret);
+    } catch (err) {
+      console.warn("Stripe-Webhook mit ungültiger Signatur:", err?.message);
+      return res.status(400).json({ error: "Ungültige Signatur." });
+    }
+    const obj = event.data?.object;
+    const paid = (event.type === "checkout.session.completed" && obj?.payment_status === "paid")
+      || event.type === "checkout.session.async_payment_succeeded";
+    if (!paid || obj?.metadata?.shop !== "filamour") return res.json({ received: true });
+
+    let session;
+    try {
+      session = await stripe.checkout.sessions.retrieve(obj.id, { expand: ["line_items"] });
+    } catch (err) {
+      console.error("Stripe-Fehler (webhook):", err?.message);
+      return res.status(500).json({ error: "Bestellung nicht lesbar." }); // Stripe versucht es später nochmals
+    }
+    if (!mailer) {
+      console.warn(`Bestellung ${obj.id} bezahlt, aber keine E-Mail verschickt (RESEND_API_KEY, MAIL_FROM, NOTIFY_EMAIL fehlen).`);
+      return res.json({ received: true });
+    }
+    // Jede Mail für sich: scheitert eine, kommt die andere trotzdem an. Keine Wiederholung, sonst gäbe es doppelte Mails.
+    const { toCustomer, toShop } = orderEmails(session);
+    for (const [label, mail] of [["Shop", toShop], ["Kundschaft", toCustomer]]) {
+      if (!mail) continue;
+      try { await mailer.send(mail); } catch (err) { console.error(`Bestell-Mail an ${label} (${obj.id}):`, err?.message); }
+    }
+    res.json({ received: true });
+  });
+
   api.use(express.json({ limit: "64kb" }));
   api.use((req, res, next) => { res.set("cache-control", "no-store"); next(); });
   const limit = (windowMin, max) => rateLimit({

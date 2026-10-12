@@ -32,7 +32,10 @@ const mailer = createMailer({ apiKey: env.RESEND_API_KEY, from: env.MAIL_FROM, t
 if (!mailer) console.log("ℹ Keine E-Mail-Benachrichtigung (RESEND_API_KEY, MAIL_FROM, NOTIFY_EMAIL).");
 if (!env.ADMIN_PASSWORD) console.log("ℹ ADMIN_PASSWORD fehlt – /admin ist ausgeschaltet.");
 
-const app = createApp({ stripe, store, mailer, adminPassword: env.ADMIN_PASSWORD || "", siteUrl, production });
+const webhookSecret = env.STRIPE_WEBHOOK_SECRET || "";
+if (stripe && !webhookSecret) console.log("ℹ STRIPE_WEBHOOK_SECRET fehlt – nach Bestellungen gehen keine E-Mails raus.");
+
+const app = createApp({ stripe, store, mailer, webhookSecret, adminPassword: env.ADMIN_PASSWORD || "", siteUrl, production });
 const server = app.listen(port, () => console.log(`Filamour läuft auf ${siteUrl || `http://localhost:${port}`}`));
 
 // Railway beendet alte Versionen mit SIGTERM: laufende Anfragen fertig machen, dann schliessen

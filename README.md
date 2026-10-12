@@ -42,6 +42,7 @@ railway.json             Start-Befehl und Healthcheck für Railway
    | `DATABASE_URL` | `${{Postgres.DATABASE_URL}}` (Railway schlägt das als Referenz vor) |
    | `ADMIN_PASSWORD` | ein langes, eigenes Passwort für `/admin` |
    | `PUBLIC_URL` | erst nach Schritt 6: `https://filamour.ch` (ohne `/` am Ende) |
+   | `STRIPE_WEBHOOK_SECRET`, `RESEND_API_KEY`, `MAIL_FROM`, `NOTIFY_EMAIL` | für die E-Mails nach jeder Bestellung, siehe «Bestellungen bearbeiten» |
 
 5. **Domain:** *Settings → Networking → Generate Domain* gibt eine Adresse wie `filamour-production.up.railway.app`. Damit kannst du sofort testen.
 6. **Eigene Domain:** *Settings → Networking → Custom Domain* → `filamour.ch` eintragen und den angezeigten DNS-Eintrag (CNAME) beim Domain-Anbieter setzen. Danach `PUBLIC_URL` setzen.
@@ -59,16 +60,30 @@ Jeder Push auf `main` auf GitHub wird automatisch neu veröffentlicht. Die Logs 
   `2× Bubble Letters «HALLO MIA» – H Sakura Pink · A Ice Blue · L Cotton White …`
   Das steht in der Positionsbeschreibung und zusätzlich in den Metadaten (`artikel_1`, `artikel_2`, …). Eine Bemerkung des Kunden steht unter «Benutzerdefinierte Felder».
 - Lieferadresse und E-Mail sammelt Stripe im Checkout.
-- **E-Mail bei neuer Bestellung:** Stripe → Einstellungen → Kommunikationseinstellungen → «Erfolgreiche Zahlungen» aktivieren.
-- **Quittung an Kunden:** Stripe → Einstellungen → Kunden-E-Mails → «Erfolgreiche Zahlungen» aktivieren.
+
+### E-Mails nach jeder Bestellung
+
+Nach jeder bezahlten Bestellung meldet Stripe sie an den Shop (Webhook). Der Shop schickt dann über Resend zwei E-Mails:
+eine **Bestätigung an die Kundschaft** (Artikel mit Farben, Total, Lieferadresse; Antworten landen bei `NOTIFY_EMAIL`)
+und eine **Bestellung an `NOTIFY_EMAIL`** (alles zum Herstellen und Versenden, mit Link zur Bestellung in Stripe; «Antworten» schreibt der Kundschaft).
+
+1. **Resend** einrichten wie unter «Chat, Kontaktanfragen und Newsletter» beschrieben (`RESEND_API_KEY`, `MAIL_FROM`, `NOTIFY_EMAIL`).
+2. **Webhook in Stripe:** Entwickler → Webhooks → «Ziel hinzufügen»
+   - Ereignisse: `checkout.session.completed` und `checkout.session.async_payment_succeeded`
+   - Ziel: Webhook-Endpunkt, URL `https://filamour.ch/api/stripe-webhook`
+3. Beim neuen Ziel das **Signaturgeheimnis** (`whsec_…`) kopieren und in Railway als `STRIPE_WEBHOOK_SECRET` eintragen.
+4. Testbestellung machen. Kommen keine Mails: Railway-Logs nach `Bestell-Mail` oder `Stripe-Webhook` durchsuchen, in Stripe beim Webhook unter «Ereignisse» nachsehen.
+
+Test- und Live-Modus haben in Stripe je einen eigenen Webhook mit eigenem `whsec_…`. Beim Wechsel auf live den Webhook dort nochmals anlegen und `STRIPE_WEBHOOK_SECRET` ersetzen.
+Die Quittungen von Stripe selbst (Einstellungen → Kunden-E-Mails) braucht es daneben nicht; wer sie zusätzlich aktiviert, verschickt zwei Mails.
 
 ## Chat, Kontaktanfragen und Newsletter
 
 Unten rechts gibt es einen Chat. Er fragt zuerst, worum es geht, und bietet dann passende Themen an. Freie Fragen versteht er über Stichwörter. Weiss er keine Antwort, bittet er um die E-Mail-Adresse.
 
 - **Alles ansehen:** `https://filamour.ch/admin` öffnen, Benutzername beliebig, Passwort = `ADMIN_PASSWORD`. Dort stehen alle Kontaktanfragen (mit Chatverlauf) und Newsletter-Anmeldungen, beide auch als **CSV-Download** (z. B. zum Import in Brevo oder Mailchimp).
-- **E-Mail bei neuer Anfrage (empfohlen):** Konto bei [resend.com](https://resend.com) (Gratis-Plan reicht), dort die Domain `filamour.ch` bestätigen und einen API-Schlüssel erstellen. Dann in Railway setzen:
-  `RESEND_API_KEY` = der Schlüssel, `MAIL_FROM` = `Filamour Shop <shop@filamour.ch>`, `NOTIFY_EMAIL` = `hallo@filamour.ch`.
+- **E-Mail bei neuer Anfrage und Bestellung (empfohlen):** Konto bei [resend.com](https://resend.com) (Gratis-Plan reicht), dort die Domain `filamour.ch` bestätigen und einen API-Schlüssel erstellen. Dann in Railway setzen:
+  `RESEND_API_KEY` = der Schlüssel, `MAIL_FROM` = `Filamour Shop <shop@filamour.ch>`, `NOTIFY_EMAIL` = `hello@filamour.ch`.
   Mit «Antworten» im Mailprogramm schreibst du direkt der Kundin oder dem Kunden. (Railway sperrt klassisches SMTP auf den günstigen Plänen, deshalb Resend.)
 - **Chat-Antworten anpassen:** in `public/app.js` im Abschnitt «Chat»: `PRODUCTS_CHAT`, `ORDER_TOPICS`, `TOPIC_KEYS`. Preise, Masse und Versand kommen automatisch aus `catalog.js`.
 
@@ -101,11 +116,11 @@ Der Checkout zeigt automatisch alle Zahlungsmittel, die im Stripe-Dashboard akti
 
 - [ ] `rechtliches.html`: Name, Adresse, MWST-Angabe, Reklamationsfrist ausfüllen (gelb markierte Stellen). Den Satz zu Resend nur stehen lassen, wenn ihr Resend nutzt.
 - [ ] `CHARS` prüfen: aktuell **Ä und Ã** (A mit Tilde). Gemeint war vermutlich ein anderer Buchstabe (Ö? Ü?). Die Bubble-Schrift enthält nur die Zeichen, die dort stehen; für neue Zeichen muss die Schriftdatei neu erstellt werden.
-- [ ] E-Mail-Adresse `hallo@filamour.ch` prüfen (steht in index.html, success.html, rechtliches.html, app.js)
 - [ ] Preise in `catalog.js` bestätigen: Fotorahmen CHF 19 ist noch ein **Platzhalter**
 - [ ] Aktionscode WILLKOMMEN10 in Stripe anlegen (Test- und Live-Modus)
 - [ ] Railway: Postgres, `ADMIN_PASSWORD`, `PUBLIC_URL` gesetzt; `/admin` einmal öffnen
-- [ ] Testbestellung mit Testschlüssel, dann Live-Schlüssel setzen
+- [ ] Stripe-Webhook und Resend eingerichtet, Testbestellung bringt beide E-Mails
+- [ ] Testbestellung mit Testschlüssel, dann Live-Schlüssel und Live-Webhook setzen
 
 ## Lokal ausprobieren
 

@@ -16,7 +16,7 @@ if (id) {
         + `<div class="tline total"><span>Total</span><span>${chf(d.total)}</span></div>`
         + `<div class="tline"><span class="muted">Bestellnummer</span><span class="muted">${esc(d.number)}</span></div>`;
       el.hidden = false;
-      if (d.pickup) document.getElementById("next").innerHTML = 'Wir melden uns in den nächsten Tagen per E-Mail für einen Abholtermin. Fragen? Schreib an <a href="mailto:hallo@filamour.ch">hallo@filamour.ch</a>.';
+      if (d.pickup) document.getElementById("next").innerHTML = 'Wir melden uns in den nächsten Tagen per E-Mail für einen Abholtermin. Fragen? Schreib an <a href="mailto:hello@filamour.ch">hello@filamour.ch</a>.';
     }
   } catch {}
 }

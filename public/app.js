@@ -725,7 +725,7 @@ if (document.fonts) {
         botSay(`Danke${data.name ? ", " + data.name : ""}! Deine Nachricht ist bei uns angekommen. Wir melden uns so bald wie möglich an ${data.email}.`, { chips: MAIN() });
       } catch {
         btn.disabled = false; btn.textContent = "Absenden";
-        botSay("Das hat leider nicht geklappt. Bitte versuch es nochmals oder schreib uns direkt an hallo@filamour.ch.");
+        botSay("Das hat leider nicht geklappt. Bitte versuch es nochmals oder schreib uns direkt an hello@filamour.ch.");
       }
     });
     f.email.focus({ preventScroll: true });
