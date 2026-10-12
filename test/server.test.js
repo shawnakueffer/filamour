@@ -123,3 +123,24 @@ test("Seiten, 404, Sicherheits-Header und SITE_URL", async () => {
     assert.equal((await fetch(`${base}/../package.json`)).status, 404);
   });
 });
+
+test("Andere Adressen leiten auf die Hauptadresse um, Healthcheck und Webhook nicht", async () => {
+  await withServer({ siteUrl: "https://filamour.ch", redirectToSiteUrl: true }, async (base) => {
+    const res = await fetch(`${base}/rechtliches.html?x=1`, { redirect: "manual" });
+    assert.equal(res.status, 301);
+    assert.equal(res.headers.get("location"), "https://filamour.ch/rechtliches.html?x=1");
+    assert.equal((await fetch(`${base}/healthz`, { redirect: "manual" })).status, 200);
+    assert.equal((await fetch(`${base}/api/stripe-webhook`, { method: "POST", redirect: "manual" })).status, 503, "nicht umgeleitet");
+  });
+});
+
+test("Admin: ohne Datenbank verständliche Meldung, nach 10 falschen Passwörtern gesperrt", async () => {
+  const auth = (pw) => ({ headers: { authorization: "Basic " + Buffer.from(`admin:${pw}`).toString("base64") } });
+  await withServer({ adminPassword: "geheim" }, async (base) => {
+    assert.equal((await fetch(`${base}/admin`, auth("geheim"))).status, 503);
+  });
+  await withServer({ store: createMemoryStore(), adminPassword: "geheim" }, async (base) => {
+    for (let i = 0; i < 10; i++) assert.equal((await fetch(`${base}/admin`, auth("falsch"))).status, 401);
+    assert.equal((await fetch(`${base}/admin`, auth("falsch"))).status, 429);
+  });
+});

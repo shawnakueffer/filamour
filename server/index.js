@@ -13,6 +13,12 @@ const port = Number(env.PORT) || 3000;
 
 // Öffentliche Adresse: eigene Domain (PUBLIC_URL) > Railway-Domain > aus der Anfrage
 const siteUrl = (env.PUBLIC_URL || (env.RAILWAY_PUBLIC_DOMAIN ? `https://${env.RAILWAY_PUBLIC_DOMAIN}` : "")).replace(/\/+$/, "");
+// Ohne feste Adresse würden Rücksprung-Links zu Stripe und Brevo aus der Anfrage gebaut – online nicht zulassen
+if (production && !siteUrl) {
+  console.error("✗ PUBLIC_URL fehlt. In Railway PUBLIC_URL=https://filamour.ch setzen.");
+  process.exit(1);
+}
+if (production && (env.ADMIN_PASSWORD || "").length > 0 && env.ADMIN_PASSWORD.length < 16) console.warn("⚠ ADMIN_PASSWORD ist kurz. Besser mindestens 16 Zeichen.");
 
 const stripe = env.STRIPE_SECRET_KEY ? new Stripe(env.STRIPE_SECRET_KEY, { maxNetworkRetries: 2, timeout: 20_000 }) : null;
 if (!stripe) console.warn("⚠ STRIPE_SECRET_KEY fehlt – die Kasse ist ausgeschaltet.");
@@ -39,11 +45,14 @@ console.log(brevo ? "✓ Newsletter über Brevo (Double-Opt-in)." : "ℹ Kein Br
 const webhookSecret = env.STRIPE_WEBHOOK_SECRET || "";
 if (stripe && !webhookSecret) console.log("ℹ STRIPE_WEBHOOK_SECRET fehlt – nach Bestellungen gehen keine E-Mails raus.");
 
-const app = createApp({ stripe, store, mailer, brevo, webhookSecret, adminPassword: env.ADMIN_PASSWORD || "", siteUrl, production });
+const app = createApp({ stripe, store, mailer, brevo, webhookSecret, adminPassword: env.ADMIN_PASSWORD || "", siteUrl, production, redirectToSiteUrl: production && Boolean(env.PUBLIC_URL) });
 const server = app.listen(port, () => console.log(`Filamour läuft auf ${siteUrl || `http://localhost:${port}`}`));
 
 // Railway beendet alte Versionen mit SIGTERM: laufende Anfragen fertig machen, dann schliessen
+let closing = false;
 const shutdown = () => {
+  if (closing) return;
+  closing = true;
   server.close(async () => { await store?.close(); process.exit(0); });
   setTimeout(() => process.exit(0), 8000).unref();
 };

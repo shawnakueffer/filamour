@@ -84,13 +84,14 @@ export function buildSession(items, origin) {
 // Kurzfassung einer bezahlten Session für die Danke-Seite
 export function summarizeSession(s) {
   return {
-    paid: s.payment_status === "paid",
+    paid: s.payment_status !== "unpaid", // auch «no_payment_required» (mit Gutschein gratis)
     number: s.id.slice(-8).toUpperCase(),
     firstName: (s.customer_details?.name || "").split(" ")[0],
     total: s.amount_total,
     shipping: s.shipping_cost?.amount_total ?? 0,
+    discount: s.total_details?.amount_discount ?? 0,
     pickup: s.metadata?.lieferung === "Abholung",
-    items: (s.line_items?.data || []).map((li) => ({ name: li.description, qty: li.quantity, amount: li.amount_total })),
+    items: (s.line_items?.data || []).map((li) => ({ name: li.description, qty: li.quantity, amount: li.amount_subtotal ?? li.amount_total })), // vor Rabatt, der steht separat
   };
 }
 

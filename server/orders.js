@@ -15,7 +15,7 @@ function articles(s) {
       text = parts.join("") || `${prices[n - 1]?.quantity ?? 1}× ${prices[n - 1]?.description ?? "Artikel"}`;
     }
     const m = /^(\d+)× (.*?)(?: – (.*))?$/s.exec(text);
-    list.push({ text, qty: m ? Number(m[1]) : 1, name: m ? m[2] : text, description: m?.[3] || "", amount: prices[n - 1]?.amount_total ?? null });
+    list.push({ text, qty: m ? Number(m[1]) : 1, name: m ? m[2] : text, description: m?.[3] || "", amount: prices[n - 1]?.amount_subtotal ?? prices[n - 1]?.amount_total ?? null }); // vor Rabatt, der steht in den Summen
   }
   return list;
 }

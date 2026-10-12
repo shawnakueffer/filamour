@@ -130,11 +130,12 @@ Der Checkout zeigt automatisch alle Zahlungsmittel, die im Stripe-Dashboard akti
 
 ## Vor dem Livegang
 
-- [ ] `rechtliches.html`: Name, Adresse, MWST-Angabe, Reklamationsfrist ausfüllen (gelb markierte Stellen). Den Satz zu Resend nur stehen lassen, wenn ihr Resend nutzt.
+- [ ] `rechtliches.html`: Name, Adresse, UID, MWST-Angabe, Reklamationsfrist ausfüllen (gelb markierte Stellen)
 - [ ] `CHARS` prüfen: aktuell **Ä und Ã** (A mit Tilde). Gemeint war vermutlich ein anderer Buchstabe (Ö? Ü?). Die Bubble-Schrift enthält nur die Zeichen, die dort stehen; für neue Zeichen muss die Schriftdatei neu erstellt werden.
 - [ ] Preise in `catalog.js` bestätigen: Fotorahmen CHF 19 ist noch ein **Platzhalter**
 - [ ] Aktionscode GIFT10 in Stripe anlegen (Test- und Live-Modus)
-- [ ] Railway: Postgres, `ADMIN_PASSWORD`, `PUBLIC_URL` gesetzt; `/admin` einmal öffnen
+- [ ] Railway: Postgres, `ADMIN_PASSWORD` (mind. 16 Zeichen), `PUBLIC_URL` gesetzt; `/admin` einmal öffnen. Ohne `PUBLIC_URL` startet der Shop online nicht.
+- [ ] Railway: `www.filamour.ch` als zweite Custom Domain hinzufügen (leitet dann automatisch auf filamour.ch um)
 - [ ] Stripe-Webhook und Resend eingerichtet, Testbestellung bringt beide E-Mails
 - [ ] Testbestellung mit Testschlüssel, dann Live-Schlüssel und Live-Webhook setzen
 

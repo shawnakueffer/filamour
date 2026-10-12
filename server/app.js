@@ -20,12 +20,22 @@ import { adminRouter } from "./admin.js";
 const PUBLIC = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "public");
 const PAGES = { "/": "index.html", "/index.html": "index.html", "/success.html": "success.html", "/rechtliches.html": "rechtliches.html" };
 
-export function createApp({ stripe = null, store = null, mailer = null, brevo = null, webhookSecret = "", adminPassword = "", siteUrl = "", production = false } = {}) {
+export function createApp({ stripe = null, store = null, mailer = null, brevo = null, webhookSecret = "", adminPassword = "", siteUrl = "", production = false, redirectToSiteUrl = false } = {}) {
   const app = express();
   app.disable("x-powered-by");
   app.set("trust proxy", 1); // Railway steht vor der App; nötig für die echte IP beim Rate-Limit
 
   const origin = (req) => siteUrl || `${req.protocol}://${req.get("host")}`;
+
+  // Nur eine Adresse: www.filamour.ch und die Railway-Adresse leiten auf siteUrl um.
+  // Sonst hätte jede Adresse ihren eigenen Warenkorb (localStorage). Healthcheck und Stripe-Webhook nie umleiten.
+  if (redirectToSiteUrl && siteUrl) {
+    const host = new URL(siteUrl).host;
+    app.use((req, res, next) => {
+      if (req.get("host") === host || req.path === "/healthz" || req.path === "/api/stripe-webhook") return next();
+      res.redirect(301, siteUrl + req.originalUrl);
+    });
+  }
 
   app.use(helmet({
     contentSecurityPolicy: {
@@ -65,7 +75,8 @@ export function createApp({ stripe = null, store = null, mailer = null, brevo = 
       return res.status(400).json({ error: "Ungültige Signatur." });
     }
     const obj = event.data?.object;
-    const paid = (event.type === "checkout.session.completed" && obj?.payment_status === "paid")
+    // «no_payment_required» = mit Gutschein ganz gratis, gilt ebenfalls als bezahlt
+    const paid = (event.type === "checkout.session.completed" && obj?.payment_status && obj.payment_status !== "unpaid")
       || event.type === "checkout.session.async_payment_succeeded";
     if (!paid || obj?.metadata?.shop !== "filamour") return res.json({ received: true });
 
@@ -80,12 +91,26 @@ export function createApp({ stripe = null, store = null, mailer = null, brevo = 
       console.warn(`Bestellung ${obj.id} bezahlt, aber keine E-Mail verschickt (RESEND_API_KEY, MAIL_FROM, NOTIFY_EMAIL fehlen).`);
       return res.json({ received: true });
     }
-    // Jede Mail für sich: scheitert eine, kommt die andere trotzdem an. Keine Wiederholung, sonst gäbe es doppelte Mails.
+    // Jede Mail für sich: scheitert eine, kommt die andere trotzdem an.
+    // Mit Datenbank wird jede Mail nur einmal verschickt; eine gescheiterte schickt der nächste Versuch von Stripe.
     const { toCustomer, toShop } = orderEmails(session, { siteUrl: origin(req) });
-    for (const [label, mail] of [["Shop", toShop], ["Kundschaft", toCustomer]]) {
+    let retry = false;
+    for (const [kind, mail] of [["shop", toShop], ["kundschaft", toCustomer]]) {
       if (!mail) continue;
-      try { await mailer.send(mail); } catch (err) { console.error(`Bestell-Mail an ${label} (${obj.id}):`, err?.message); }
+      try {
+        if (store && !(await store.claimOrderMail(session.id, kind))) continue;
+      } catch (err) {
+        console.error(`Bestell-Mail (${obj.id}): Datenbank nicht erreichbar:`, err?.message);
+        retry = true; continue;
+      }
+      try {
+        await mailer.send(mail);
+      } catch (err) {
+        console.error(`Bestell-Mail an ${kind} (${obj.id}):`, err?.message);
+        if (store) { retry = true; await store.releaseOrderMail(session.id, kind).catch(() => {}); }
+      }
     }
+    if (retry) return res.status(500).json({ error: "Nicht alle Mails verschickt." }); // Stripe versucht es später nochmals
     res.json({ received: true });
   });
 
@@ -158,7 +183,7 @@ export function createApp({ stripe = null, store = null, mailer = null, brevo = 
     if (mailer) {
       try {
         await mailer.send({
-          subject: `Neue Anfrage von ${m.name || m.email}`,
+          subject: `Neue Anfrage von ${(m.name || m.email).replace(/[\r\n]+/g, " ")}`,
           replyTo: m.email,
           text: `${m.name ? `Name: ${m.name}\n` : ""}E-Mail: ${m.email}\n\nFrage:\n${m.question || "–"}\n\n--- Chatverlauf ---\n${m.history || "–"}`,
         });
@@ -176,7 +201,9 @@ export function createApp({ stripe = null, store = null, mailer = null, brevo = 
   });
   app.use("/api", api);
 
-  app.use("/admin", limit(15, 60), adminRouter({ store, password: adminPassword, newsletterInBrevo: Boolean(brevo) }));
+  // Admin: höchstens 10 falsche Passwörter pro 15 Minuten und IP, erfolgreiche Aufrufe zählen nicht
+  const adminLimit = rateLimit({ windowMs: 15 * 60_000, limit: 10, skipSuccessfulRequests: true, standardHeaders: "draft-8", legacyHeaders: false });
+  app.use("/admin", limit(15, 60), adminLimit, adminRouter({ store, password: adminPassword, newsletterInBrevo: Boolean(brevo) }));
 
   /* ---------- Seiten ---------- */
   const raw = new Map();

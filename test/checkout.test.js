@@ -20,6 +20,15 @@ test("Warenkorb wird geprüft", () => {
   assert.match(validateCart({ items: Array(21).fill({ type: "poster", variant: "happy", qty: 1 }) }).error, /Maximal/);
 });
 
+test("Eingeschleuste Namen wie __proto__ gelten nicht als Farbe oder Produkt", () => {
+  for (const bad of ["__proto__", "constructor", "toString"]) {
+    assert.match(validateCart({ items: [{ text: "AB", colors: [bad, "bl-red"], qty: 1 }] }).error, /Farbe/, bad);
+    assert.match(validateCart({ items: [{ type: "poster", variant: bad, qty: 1 }] }).error, /Wandbild/, bad);
+    assert.match(validateCart({ items: [{ type: "frame", style: bad, color: "bl-red", qty: 1 }] }).error, /Fotorahmen/, bad);
+    assert.match(validateCart({ items: [{ type: "frame", style: "wave", color: bad, qty: 1 }] }).error, /Fotorahmen/, bad);
+  }
+});
+
 test("Preis kommt vom Server, nicht vom Browser", () => {
   const ok = validateCart({ items: [{ text: "Hallo Mia", colors: HALLO_MIA, qty: 2, price: 1, unit: 1 }] });
   assert.match(ok.items[0].name, /\(8 Teile, /, "Leerzeichen zählt nicht");
@@ -126,7 +135,8 @@ test("Checkout: Fehler werden verständlich gemeldet", async () => {
 
 test("GET /api/order prüft die Session-ID und fasst zusammen", async () => {
   const stripe = { checkout: { sessions: { retrieve: async (id) => ({
-    id, payment_status: "paid", amount_total: 4850, shipping_cost: { amount_total: 900 },
+    id, payment_status: id.endsWith("GRATIS") ? "no_payment_required" : "paid", amount_total: 4850, shipping_cost: { amount_total: 900 },
+    total_details: { amount_discount: 150 },
     customer_details: { name: "Mia Muster" },
     line_items: { data: [{ description: "Bubble Letters «MIA» (3 Teile)", quantity: 1, amount_total: 1350 }] },
   }) } } };
@@ -134,6 +144,9 @@ test("GET /api/order prüft die Session-ID und fasst zusammen", async () => {
     assert.equal((await fetch(`${base}/api/order?session_id=../../etc`)).status, 400);
     const d = await (await fetch(`${base}/api/order?session_id=cs_test_abcDEF12345678`)).json();
     assert.equal(d.paid, true);
+    assert.equal(d.discount, 150);
+    const gratis = await (await fetch(`${base}/api/order?session_id=cs_test_abcGRATIS`)).json();
+    assert.equal(gratis.paid, true, "mit 100-%-Gutschein gilt die Bestellung als bezahlt");
     assert.equal(d.firstName, "Mia");
     assert.equal(d.number, "12345678");
     assert.equal(d.items[0].qty, 1);

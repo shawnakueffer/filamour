@@ -18,7 +18,10 @@ export const LETTER_SIZES = [
   { id: "gross", name: "Gross", heightCm: 6.5, depthCm: 2.5, price: 490 },
   { id: "klein", name: "Klein", heightCm: 2.5, depthCm: 1,   price: 290 },
 ];
-export const SIZE_BY_ID = Object.fromEntries(LETTER_SIZES.map((s) => [s.id, s]));
+// Nachschlage-Tabellen ohne Prototyp: «__proto__» oder «constructor» aus dem Browser finden so nichts
+const byId = (list) => Object.assign(Object.create(null), Object.fromEntries(list.map((x) => [x.id, x])));
+
+export const SIZE_BY_ID = byId(LETTER_SIZES);
 // Grösse eines Designs; ältere Warenkörbe ohne Grösse sind «gross». Unbekannt → null
 export function letterSize(id) {
   const key = id || LETTER_SIZES[0].id;
@@ -67,7 +70,7 @@ export const COLORS = [
   { id: "pm-purple",  name: "Muted Purple",    hex: "#9E88B2" },   // Polymaker PolyTerra
 ];
 
-export const COLOR_BY_ID = Object.fromEntries(COLORS.map((c) => [c.id, c]));
+export const COLOR_BY_ID = byId(COLORS);
 
 // Weitere Produkte. Preise in Rappen.
 export const PRODUCTS = {
@@ -81,14 +84,14 @@ export const POSTERS = [
   { id: "happy",    title: "MY HAPPY PLACE",      lines: ["MY", "HAPPY", "PLACE"],      colorName: "Bordeaux", bg: "#6b1f2d", fg: "#a1404f" },
   { id: "no",       title: "HOW ABOUT NO",        lines: ["HOW", "ABOUT", "NO"],        colorName: "Gelb",     bg: "#eccc5c", fg: "#f8e59a" },
 ];
-export const POSTER_BY_ID = Object.fromEntries(POSTERS.map((p) => [p.id, p]));
+export const POSTER_BY_ID = byId(POSTERS);
 
 // Fotorahmen: Form, Farbe aus der Filament-Liste
 export const FRAME_STYLES = [
   { id: "wave", title: "Wellen" },
   { id: "dots", title: "Punkte" },
 ];
-export const FRAME_BY_ID = Object.fromEntries(FRAME_STYLES.map((s) => [s.id, s]));
+export const FRAME_BY_ID = byId(FRAME_STYLES);
 
 // Nur druckbare Zeichen zählen (Leerzeichen und unbekannte Zeichen nicht)
 export function pieces(text, colors) {

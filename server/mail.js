@@ -11,6 +11,7 @@ export function createMailer({ apiKey, from, to, fetchImpl = fetch } = {}) {
       const res = await fetchImpl("https://api.resend.com/emails", {
         method: "POST",
         headers: { authorization: `Bearer ${apiKey}`, "content-type": "application/json" },
+        signal: AbortSignal.timeout(10_000), // Stripe wartet nicht ewig auf den Webhook
         body: JSON.stringify({ from, to: [recipient], subject, text, ...(html ? { html } : {}), ...(reply ? { reply_to: reply } : {}) }),
       });
       if (!res.ok) throw new Error(`Resend ${res.status}: ${(await res.text()).slice(0, 200)}`);

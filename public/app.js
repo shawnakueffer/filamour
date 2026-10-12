@@ -176,7 +176,14 @@ $("#qtyPlus").onclick = () => { qty = Math.min(SHOP.maxQuantity, qty + 1); rende
 let rT; window.addEventListener("resize", () => { clearTimeout(rT); rT = setTimeout(() => { render(); renderArt(); }, 120); });
 
 /* ---------- Warenkorb ---------- */
-let cart = store.get("filamour-cart", []).filter((it) => it && it.id && !describeItem(it).error);
+// Gespeicherter Warenkorb: nur gültige Einträge, Menge in den erlaubten Grenzen, saubere IDs
+const loadCart = () => {
+  const saved = store.get("filamour-cart", []);
+  return (Array.isArray(saved) ? saved : [])
+    .filter((it) => it && /^[a-z0-9]{1,16}$/.test(it.id) && !describeItem(it).error)
+    .map((it) => ({ ...it, qty: Math.min(SHOP.maxQuantity, Math.max(1, Math.floor(Number(it.qty)) || 1)) }));
+};
+let cart = loadCart();
 const saveCart = () => store.set("filamour-cart", cart);
 const uid = () => Math.random().toString(36).slice(2, 10);
 
@@ -306,6 +313,8 @@ $("#checkout").onclick = async () => {
     btn.disabled = false; btn.textContent = "Zur Kasse";
   }
 };
+// Mit «Zurück» von Stripe zeigt der Browser die alte Seite aus dem Zwischenspeicher: Knopf wieder freigeben
+window.addEventListener("pageshow", (e) => { if (e.persisted) { $("#checkout").disabled = false; $("#checkout").textContent = "Zur Kasse"; } });
 
 /* ---------- Dezente Animationen ---------- */
 function motion() {

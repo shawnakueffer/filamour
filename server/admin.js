@@ -30,6 +30,7 @@ export function adminRouter({ store, password, newsletterInBrevo = false }) {
     res.set("WWW-Authenticate", 'Basic realm="Filamour Admin", charset="UTF-8"').status(401).send("Anmeldung nötig.");
   });
   r.use((req, res, next) => { res.set("cache-control", "no-store").set("x-robots-tag", "noindex"); next(); });
+  r.use((req, res, next) => (store ? next() : res.status(503).type("text/plain").send("Keine Datenbank verbunden (DATABASE_URL fehlt).")));
 
   r.get("/newsletter.csv", async (req, res) => {
     res.type("text/csv").attachment("newsletter.csv").send(csv(await store.listNewsletter(), ["email", "created_at"]));

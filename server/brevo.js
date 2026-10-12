@@ -10,6 +10,7 @@ export function createBrevo({ apiKey, listId, templateId, fetchImpl = fetch } = 
       const res = await fetchImpl("https://api.brevo.com/v3/contacts/doubleOptinConfirmation", {
         method: "POST",
         headers: { "api-key": apiKey, "content-type": "application/json", accept: "application/json" },
+        signal: AbortSignal.timeout(10_000),
         body: JSON.stringify({ email, includeListIds: [list], templateId: template, redirectionUrl }),
       });
       if (!res.ok) throw new Error(`Brevo ${res.status}: ${(await res.text()).slice(0, 200)}`);

@@ -1,4 +1,4 @@
-// Speicher für Newsletter-Anmeldungen und Kontaktanfragen.
+// Speicher für Newsletter-Anmeldungen, Kontaktanfragen und verschickte Bestellmails.
 // Produktion: PostgreSQL (DATABASE_URL, auf Railway ein Klick). Lokal ohne DATABASE_URL: Datei in data/.
 import fs from "node:fs/promises";
 import path from "node:path";
@@ -17,10 +17,17 @@ CREATE TABLE IF NOT EXISTS contact_messages (
   question   TEXT NOT NULL DEFAULT '',
   history    TEXT NOT NULL DEFAULT '',
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE TABLE IF NOT EXISTS order_mails (
+  session_id TEXT NOT NULL,
+  kind       TEXT NOT NULL,
+  sent_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (session_id, kind)
 );`;
 
 export async function createPgStore(connectionString) {
-  const pool = new pg.Pool({ connectionString, max: 5 });
+  // Timeouts, damit eine hängende Datenbank keine Anfrage endlos blockiert
+  const pool = new pg.Pool({ connectionString, max: 5, connectionTimeoutMillis: 5000, statement_timeout: 5000 });
   pool.on("error", (err) => console.error("Postgres:", err.message));
   // Railways internes Netzwerk ist direkt nach dem Start manchmal noch nicht bereit
   for (let attempt = 1; ; attempt++) {
@@ -35,6 +42,15 @@ export async function createPgStore(connectionString) {
     async addNewsletter(email) {
       const r = await pool.query("INSERT INTO newsletter_signups (email) VALUES ($1) ON CONFLICT (email) DO NOTHING", [email]);
       return { created: r.rowCount === 1 };
+    },
+    // Stripe kann ein Ereignis mehrfach schicken: true nur beim ersten Mal, dann wird die Mail verschickt
+    async claimOrderMail(sessionId, kind) {
+      const r = await pool.query("INSERT INTO order_mails (session_id, kind) VALUES ($1, $2) ON CONFLICT DO NOTHING", [sessionId, kind]);
+      return r.rowCount === 1;
+    },
+    // Versand gescheitert: wieder freigeben, damit der nächste Versuch von Stripe die Mail schickt
+    async releaseOrderMail(sessionId, kind) {
+      await pool.query("DELETE FROM order_mails WHERE session_id = $1 AND kind = $2", [sessionId, kind]);
     },
     async addContact(m) {
       await pool.query("INSERT INTO contact_messages (name, email, question, history) VALUES ($1, $2, $3, $4)", [m.name, m.email, m.question, m.history]);
@@ -52,7 +68,7 @@ export async function createPgStore(connectionString) {
 
 // Nur für Tests und lokales Ausprobieren
 export function createMemoryStore() {
-  const newsletter = [], contacts = [];
+  const newsletter = [], contacts = [], orderMails = new Set();
   return {
     kind: "memory",
     async addNewsletter(email) {
@@ -60,6 +76,13 @@ export function createMemoryStore() {
       newsletter.unshift({ email, created_at: new Date() });
       return { created: true };
     },
+    async claimOrderMail(sessionId, kind) {
+      const key = `${sessionId} ${kind}`;
+      if (orderMails.has(key)) return false;
+      orderMails.add(key);
+      return true;
+    },
+    async releaseOrderMail(sessionId, kind) { orderMails.delete(`${sessionId} ${kind}`); },
     async addContact(m) { contacts.unshift({ ...m, created_at: new Date() }); },
     async listNewsletter() { return newsletter; },
     async listContacts() { return contacts; },

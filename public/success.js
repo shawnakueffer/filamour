@@ -12,6 +12,7 @@ if (id) {
       const el = document.getElementById("order");
       const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
       el.innerHTML = d.items.map((i) => `<div class="tline"><span>${i.qty}× ${esc(i.name)}</span><span>${chf(i.amount)}</span></div>`).join("")
+        + (d.discount ? `<div class="tline"><span>Rabatt</span><span>−${chf(d.discount)}</span></div>` : "")
         + `<div class="tline"><span>Versand</span><span>${d.pickup ? "Abholung" : d.shipping ? chf(d.shipping) : "gratis"}</span></div>`
         + `<div class="tline total"><span>Total</span><span>${chf(d.total)}</span></div>`
         + `<div class="tline"><span class="muted">Bestellnummer</span><span class="muted">${esc(d.number)}</span></div>`;

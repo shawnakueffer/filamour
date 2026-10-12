@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import Stripe from "stripe";
 import { orderEmails } from "../server/orders.js";
 import { createMailer } from "../server/mail.js";
+import { createMemoryStore } from "../server/store.js";
 import { withServer } from "./helpers.js";
 
 const SECRET = "whsec_test_geheim";
@@ -27,6 +28,15 @@ const SESSION = {
   custom_fields: [{ key: "bemerkung", text: { value: "Bitte als Geschenk verpacken" } }],
   line_items: { data: [{ amount_total: 870, quantity: 1 }, { amount_total: 1900, quantity: 1 }] },
 };
+
+test("Mit Rabatt: Artikel zum vollen Preis, Rabatt als eigene Zeile", () => {
+  const { toCustomer } = orderEmails({
+    ...SESSION, amount_subtotal: 2770, amount_total: 3193, total_details: { amount_discount: 277 },
+    line_items: { data: [{ amount_subtotal: 870, amount_total: 783 }, { amount_subtotal: 1900, amount_total: 1710 }] },
+  });
+  assert.match(toCustomer.text, /Klein 2,5 cm\) – M Sakura Pink · I Ice Blue · A Peanut\n  CHF 8\.70/);
+  assert.match(toCustomer.text, /Zwischensumme: CHF 27\.70\nRabatt: −CHF 2\.77/);
+});
 
 test("Bestell-Mails enthalten Artikel, Farben, Adresse und Bemerkung", () => {
   const { toCustomer, toShop } = orderEmails(SESSION);
@@ -114,4 +124,36 @@ test("Mails an die Kundschaft: Antworten gehen an den Shop", async () => {
   await mailer.send({ to: "mia@example.ch", subject: "a", text: "b" });
   await mailer.send({ subject: "c", text: "d", replyTo: "mia@example.ch" });
   assert.deepEqual(sent.map((m) => [m.to[0], m.reply_to]), [["mia@example.ch", "hello@filamour.ch"], ["hello@filamour.ch", "mia@example.ch"]]);
+});
+
+test("Webhook: jede Mail nur einmal, gescheiterte beim nächsten Versuch von Stripe", async () => {
+  const store = createMemoryStore(), sent = [];
+  let failShop = true;
+  const mailer = { send: async (m) => { if (!m.to && failShop) throw new Error("Resend 500"); sent.push(m.to || "shop"); } };
+  const stripe = { webhooks, checkout: { sessions: { retrieve: async (id) => ({ ...SESSION, id }) } } };
+  const event = { id: "evt_1", type: "checkout.session.completed", data: { object: SESSION } };
+  await withServer({ stripe, mailer, store, webhookSecret: SECRET }, async (base) => {
+    assert.equal((await sendWebhook(base, event)).status, 500, "Shop-Mail gescheitert → Stripe soll es nochmals versuchen");
+    assert.deepEqual(sent, ["mia@example.ch"]);
+    failShop = false;
+    assert.equal((await sendWebhook(base, event)).status, 200);
+    assert.deepEqual(sent, ["mia@example.ch", "shop"], "nur die fehlende Mail kommt dazu");
+    assert.equal((await sendWebhook(base, event)).status, 200);
+    assert.equal(sent.length, 2, "doppeltes Ereignis → keine weitere Mail");
+  });
+});
+
+test("Webhook: Gratis-Bestellung und spät bestätigte Zahlung schicken Mails, Stripe-Fehler → 500", async () => {
+  const sent = [];
+  const mailer = { send: async (m) => { sent.push(m.to || "shop"); } };
+  let failRetrieve = false;
+  const stripe = { webhooks, checkout: { sessions: { retrieve: async (id) => { if (failRetrieve) throw new Error("down"); return { ...SESSION, id }; } } } };
+  await withServer({ stripe, mailer, webhookSecret: SECRET }, async (base) => {
+    await sendWebhook(base, { type: "checkout.session.completed", data: { object: { ...SESSION, id: "cs_test_gratis", payment_status: "no_payment_required" } } });
+    assert.equal(sent.length, 2, "100-%-Gutschein");
+    await sendWebhook(base, { type: "checkout.session.async_payment_succeeded", data: { object: { ...SESSION, id: "cs_test_spaet", payment_status: "paid" } } });
+    assert.equal(sent.length, 4);
+    failRetrieve = true;
+    assert.equal((await sendWebhook(base, { type: "checkout.session.completed", data: { object: SESSION } })).status, 500);
+  });
 });
