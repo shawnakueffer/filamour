@@ -27,7 +27,7 @@ export function letterSize(id) {
 
 // Newsletter: Rabattcode für die erste Bestellung.
 // Den gleichen Code in Stripe als Aktionscode anlegen (Produkte → Gutscheine), siehe README.
-export const NEWSLETTER = { code: "WILLKOMMEN10", percent: 10 };
+export const NEWSLETTER = { code: "GIFT10", percent: 10 };
 
 // Hinweise: die ersten drei stehen in der schwarzen Leiste ganz oben
 export const ANNOUNCEMENTS = [

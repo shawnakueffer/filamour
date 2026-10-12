@@ -91,9 +91,9 @@ Unten rechts gibt es einen Chat. Er fragt zuerst, worum es geht, und bietet dann
 
 ### Newsletter und 10 % Rabatt
 
-Wer sich unten auf der Seite anmeldet, bekommt den Code **WILLKOMMEN10** angezeigt. Mit Brevo erst nach der Bestätigung (Double-Opt-in), ohne Brevo sofort.
+Wer sich unten auf der Seite anmeldet, bekommt den Code **GIFT10** angezeigt. Mit Brevo erst nach der Bestätigung (Double-Opt-in), ohne Brevo sofort.
 
-1. **Code in Stripe anlegen:** Stripe → Produktkatalog → Gutscheine → «Gutschein erstellen»: 10 % Rabatt, Dauer «Einmalig». Danach beim Gutschein einen **Aktionscode** `WILLKOMMEN10` hinzufügen und «Nur für Erstbestellungen» aktivieren. Der Checkout zeigt das Feld «Aktionscode» automatisch.
+1. **Code in Stripe anlegen:** Stripe → Produktkatalog → Gutscheine → «Gutschein erstellen»: 10 % Rabatt, Dauer «Einmalig». Danach beim Gutschein einen **Aktionscode** `GIFT10` hinzufügen und «Nur für Erstbestellungen» aktivieren. Der Checkout zeigt das Feld «Aktionscode» automatisch.
 2. Code oder Prozentsatz ändern: `public/catalog.js` → `NEWSLETTER` (und den Aktionscode in Stripe gleich nennen).
 
 Hinweis: Der Code wird auf der Seite angezeigt. Wer ihn weitergibt, kann ihn auch ohne Anmeldung nutzen. «Nur für Erstbestellungen» in Stripe begrenzt ihn auf eine Bestellung pro Kunde.
@@ -133,7 +133,7 @@ Der Checkout zeigt automatisch alle Zahlungsmittel, die im Stripe-Dashboard akti
 - [ ] `rechtliches.html`: Name, Adresse, MWST-Angabe, Reklamationsfrist ausfüllen (gelb markierte Stellen). Den Satz zu Resend nur stehen lassen, wenn ihr Resend nutzt.
 - [ ] `CHARS` prüfen: aktuell **Ä und Ã** (A mit Tilde). Gemeint war vermutlich ein anderer Buchstabe (Ö? Ü?). Die Bubble-Schrift enthält nur die Zeichen, die dort stehen; für neue Zeichen muss die Schriftdatei neu erstellt werden.
 - [ ] Preise in `catalog.js` bestätigen: Fotorahmen CHF 19 ist noch ein **Platzhalter**
-- [ ] Aktionscode WILLKOMMEN10 in Stripe anlegen (Test- und Live-Modus)
+- [ ] Aktionscode GIFT10 in Stripe anlegen (Test- und Live-Modus)
 - [ ] Railway: Postgres, `ADMIN_PASSWORD`, `PUBLIC_URL` gesetzt; `/admin` einmal öffnen
 - [ ] Stripe-Webhook und Resend eingerichtet, Testbestellung bringt beide E-Mails
 - [ ] Testbestellung mit Testschlüssel, dann Live-Schlüssel und Live-Webhook setzen
