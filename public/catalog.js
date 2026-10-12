@@ -5,7 +5,7 @@
 export const SHOP = {
   name: "Filamour",
   currency: "chf",
-  shipping: 700,              // Rappen Versand pro Bestellung (CHF 7.00)
+  shipping: 650,              // Rappen Versand pro Bestellung (CHF 6.50)
   freeShippingFrom: 6000,     // ab diesem Warenwert gratis Versand (0 = nie)
   shippingCountries: ["CH", "LI"],
   maxLettersPerDesign: 40,

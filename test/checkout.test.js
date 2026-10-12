@@ -74,7 +74,7 @@ test("Nicht druckbare Zeichen landen nicht im Produktnamen", () => {
 
 test("Gratisversand ab der Grenze, sonst Versandkosten", () => {
   const small = buildSession(validateCart({ items: [{ text: "AB", colors: ["bl-red", "bl-red"], qty: 1 }] }).items, "https://x.ch");
-  assert.equal(small.shipping_options[0].shipping_rate_data.fixed_amount.amount, 700, "Versand CHF 7");
+  assert.equal(small.shipping_options[0].shipping_rate_data.fixed_amount.amount, 650, "Versand CHF 6.50");
   const big = buildSession(validateCart({ items: [{ type: "frame", style: "wave", color: "bl-red", qty: 4 }] }).items, "https://x.ch");
   assert.equal(big.shipping_options[0].shipping_rate_data.fixed_amount.amount, 0, "ab CHF 60 gratis");
 });

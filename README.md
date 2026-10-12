@@ -118,7 +118,7 @@ Der Checkout zeigt automatisch alle Zahlungsmittel, die im Stripe-Dashboard akti
 
 ## Anpassen
 
-- **Versand, Gratisversand-Grenze, Lieferländer:** `public/catalog.js` → `SHOP` (aktuell Versand CHF 7, gratis ab CHF 60)
+- **Versand, Gratisversand-Grenze, Lieferländer:** `public/catalog.js` → `SHOP` (aktuell Versand CHF 6.50, gratis ab CHF 60)
 - **Buchstaben-Grössen und Preise:** `public/catalog.js` → `LETTER_SIZES` (aktuell gross 6,5 cm für CHF 4.90, klein 2,5 cm für CHF 2.90). Die Grösse steht in Stripe im Artikelnamen, z. B. `Bubble Letters «MIA» (3 Teile, Klein 2,5 cm)`.
 - **Wandbild und Fotorahmen ein-/ausblenden:** `public/catalog.js` → `PRODUCTS.poster.active` / `PRODUCTS.frame.active`. Aktuell beide `false`: im Shop, im Chat und an der Kasse ausgeblendet. Beim Einblenden in `rechtliches.html` unter «Verkauf und Lieferung» den Satz zur Abholung von Wandbildern wieder ergänzen.
 - **Nur Abholung:** `pickupOnly: true` bei einem Produkt in `PRODUCTS` (aktuell Wandbild). Enthält eine Bestellung so ein Produkt, wird die ganze Bestellung abgeholt: keine Adresse, keine Versandkosten, Hinweis im Warenkorb und im Stripe-Checkout. In Stripe steht bei der Zahlung unter Metadaten `lieferung: Abholung`. Für Versand wieder `pickupOnly` entfernen.
