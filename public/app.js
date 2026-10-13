@@ -1,4 +1,4 @@
-import { SHOP, ANNOUNCEMENTS, ANNOUNCEMENTS_SHORT, CHARS, COLORS, COLOR_BY_ID, PRODUCTS, NEWSLETTER, POSTERS, POSTER_BY_ID, FRAME_STYLES, FRAME_BY_ID, LETTER_SIZES, letterSize, describeItem, pieces, designPrice, shippingFor, isPickup, PICKUP_NOTE, chf, cm } from "./catalog.js";
+import { SHOP, ANNOUNCEMENTS, ANNOUNCEMENTS_SHORT, CHARS, COLORS, COLOR_BY_ID, PRODUCTS, ALPHABET, alphabetColors, NEWSLETTER, POSTERS, POSTER_BY_ID, FRAME_STYLES, FRAME_BY_ID, LETTER_SIZES, letterSize, describeItem, pieces, designPrice, shippingFor, isPickup, PICKUP_NOTE, chf, cm } from "./catalog.js";
 import { REVIEWS } from "./reviews.js";
 
 const $ = (s) => document.querySelector(s);
@@ -173,7 +173,7 @@ $("#sizeOpts").addEventListener("click", (e) => { const b = e.target.closest("[d
 document.querySelectorAll(".bgbtn").forEach((b) => (b.onclick = () => { state.bg = b.dataset.bg; render(); }));
 $("#qtyMinus").onclick = () => { qty = Math.max(1, qty - 1); render(); };
 $("#qtyPlus").onclick = () => { qty = Math.min(SHOP.maxQuantity, qty + 1); render(); };
-let rT; window.addEventListener("resize", () => { clearTimeout(rT); rT = setTimeout(() => { render(); renderArt(); }, 120); });
+let rT; window.addEventListener("resize", () => { clearTimeout(rT); rT = setTimeout(() => { render(); renderArt(); renderAlphaPreview(); }, 120); });
 
 /* ---------- Warenkorb ---------- */
 // Gespeicherter Warenkorb: nur gültige Einträge, Menge in den erlaubten Grenzen, saubere IDs
@@ -206,7 +206,8 @@ $("#addToCart").onclick = () => {
 
 function addProduct(item, msgEl) {
   // gleiche Variante schon im Warenkorb? Dann Menge erhöhen
-  const same = cart.find((c) => c.type === item.type && c.variant === item.variant && c.style === item.style && c.color === item.color);
+  const same = cart.find((c) => c.type === item.type && c.variant === item.variant && c.style === item.style && c.color === item.color
+    && c.size === item.size && JSON.stringify(c.colors || []) === JSON.stringify(item.colors || []));
   if (same) same.qty = Math.min(SHOP.maxQuantity, same.qty + 1); else cart.push({ id: uid(), qty: 1, ...item });
   saveCart(); renderCart();
   msgEl.innerHTML = `Im Warenkorb. <button class="btn link">Ansehen</button>`;
@@ -235,6 +236,7 @@ function renderCart() {
   body.innerHTML = cart.map((it) => {
     const d = describeItem(it), letters = d.type === "letters";
     const prev = letters ? wordsHTML(it.text, it.colors, 30)
+      : d.type === "alphabet" ? alphaMini(it)
       : d.type === "poster" ? posterMini(POSTER_BY_ID[it.variant])
       : `<div class="mini-frame">${frameSVG(it.style, COLOR_BY_ID[it.color].hex)}</div>`;
     return `<div class="citem" data-id="${it.id}">
@@ -456,6 +458,68 @@ function renderDims() {
   </svg>`;
 }
 
+/* ---------- Alphabet-Set ---------- */
+const alpha = { size: LETTER_SIZES[0].id, variant: "farbig", colors: ["pt-sakura", "bm-ice", "es-matcha", "sp-lemon", "pm-purple"] };
+const alphaItem = () => ({ type: "alphabet", size: alpha.size, variant: alpha.variant, colors: alpha.variant === "farbig" ? alpha.colors.slice() : [] });
+// Farbe pro Buchstabe; ohne gewählte Farbe vorerst weiss
+const alphaPerLetter = (variant, colors) => alphabetColors(variant === "farbig" && !colors.length ? "weiss" : variant, colors);
+
+function renderAlphaPreview() {
+  const box = $("#alphaPreview"); if (!box) return;
+  const perLetter = alphaPerLetter(alpha.variant, alpha.colors);
+  const perRow = box.parentElement.clientWidth < 560 ? 7 : 9;
+  const px = Math.round(Math.min(76, (box.parentElement.clientWidth - 48) / (perRow * 0.82)));
+  const rows = [];
+  for (let i = 0; i < ALPHABET.letters.length; i += perRow) rows.push(i);
+  box.innerHTML = rows.map((start) => {
+    const row = ALPHABET.letters.slice(start, start + perRow);
+    return `<div class="alpha-row">${wordsHTML(row, perLetter.slice(start, start + perRow), px)}</div>`;
+  }).join("");
+}
+// Kleine Vorschau im Warenkorb: A–M und N–Z
+function alphaMini(it) {
+  const perLetter = alphaPerLetter(it.variant, it.colors || []);
+  const half = Math.ceil(ALPHABET.letters.length / 2);
+  return wordsHTML(ALPHABET.letters.slice(0, half) + " " + ALPHABET.letters.slice(half), [...perLetter.slice(0, half), null, ...perLetter.slice(half)], 20);
+}
+
+function renderAlpha() {
+  if (!$("#alphabet") || !ALPHABET.active) return;
+  const size = letterSize(alpha.size);
+  $("#alphaSizes").innerHTML = LETTER_SIZES.map((z) => `<button class="opt plain" role="radio" aria-checked="${z.id === alpha.size}" data-size="${z.id}">${z.name} · ${cm(z.heightCm)} · ${chf(ALPHABET.price[z.id])}</button>`).join("");
+  $("#alphaVariants").innerHTML = [["weiss", "Ganz weiss"], ["farbig", `Farbig (bis ${ALPHABET.maxColors} Farben)`]]
+    .map(([id, label]) => `<button class="opt plain" role="radio" aria-checked="${id === alpha.variant}" data-variant="${id}">${label}</button>`).join("");
+  const farbig = alpha.variant === "farbig", n = alpha.colors.length, full = n >= ALPHABET.maxColors;
+  $("#alphaColorPanel").hidden = !farbig;
+  $("#alphaPickTitle").textContent = `Deine Farben: ${n} von ${ALPHABET.maxColors}`;
+  $("#alphaReset").hidden = !n;
+  $("#alphaPicked").innerHTML = n
+    ? alpha.colors.map((id, i) => `<button class="opt" type="button" data-remove="${i}" aria-label="${COLOR_BY_ID[id].name} entfernen" title="Entfernen"><span class="dot" style="background:${COLOR_BY_ID[id].hex}"></span>${i + 1}. ${COLOR_BY_ID[id].name} <span aria-hidden="true">×</span></button>`).join("")
+    : `<span class="muted" style="font-size:14px">Tippe unten auf eine Farbe, um sie hinzuzufügen.</span>`;
+  $("#alphaShelf").innerHTML = COLORS.map((c) => {
+    const on = alpha.colors.includes(c.id);
+    return `<button class="sw" type="button" data-c="${c.id}" aria-pressed="${on}" ${!on && full ? "disabled" : ""}><span class="spool" style="background-color:${c.hex}"></span><span class="nm">${c.name}</span></button>`;
+  }).join("");
+  const d = describeItem(alphaItem());
+  $("#alphaPrice").textContent = chf(ALPHABET.price[size.id]);
+  $("#alphaInfo").textContent = `${ALPHABET.letters.length} Buchstaben, ${size.name} ${cm(size.heightCm)}`;
+  $("#alphaAdd").disabled = Boolean(d.error);
+  renderAlphaPreview();
+}
+if ($("#alphabet")) {
+  $("#alphaSizes").addEventListener("click", (e) => { const b = e.target.closest("[data-size]"); if (!b) return; alpha.size = b.dataset.size; $("#alphaAdded").textContent = ""; renderAlpha(); });
+  $("#alphaVariants").addEventListener("click", (e) => { const b = e.target.closest("[data-variant]"); if (!b) return; alpha.variant = b.dataset.variant; $("#alphaAdded").textContent = ""; renderAlpha(); });
+  $("#alphaShelf").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-c]"); if (!b || b.disabled) return;
+    const id = b.dataset.c, i = alpha.colors.indexOf(id);
+    if (i >= 0) alpha.colors.splice(i, 1); else if (alpha.colors.length < ALPHABET.maxColors) alpha.colors.push(id);
+    $("#alphaAdded").textContent = ""; renderAlpha();
+  });
+  $("#alphaPicked").addEventListener("click", (e) => { const b = e.target.closest("[data-remove]"); if (!b) return; alpha.colors.splice(+b.dataset.remove, 1); renderAlpha(); });
+  $("#alphaReset").onclick = () => { alpha.colors = []; renderAlpha(); };
+  $("#alphaAdd").onclick = () => addProduct(alphaItem(), $("#alphaAdded"));
+}
+
 /* ---------- Bewertungen ---------- */
 function renderReviews() {
   const sec = $("#bewertungen"), list = REVIEWS.filter((r) => r && r.text);
@@ -488,7 +552,7 @@ $("#faqPrice").textContent = `Grosse Buchstaben kosten ${chf(BIG.price)}, kleine
 const extrasActive = PRODUCTS.poster.active || PRODUCTS.frame.active;
 document.querySelectorAll("[data-product]").forEach((el) => {
   const id = el.dataset.product;
-  el.hidden = !(id === "extras" ? extrasActive : PRODUCTS[id]?.active);
+  el.hidden = !(id === "extras" ? extrasActive : id === "alphabet" ? ALPHABET.active : PRODUCTS[id]?.active);
 });
 const posterPickup = PRODUCTS.poster.active ? " Wandbilder gibt es vorerst nur zur Abholung." : "";
 $("#faqShip").textContent = `In die Schweiz und nach Liechtenstein. Der Versand kostet ${chf(SHOP.shipping)}${SHOP.freeShippingFrom ? `, ab einem Bestellwert von ${chf(SHOP.freeShippingFrom)} ist er gratis` : ""}.${posterPickup}`;
@@ -597,7 +661,7 @@ renderAnnounce(); renderReviews(); stripeSections();
 window.addEventListener("scroll", () => $("#top").classList.toggle("scrolled", scrollY > 8), { passive: true });
 
 $("#txt").value = state.text;
-renderPoster(); renderFrame();
+renderPoster(); renderFrame(); renderAlpha();
 buildSizes(); buildShelf(); render(); renderCart();
 if (location.hash === "#warenkorb" && cart.length) openCart();
 try { motion(); } catch (e) { console.warn(e); } // Animationen dürfen den Shop nie blockieren
@@ -605,7 +669,7 @@ try { motion(); } catch (e) { console.warn(e); } // Animationen dürfen den Shop
 if (document.fonts) {
   document.fonts.load("100px 'Cherry Bomb One'").then(() => document.fonts.ready).then(() => {
     fontReady = true; for (const k in widthCache) delete widthCache[k];
-    render(); renderCart(); renderArt();
+    render(); renderCart(); renderArt(); renderAlphaPreview();
   }).catch(() => renderArt());
 } else renderArt();
 

@@ -15,8 +15,8 @@ export const SHOP = {
 
 // Buchstaben-Grössen, die erste ist der Standard. price = Rappen pro Buchstabe/Zeichen (490 = CHF 4.90)
 export const LETTER_SIZES = [
-  { id: "gross", name: "Gross", heightCm: 6.5, depthCm: 2.5, price: 490 },
-  { id: "klein", name: "Klein", heightCm: 2.5, depthCm: 1,   price: 290 },
+  { id: "gross", name: "Gross", heightCm: 6.5, depthCm: 2.2, price: 490 },
+  { id: "klein", name: "Klein", heightCm: 3,   depthCm: 1,   price: 290 },
 ];
 // Nachschlage-Tabellen ohne Prototyp: «__proto__» oder «constructor» aus dem Browser finden so nichts
 const byId = (list) => Object.assign(Object.create(null), Object.fromEntries(list.map((x) => [x.id, x])));
@@ -72,6 +72,21 @@ export const COLORS = [
 
 export const COLOR_BY_ID = byId(COLORS);
 
+// Alphabet-Set: alle Buchstaben A–Z in einer Grösse, ganz weiss oder farbig.
+// Farbig: bis zu 5 Farben, die sich in der gewählten Reihenfolge abwechseln (A = Farbe 1, B = Farbe 2 …).
+export const ALPHABET = {
+  active: true,
+  letters: "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+  white: "pt-white",
+  maxColors: 5,
+  price: { gross: 12740, klein: 7540 }, // PLATZHALTER: 26 × Einzelpreis, Preis bestätigen
+};
+// Farbe pro Buchstabe (Liste von Farb-IDs in der Reihenfolge von ALPHABET.letters)
+export function alphabetColors(variant, colors) {
+  const palette = variant === "weiss" ? [ALPHABET.white] : colors;
+  return [...ALPHABET.letters].map((_, i) => palette[i % palette.length]);
+}
+
 // Weitere Produkte. Preise in Rappen.
 // active: false blendet ein Produkt im Shop aus und der Server nimmt keine Bestellungen dafür an.
 // Zum Wiedereinblenden auf true setzen (und in rechtliches.html den Satz zur Abholung von Wandbildern ergänzen).
@@ -123,6 +138,26 @@ export function describeItem(it) {
       name: `Bubble Letters «${text}» (${list.length} Teile, ${size.name} ${cm(size.heightCm)})`,
       description: list.map((p) => `${p.ch} ${COLOR_BY_ID[p.color].name}`).join(" · "),
       meta: `${size.name}, ${list.length} Buchstaben à ${chf(size.price)}`,
+    };
+  }
+  if (type === "alphabet") {
+    if (!ALPHABET.active) return { error: "Das Alphabet gibt es im Moment nicht." };
+    const size = letterSize(it.size);
+    if (!size) return { error: "Diese Buchstaben-Grösse gibt es nicht mehr." };
+    let palette;
+    if (it.variant === "weiss") palette = [ALPHABET.white];
+    else if (it.variant === "farbig") {
+      palette = Array.isArray(it.colors) ? it.colors.map(String) : [];
+      if (!palette.length || palette.length > ALPHABET.maxColors || new Set(palette).size !== palette.length || palette.some((id) => !COLOR_BY_ID[id])) {
+        return { error: `Bitte wähle für das Alphabet 1 bis ${ALPHABET.maxColors} verschiedene Farben.` };
+      }
+    } else return { error: "Diese Alphabet-Variante gibt es nicht." };
+    const letters = [...ALPHABET.letters], perLetter = alphabetColors(it.variant, palette);
+    return {
+      type, unit: ALPHABET.price[size.id],
+      name: `Alphabet A–Z (${letters.length} Teile, ${size.name} ${cm(size.heightCm)})`,
+      description: letters.map((ch, i) => `${ch} ${COLOR_BY_ID[perLetter[i]].name}`).join(" · "),
+      meta: it.variant === "weiss" ? `${size.name}, ganz weiss` : `${size.name}, ${palette.length} ${palette.length === 1 ? "Farbe" : "Farben"} im Wechsel`,
     };
   }
   if (type === "poster") {

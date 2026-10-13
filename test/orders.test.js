@@ -20,7 +20,7 @@ const SESSION = {
   total_details: { amount_discount: 0 },
   metadata: {
     shop: "filamour", artikel: "2", lieferung: "Versand",
-    artikel_1: "1× Bubble Letters «MIA» (3 Teile, Klein 2,5 cm) – M Sakura Pink · I Ice Blue · A Peanut",
+    artikel_1: "1× Bubble Letters «MIA» (3 Teile, Klein 3 cm) – M Sakura Pink · I Ice Blue · A Peanut",
     artikel_2: "1× Fotorahmen Wellen – Sakura Pink",
   },
   customer_details: { name: "Mia Muster", email: "mia@example.ch", phone: null },
@@ -34,7 +34,7 @@ test("Mit Rabatt: Artikel zum vollen Preis, Rabatt als eigene Zeile", () => {
     ...SESSION, amount_subtotal: 2770, amount_total: 3193, total_details: { amount_discount: 277 },
     line_items: { data: [{ amount_subtotal: 870, amount_total: 783 }, { amount_subtotal: 1900, amount_total: 1710 }] },
   });
-  assert.match(toCustomer.text, /Klein 2,5 cm\) – M Sakura Pink · I Ice Blue · A Peanut\n  CHF 8\.70/);
+  assert.match(toCustomer.text, /Klein 3 cm\) – M Sakura Pink · I Ice Blue · A Peanut\n  CHF 8\.70/);
   assert.match(toCustomer.text, /Zwischensumme: CHF 27\.70\nRabatt: −CHF 2\.77/);
 });
 
@@ -43,7 +43,7 @@ test("Bestell-Mails enthalten Artikel, Farben, Adresse und Bemerkung", () => {
   assert.equal(toCustomer.to, "mia@example.ch");
   assert.equal(toCustomer.subject, "Danke für deine Bestellung bei Filamour (Nr. E5F6G7H8)");
   assert.match(toCustomer.text, /^Hallo Mia/);
-  assert.match(toCustomer.text, /«MIA» \(3 Teile, Klein 2,5 cm\) – M Sakura Pink · I Ice Blue · A Peanut\n  CHF 8\.70/);
+  assert.match(toCustomer.text, /«MIA» \(3 Teile, Klein 3 cm\) – M Sakura Pink · I Ice Blue · A Peanut\n  CHF 8\.70/);
   assert.match(toCustomer.text, /Total: CHF 21\.60/);
   assert.match(toCustomer.text, /Bahnhofstrasse 1\n8001 Zürich/);
   assert.match(toCustomer.text, /Geschenk verpacken/);

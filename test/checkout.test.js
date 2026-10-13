@@ -2,7 +2,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { validateCart, buildSession, summarizeSession } from "../server/checkout.js";
-import { isPickup, PRODUCTS } from "../public/catalog.js";
+import { isPickup, PRODUCTS, ALPHABET } from "../public/catalog.js";
 import { withServer } from "./helpers.js";
 
 const HALLO_MIA = ["pt-sakura", "bm-ice", "pt-white", "pt-peanut", "bm-ice", "pt-sakura", "pt-white", "pt-peanut", "bl-magenta"];
@@ -56,7 +56,7 @@ test("Kleine Buchstaben kosten CHF 2.90, ohne Grösse gilt gross", () => {
   assert.equal(validateCart({ items: [{ ...item, size: "gross" }] }).items[0].unit, 3 * 490);
   const small = validateCart({ items: [{ ...item, size: "klein", price: 1 }] }).items[0];
   assert.equal(small.unit, 3 * 290);
-  assert.equal(small.name, "Bubble Letters «MIA» (3 Teile, Klein 2,5 cm)");
+  assert.equal(small.name, "Bubble Letters «MIA» (3 Teile, Klein 3 cm)");
   assert.match(validateCart({ items: [{ ...item, size: "riesig" }] }).error, /Grösse/);
   assert.match(validateCart({ items: [{ ...item, size: "__proto__" }] }).error, /Grösse/);
 });
@@ -166,4 +166,26 @@ test("GET /api/order prüft die Session-ID und fasst zusammen", async () => {
     assert.equal(d.number, "12345678");
     assert.equal(d.items[0].qty, 1);
   });
+});
+
+test("Alphabet: Preis je Grösse, ganz weiss oder bis zu 5 Farben im Wechsel", () => {
+  const five = ["pt-sakura", "bm-ice", "es-matcha", "sp-lemon", "pm-purple"];
+  const weiss = validateCart({ items: [{ type: "alphabet", size: "gross", variant: "weiss", colors: ["bl-red"], qty: 1, price: 1 }] }).items[0];
+  assert.equal(weiss.unit, ALPHABET.price.gross, "Preis vom Server");
+  assert.equal(weiss.name, "Alphabet A–Z (26 Teile, Gross 6,5 cm)");
+  assert.match(weiss.description, /^A Cotton White · B Cotton White .* Z Cotton White$/, "weiss ignoriert mitgeschickte Farben");
+  const bunt = validateCart({ items: [{ type: "alphabet", size: "klein", variant: "farbig", colors: five, qty: 2 }] }).items[0];
+  assert.equal(bunt.unit, ALPHABET.price.klein);
+  assert.equal(bunt.name, "Alphabet A–Z (26 Teile, Klein 3 cm)");
+  assert.match(bunt.description, /^A Sakura Pink · B Ice Blue · C Matcha Green · D Lemon Cream · E Muted Purple · F Sakura Pink/);
+  assert.match(bunt.description, /Z Sakura Pink$/, "26. Buchstabe = Farbe 1 (26 = 5 × 5 + 1)");
+  assert.equal(validateCart({ items: [{ type: "alphabet", size: "klein", variant: "farbig", colors: ["bl-red"], qty: 1 }] }).items[0].meta, "Klein, 1 Farbe im Wechsel");
+  for (const colors of [[], [...five, "bl-red"], ["bl-red", "bl-red"], ["gibtsnicht"], ["__proto__"], "bl-red"]) {
+    assert.match(validateCart({ items: [{ type: "alphabet", size: "gross", variant: "farbig", colors, qty: 1 }] }).error, /1 bis 5 verschiedene Farben/, JSON.stringify(colors));
+  }
+  assert.match(validateCart({ items: [{ type: "alphabet", size: "riesig", variant: "weiss", qty: 1 }] }).error, /Grösse/);
+  assert.match(validateCart({ items: [{ type: "alphabet", size: "gross", variant: "regenbogen", qty: 1 }] }).error, /Variante/);
+  ALPHABET.active = false;
+  try { assert.match(validateCart({ items: [{ type: "alphabet", size: "gross", variant: "weiss", qty: 1 }] }).error, /im Moment nicht/); }
+  finally { ALPHABET.active = true; }
 });

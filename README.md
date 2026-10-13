@@ -119,7 +119,8 @@ Der Checkout zeigt automatisch alle Zahlungsmittel, die im Stripe-Dashboard akti
 ## Anpassen
 
 - **Versand, Gratisversand-Grenze, Lieferländer:** `public/catalog.js` → `SHOP` (aktuell Versand CHF 6.50, gratis ab CHF 60)
-- **Buchstaben-Grössen und Preise:** `public/catalog.js` → `LETTER_SIZES` (aktuell gross 6,5 cm für CHF 4.90, klein 2,5 cm für CHF 2.90). Die Grösse steht in Stripe im Artikelnamen, z. B. `Bubble Letters «MIA» (3 Teile, Klein 2,5 cm)`.
+- **Buchstaben-Grössen und Preise:** `public/catalog.js` → `LETTER_SIZES` (aktuell gross 6,5 cm hoch und 2,2 cm dick für CHF 4.90, klein 3 cm hoch und 1 cm dick für CHF 2.90). Die Grösse steht in Stripe im Artikelnamen, z. B. `Bubble Letters «MIA» (3 Teile, Klein 3 cm)`.
+- **Alphabet-Set:** `public/catalog.js` → `ALPHABET` (Preise je Grösse, Farbe für «ganz weiss», maximal 5 Farben, `active` zum Ausblenden). Die Farben wechseln sich in der gewählten Reihenfolge ab; in Stripe und der Bestellmail steht jeder Buchstabe mit seiner Farbe.
 - **Wandbild und Fotorahmen ein-/ausblenden:** `public/catalog.js` → `PRODUCTS.poster.active` / `PRODUCTS.frame.active`. Aktuell beide `false`: im Shop, im Chat und an der Kasse ausgeblendet. Beim Einblenden in `rechtliches.html` unter «Verkauf und Lieferung» den Satz zur Abholung von Wandbildern wieder ergänzen.
 - **Nur Abholung:** `pickupOnly: true` bei einem Produkt in `PRODUCTS` (aktuell Wandbild). Enthält eine Bestellung so ein Produkt, wird die ganze Bestellung abgeholt: keine Adresse, keine Versandkosten, Hinweis im Warenkorb und im Stripe-Checkout. In Stripe steht bei der Zahlung unter Metadaten `lieferung: Abholung`. Für Versand wieder `pickupOnly` entfernen.
 - **Farben hinzufügen/entfernen:** `public/catalog.js` → `COLORS`
@@ -134,6 +135,7 @@ Der Checkout zeigt automatisch alle Zahlungsmittel, die im Stripe-Dashboard akti
 - [x] `rechtliches.html`: Impressum, MWST-Angabe, Reklamationsfrist ausgefüllt, Datenschutz überarbeitet (Stand 12.10.2026). Bei neuen Diensten den Abschnitt «Unsere Dienstleister» nachführen.
 - [ ] `CHARS` prüfen: aktuell **Ä und Ã** (A mit Tilde). Gemeint war vermutlich ein anderer Buchstabe (Ö? Ü?). Die Bubble-Schrift enthält nur die Zeichen, die dort stehen; für neue Zeichen muss die Schriftdatei neu erstellt werden.
 - [ ] Preise in `catalog.js` bestätigen: Fotorahmen CHF 19 ist noch ein **Platzhalter**
+- [ ] Preise Alphabet bestätigen: CHF 127.40 (gross) / 75.40 (klein) sind **Platzhalter** (26 × Einzelpreis)
 - [ ] Aktionscode GIFT10 in Stripe anlegen (Test- und Live-Modus)
 - [ ] Railway: Postgres, `ADMIN_PASSWORD` (mind. 16 Zeichen), `PUBLIC_URL` gesetzt; `/admin` einmal öffnen. Ohne `PUBLIC_URL` startet der Shop online nicht.
 - [ ] Railway: `www.filamour.ch` als zweite Custom Domain hinzufügen (leitet dann automatisch auf filamour.ch um)
