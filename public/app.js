@@ -497,8 +497,7 @@ function renderAlpha() {
   }).join("");
   // Set-Preis mit echtem Vergleichspreis (26 Buchstaben einzeln) durchgestrichen
   const price = ALPHABET.price[alpha.size][alpha.variant], single = alphabetSinglePrice(alpha.size);
-  $("#alphaPrice").innerHTML = `<s class="was" aria-label="einzeln ${chf(single)}">${chf(single)}</s> <span class="now">${chf(price)}</span>`
-    + `<span class="save">einzeln ${chf(single)} · du sparst ${chf(single - price)}</span>`;
+  $("#alphaPrice").innerHTML = `<s class="was" aria-label="einzeln ${chf(single)}">${chf(single)}</s> <span class="now">${chf(price)}</span>`;
   $("#alphaAdd").disabled = Boolean(describeItem(alphaItem()).error);
   renderAlphaPreview();
 }
