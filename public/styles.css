@@ -290,11 +290,15 @@ section.block.alt { background: var(--band); }
 .material-visual .spool { position: absolute; left: 8%; top: 8%; width: 64%; height: auto; aspect-ratio: 1; overflow: visible; }
 .material-visual .art { position: absolute; right: 9%; bottom: 8%; }
 
-/* Alphabet-Set: Vorschau in Zeilen, gewählte Farben als Chips */
-.alpha-stage { min-height: 0; padding: 40px 24px; }
-.alpha-lines { display: grid; justify-items: center; row-gap: 4px; }
+/* Alphabet-Set: kompakte Karte, Vorschau links, Auswahl rechts */
+.alpha { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 40px; align-items: center; }
+@media (max-width: 860px) { .alpha { grid-template-columns: 1fr; gap: 24px; } }
+.alpha .block-head { margin-bottom: 0; }
+.alpha-scene { border-radius: 22px; background: #f1eeeb; box-shadow: inset 0 0 0 1px #e3ded9; padding: 28px 20px; display: grid; place-items: center; min-height: 200px; }
+.alpha-lines { display: grid; justify-items: center; row-gap: 2px; }
 .alpha-row { display: flex; justify-content: center; }
-.alpha-picked { display: flex; flex-wrap: wrap; gap: 6px; min-height: 34px; align-items: center; }
+.cdot[aria-pressed="true"] { outline: 2px solid var(--fg); outline-offset: 2px; }
+.cdot:disabled { opacity: .35; cursor: default; }
 
 /* Über uns: Bild links, Text rechts (wie Material, gespiegelt) */
 .about { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); gap: 48px; align-items: center; }
