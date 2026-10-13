@@ -460,6 +460,23 @@
   </div>
 </aside>
 
+<!-- Popup: Rabatt für die erste Bestellung (erscheint nach 3 Sekunden, siehe app.js) -->
+<div class="scrim promo-scrim" id="promoScrim" hidden></div>
+<section class="promo" id="promo" role="dialog" aria-modal="true" aria-labelledby="promoTitle" hidden>
+  <button class="icon-btn promo-close" id="promoClose" type="button" aria-label="Schliessen">×</button>
+  <p class="eyebrow">Newsletter</p>
+  <h2 id="promoTitle"></h2>
+  <p class="muted" id="promoText">Melde dich für unseren Newsletter an und erhalte deinen Rabattcode. Kein Spam, abmelden geht jederzeit.</p>
+  <form class="news-form" id="promoForm" novalidate>
+    <label class="sr-only" for="promoEmail">E-Mail-Adresse</label>
+    <input type="email" id="promoEmail" name="email" placeholder="Deine E-Mail-Adresse" autocomplete="email" required>
+    <input class="hp" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+    <button class="btn primary" type="submit">Code erhalten</button>
+  </form>
+  <p class="news-note" id="promoNote" role="status">Mehr dazu im <a href="rechtliches.html#datenschutz">Datenschutz</a>.</p>
+  <button class="btn link promo-no" id="promoNo" type="button">Nein danke</button>
+</section>
+
 <!-- Chat -->
 <button class="chat-fab" id="chatFab" aria-controls="chat" aria-expanded="false">
   <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3h11A2.5 2.5 0 0 1 20 5.5v8a2.5 2.5 0 0 1-2.5 2.5H10l-4.2 3.6c-.5.4-1.3.1-1.3-.6V16A2.5 2.5 0 0 1 4 13.5z" fill="currentColor"/></svg>

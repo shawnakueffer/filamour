@@ -490,3 +490,16 @@ footer a:hover, .foot-link:hover { color: var(--fg); }
 .news-code span { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
 .news-code b { font-size: 22px; letter-spacing: .06em; font-variant-numeric: tabular-nums; }
 .news-code p { grid-column: 1 / -1; font-size: 13px; color: var(--muted); }
+
+/* Popup: Rabatt für die erste Bestellung. Computer: mittig. Handy: Karte von unten. */
+.promo-scrim { z-index: 60; }
+.promo { position: fixed; z-index: 61; left: 50%; top: 50%; width: min(440px, calc(100% - 32px)); background: var(--surface); border-radius: 22px; padding: 30px 28px 22px; box-shadow: 0 30px 80px -20px rgba(0,0,0,.35); display: grid; gap: 10px; opacity: 0; transform: translate(-50%, -46%); transition: opacity .22s, transform .22s; }
+.promo.on { opacity: 1; transform: translate(-50%, -50%); }
+.promo h2 { font-size: clamp(26px, 6vw, 32px); padding-right: 36px; }
+.promo-close { position: absolute; top: 14px; right: 14px; }
+.promo-no { justify-self: center; font-size: 14px; }
+@media (max-width: 560px) {
+  .promo { left: 0; right: 0; top: auto; bottom: 0; width: 100%; border-radius: 22px 22px 0 0; padding-bottom: calc(22px + env(safe-area-inset-bottom, 0px)); transform: translateY(24px); }
+  .promo.on { transform: none; }
+}
+@media (prefers-reduced-motion: reduce) { .promo { transition: none; } }

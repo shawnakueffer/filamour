@@ -521,11 +521,66 @@ $("#newsForm").addEventListener("submit", async (e) => {
       f.hidden = true;
       note.textContent = `Fast geschafft! Wir haben dir eine E-Mail an ${email} geschickt. Klick auf den Link darin, dann bekommst du deinen Code.`;
     } else showNewsCode(`Danke! ${email} ist angemeldet.`);
+    store.set(PROMO_KEY, { done: true }); // angemeldet: Popup nie mehr zeigen
   } catch (err) {
     note.textContent = err.message || "Das hat leider nicht geklappt. Bitte versuch es nochmals."; note.classList.add("err");
     btn.disabled = false; btn.textContent = "Code erhalten";
   }
 });
+
+/* ---------- Popup: Rabatt für die erste Bestellung ---------- */
+// Erscheint einmal nach 3 Sekunden. Nach «Nein danke» oder Schliessen 30 Tage Ruhe, nach einer Anmeldung nie mehr.
+// Wartet, solange Warenkorb oder Chat offen sind oder jemand gerade etwas eintippt.
+const PROMO_KEY = "filamour-promo";
+(function promo() {
+  const box = $("#promo"), scrim = $("#promoScrim"), form = $("#promoForm"), note = $("#promoNote");
+  const seen = store.get(PROMO_KEY, null);
+  if (seen?.done || (seen?.until && Date.now() < seen.until) || new URLSearchParams(location.search).has("newsletter")) return;
+  $("#promoTitle").textContent = `${NEWSLETTER.percent} % auf deine erste Bestellung`;
+  let lastFocus = null;
+  const busy = () => !$("#drawer").hidden || !$("#chat").hidden || document.activeElement?.matches?.("input, textarea");
+  function open() {
+    if (store.get(PROMO_KEY, null)?.done || !$("#newsCode").hidden) return; // inzwischen unten angemeldet
+    if (busy()) { setTimeout(open, 3000); return; }
+    lastFocus = document.activeElement;
+    background().forEach((el) => (el.inert = true));
+    scrim.hidden = false; box.hidden = false;
+    requestAnimationFrame(() => { scrim.classList.add("on"); box.classList.add("on"); $("#promoClose").focus(); });
+  }
+  function close() {
+    if (!store.get(PROMO_KEY, null)?.done) store.set(PROMO_KEY, { until: Date.now() + 30 * 86_400_000 });
+    background().forEach((el) => (el.inert = false));
+    scrim.classList.remove("on"); box.classList.remove("on");
+    setTimeout(() => { scrim.hidden = true; box.hidden = true; }, 220);
+    lastFocus?.focus?.();
+  }
+  $("#promoClose").onclick = close;
+  $("#promoNo").onclick = close;
+  scrim.onclick = close;
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !box.hidden) close(); });
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const email = form.email.value.trim(), btn = form.querySelector("button");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) { note.textContent = "Bitte gib eine gültige E-Mail-Adresse ein."; note.classList.add("err"); form.email.focus(); return; }
+    note.classList.remove("err"); btn.disabled = true; btn.textContent = "Einen Moment …";
+    try {
+      const r = await postJSON("/api/newsletter", { email, website: form.website.value });
+      store.set(PROMO_KEY, { done: true });
+      form.hidden = true; $("#promoNo").textContent = "Schliessen";
+      if (r?.confirm) {
+        $("#promoText").textContent = `Fast geschafft! Wir haben dir eine E-Mail an ${email} geschickt. Klick auf den Link darin, dann bekommst du deinen Code.`;
+        note.textContent = "";
+      } else {
+        $("#promoText").textContent = `Danke! Dein Code: ${NEWSLETTER.code}. Gib ihn beim Bezahlen im Feld «Aktionscode» ein.`;
+        note.textContent = "";
+      }
+    } catch (err) {
+      note.textContent = err.message || "Das hat leider nicht geklappt. Bitte versuch es nochmals."; note.classList.add("err");
+      btn.disabled = false; btn.textContent = "Code erhalten";
+    }
+  });
+  setTimeout(open, 3000);
+})();
 $("#newsCopy").onclick = async () => {
   const b = $("#newsCopy");
   try { await navigator.clipboard.writeText(NEWSLETTER.code); b.textContent = "Kopiert"; }
