@@ -79,8 +79,10 @@ export const ALPHABET = {
   letters: "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
   white: "pt-white",
   maxColors: 5,
-  price: { gross: 12740, klein: 7540 }, // PLATZHALTER: 26 × Einzelpreis, Preis bestätigen
+  price: { gross: { farbig: 9900, weiss: 8900 }, klein: { farbig: 5900, weiss: 4900 } }, // Rappen
 };
+// Vergleichspreis (durchgestrichen): was die 26 Buchstaben einzeln im Studio kosten. Muss ein echter Preis sein (PBV).
+export const alphabetSinglePrice = (sizeId) => [...ALPHABET.letters].length * (letterSize(sizeId)?.price ?? 0);
 // Farbe pro Buchstabe (Liste von Farb-IDs in der Reihenfolge von ALPHABET.letters)
 export function alphabetColors(variant, colors) {
   const palette = variant === "weiss" ? [ALPHABET.white] : colors;
@@ -154,7 +156,7 @@ export function describeItem(it) {
     } else return { error: "Diese Alphabet-Variante gibt es nicht." };
     const letters = [...ALPHABET.letters], perLetter = alphabetColors(it.variant, palette);
     return {
-      type, unit: ALPHABET.price[size.id],
+      type, unit: ALPHABET.price[size.id][it.variant],
       name: `Alphabet A–Z (${letters.length} Teile, ${size.name} ${cm(size.heightCm)})`,
       description: letters.map((ch, i) => `${ch} ${COLOR_BY_ID[perLetter[i]].name}`).join(" · "),
       meta: it.variant === "weiss" ? `${size.name}, ganz weiss` : `${size.name}, ${palette.length} ${palette.length === 1 ? "Farbe" : "Farben"} im Wechsel`,

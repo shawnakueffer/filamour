@@ -2,7 +2,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { validateCart, buildSession, summarizeSession } from "../server/checkout.js";
-import { isPickup, PRODUCTS, ALPHABET } from "../public/catalog.js";
+import { isPickup, PRODUCTS, ALPHABET, alphabetSinglePrice } from "../public/catalog.js";
 import { withServer } from "./helpers.js";
 
 const HALLO_MIA = ["pt-sakura", "bm-ice", "pt-white", "pt-peanut", "bm-ice", "pt-sakura", "pt-white", "pt-peanut", "bl-magenta"];
@@ -171,11 +171,16 @@ test("GET /api/order prüft die Session-ID und fasst zusammen", async () => {
 test("Alphabet: Preis je Grösse, ganz weiss oder bis zu 5 Farben im Wechsel", () => {
   const five = ["pt-sakura", "bm-ice", "es-matcha", "sp-lemon", "pm-purple"];
   const weiss = validateCart({ items: [{ type: "alphabet", size: "gross", variant: "weiss", colors: ["bl-red"], qty: 1, price: 1 }] }).items[0];
-  assert.equal(weiss.unit, ALPHABET.price.gross, "Preis vom Server");
+  assert.equal(weiss.unit, 8900, "gross weiss CHF 89, Preis vom Server");
   assert.equal(weiss.name, "Alphabet A–Z (26 Teile, Gross 6,5 cm)");
   assert.match(weiss.description, /^A Cotton White · B Cotton White .* Z Cotton White$/, "weiss ignoriert mitgeschickte Farben");
   const bunt = validateCart({ items: [{ type: "alphabet", size: "klein", variant: "farbig", colors: five, qty: 2 }] }).items[0];
-  assert.equal(bunt.unit, ALPHABET.price.klein);
+  assert.equal(bunt.unit, 5900, "klein farbig CHF 59");
+  assert.equal(validateCart({ items: [{ type: "alphabet", size: "gross", variant: "farbig", colors: five, qty: 1 }] }).items[0].unit, 9900);
+  assert.equal(validateCart({ items: [{ type: "alphabet", size: "klein", variant: "weiss", qty: 1 }] }).items[0].unit, 4900);
+  assert.equal(alphabetSinglePrice("gross"), 26 * 490, "Vergleichspreis = echte Einzelpreise");
+  assert.equal(alphabetSinglePrice("klein"), 26 * 290);
+  for (const size of ["gross", "klein"]) for (const v of ["farbig", "weiss"]) assert.ok(ALPHABET.price[size][v] < alphabetSinglePrice(size), "Set günstiger als einzeln");
   assert.equal(bunt.name, "Alphabet A–Z (26 Teile, Klein 3 cm)");
   assert.match(bunt.description, /^A Sakura Pink · B Ice Blue · C Matcha Green · D Lemon Cream · E Muted Purple · F Sakura Pink/);
   assert.match(bunt.description, /Z Sakura Pink$/, "26. Buchstabe = Farbe 1 (26 = 5 × 5 + 1)");

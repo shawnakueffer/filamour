@@ -1,4 +1,4 @@
-import { SHOP, ANNOUNCEMENTS, ANNOUNCEMENTS_SHORT, CHARS, COLORS, COLOR_BY_ID, PRODUCTS, ALPHABET, alphabetColors, NEWSLETTER, POSTERS, POSTER_BY_ID, FRAME_STYLES, FRAME_BY_ID, LETTER_SIZES, letterSize, describeItem, pieces, designPrice, shippingFor, isPickup, PICKUP_NOTE, chf, cm } from "./catalog.js";
+import { SHOP, ANNOUNCEMENTS, ANNOUNCEMENTS_SHORT, CHARS, COLORS, COLOR_BY_ID, PRODUCTS, ALPHABET, alphabetColors, alphabetSinglePrice, NEWSLETTER, POSTERS, POSTER_BY_ID, FRAME_STYLES, FRAME_BY_ID, LETTER_SIZES, letterSize, describeItem, pieces, designPrice, shippingFor, isPickup, PICKUP_NOTE, chf, cm } from "./catalog.js";
 import { REVIEWS } from "./reviews.js";
 
 const $ = (s) => document.querySelector(s);
@@ -495,7 +495,10 @@ function renderAlpha() {
     const on = alpha.colors.includes(c.id);
     return `<button class="cdot" type="button" aria-pressed="${on}" aria-label="${c.name}" title="${c.name}" data-c="${c.id}" style="background:${c.hex}" ${!on && full ? "disabled" : ""}></button>`;
   }).join("");
-  $("#alphaPrice").textContent = chf(ALPHABET.price[alpha.size]);
+  // Set-Preis mit echtem Vergleichspreis (26 Buchstaben einzeln) durchgestrichen
+  const price = ALPHABET.price[alpha.size][alpha.variant], single = alphabetSinglePrice(alpha.size);
+  $("#alphaPrice").innerHTML = `<s class="was" aria-label="einzeln ${chf(single)}">${chf(single)}</s> <span class="now">${chf(price)}</span>`
+    + `<span class="save">einzeln ${chf(single)} · du sparst ${chf(single - price)}</span>`;
   $("#alphaAdd").disabled = Boolean(describeItem(alphaItem()).error);
   renderAlphaPreview();
 }
