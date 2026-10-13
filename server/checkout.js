@@ -61,6 +61,7 @@ export function buildSession(items, origin) {
     // Abholung: keine Adresse, keine Versandkosten, dafür ein Hinweis über dem Bezahlknopf
     ...(pickup ? { custom_text: { submit: { message: PICKUP_NOTE } } } : {
       shipping_address_collection: { allowed_countries: SHOP.shippingCountries },
+      custom_text: { shipping_address: { message: "Wir liefern nur in die Schweiz und nach Liechtenstein." } },
       shipping_options: [{
         shipping_rate_data: {
           type: "fixed_amount",

@@ -252,7 +252,7 @@ function renderCart() {
   $("#tShip").textContent = t.pickup ? "Abholung" : t.ship ? chf(t.ship) : "gratis";
   $("#pickupNote").hidden = !t.pickup;
   $("#pickupNote").textContent = PICKUP_NOTE;
-  $("#payNote").textContent = t.pickup ? "Zahlung im nächsten Schritt, sicher über Stripe." : "Lieferadresse und Zahlung im nächsten Schritt, sicher über Stripe.";
+  $("#payNote").textContent = t.pickup ? "Zahlung im nächsten Schritt, sicher über Stripe." : "Lieferung nur in die Schweiz und nach Liechtenstein. Lieferadresse und Zahlung im nächsten Schritt, sicher über Stripe.";
   const fs = $("#freeship");
   fs.hidden = !SHOP.freeShippingFrom || t.pickup;
   if (SHOP.freeShippingFrom && !t.pickup) {
