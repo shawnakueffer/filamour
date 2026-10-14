@@ -52,11 +52,11 @@ test("Kleine Buchstaben kosten CHF 2.90, ohne Grösse gilt gross", () => {
   const item = { text: "MIA", colors: ["bl-red", "bl-red", "bl-red"], qty: 1 };
   const big = validateCart({ items: [item] }).items[0];
   assert.equal(big.unit, 3 * 490);
-  assert.equal(big.name, "Bubble Letters «MIA» (3 Teile, Gross 6,5 cm)");
+  assert.equal(big.name, "Bubble Letters «MIA» (3 Teile, Gross 6,5 cm, matt)");
   assert.equal(validateCart({ items: [{ ...item, size: "gross" }] }).items[0].unit, 3 * 490);
   const small = validateCart({ items: [{ ...item, size: "klein", price: 1 }] }).items[0];
   assert.equal(small.unit, 3 * 290);
-  assert.equal(small.name, "Bubble Letters «MIA» (3 Teile, Klein 3 cm)");
+  assert.equal(small.name, "Bubble Letters «MIA» (3 Teile, Klein 3 cm, matt)");
   assert.match(validateCart({ items: [{ ...item, size: "riesig" }] }).error, /Grösse/);
   assert.match(validateCart({ items: [{ ...item, size: "__proto__" }] }).error, /Grösse/);
 });
@@ -69,7 +69,7 @@ test("Neue Farben sind bestellbar", () => {
 
 test("Nicht druckbare Zeichen landen nicht im Produktnamen", () => {
   const ok = validateCart({ items: [{ text: "Leo 2<b>", colors: ["bl-red", "bl-red", "bl-red", "bl-red", "bl-red", "bl-red", "bl-red", "bl-red"], qty: 1 }] });
-  assert.equal(ok.items[0].name, "Bubble Letters «LEO B» (4 Teile, Gross 6,5 cm)");
+  assert.equal(ok.items[0].name, "Bubble Letters «LEO B» (4 Teile, Gross 6,5 cm, matt)");
 });
 
 test("Gratisversand ab der Grenze, sonst Versandkosten", () => {
@@ -172,7 +172,7 @@ test("Alphabet: Preis je Grösse, ganz weiss oder bis zu 5 Farben im Wechsel", (
   const five = ["pt-sakura", "bm-ice", "es-matcha", "sp-lemon", "pm-purple"];
   const weiss = validateCart({ items: [{ type: "alphabet", size: "gross", variant: "weiss", colors: ["bl-red"], qty: 1, price: 1 }] }).items[0];
   assert.equal(weiss.unit, 8900, "gross weiss CHF 89, Preis vom Server");
-  assert.equal(weiss.name, "Alphabet A–Z (26 Teile, Gross 6,5 cm)");
+  assert.equal(weiss.name, "Alphabet A–Z (26 Teile, Gross 6,5 cm, matt)");
   assert.match(weiss.description, /^A Cotton White · B Cotton White .* Z Cotton White$/, "weiss ignoriert mitgeschickte Farben");
   const bunt = validateCart({ items: [{ type: "alphabet", size: "klein", variant: "farbig", colors: five, qty: 2 }] }).items[0];
   assert.equal(bunt.unit, 5900, "klein farbig CHF 59");
@@ -181,7 +181,7 @@ test("Alphabet: Preis je Grösse, ganz weiss oder bis zu 5 Farben im Wechsel", (
   assert.equal(alphabetSinglePrice("gross"), 26 * 490, "Vergleichspreis = echte Einzelpreise");
   assert.equal(alphabetSinglePrice("klein"), 26 * 290);
   for (const size of ["gross", "klein"]) for (const v of ["farbig", "weiss"]) assert.ok(ALPHABET.price[size][v] < alphabetSinglePrice(size), "Set günstiger als einzeln");
-  assert.equal(bunt.name, "Alphabet A–Z (26 Teile, Klein 3 cm)");
+  assert.equal(bunt.name, "Alphabet A–Z (26 Teile, Klein 3 cm, matt)");
   assert.match(bunt.description, /^A Sakura Pink · B Ice Blue · C Matcha Green · D Lemon Cream · E Muted Purple · F Sakura Pink/);
   assert.match(bunt.description, /Z Sakura Pink$/, "26. Buchstabe = Farbe 1 (26 = 5 × 5 + 1)");
   assert.equal(validateCart({ items: [{ type: "alphabet", size: "klein", variant: "farbig", colors: ["bl-red"], qty: 1 }] }).items[0].meta, "Klein, 1 Farbe im Wechsel");
@@ -193,4 +193,20 @@ test("Alphabet: Preis je Grösse, ganz weiss oder bis zu 5 Farben im Wechsel", (
   ALPHABET.active = false;
   try { assert.match(validateCart({ items: [{ type: "alphabet", size: "gross", variant: "weiss", qty: 1 }] }).error, /im Moment nicht/); }
   finally { ALPHABET.active = true; }
+});
+
+test("Glänzend kostet 50 Rappen mehr pro Buchstabe, matt ist Standard", () => {
+  const item = { text: "MIA", colors: ["bl-red", "bl-red", "bl-red"], qty: 1 };
+  assert.equal(validateCart({ items: [item] }).items[0].unit, 3 * 490, "ohne Angabe matt");
+  const glanz = validateCart({ items: [{ ...item, finish: "glaenzend" }] }).items[0];
+  assert.equal(glanz.unit, 3 * 540);
+  assert.equal(glanz.name, "Bubble Letters «MIA» (3 Teile, Gross 6,5 cm, glänzend)");
+  assert.equal(glanz.meta, "Gross, glänzend, 3 Buchstaben à CHF 5.40");
+  assert.equal(validateCart({ items: [{ ...item, size: "klein", finish: "glaenzend" }] }).items[0].unit, 3 * 340);
+  assert.equal(validateCart({ items: [{ ...item, finish: "matt" }] }).items[0].unit, 3 * 490);
+  for (const bad of ["seidenmatt", "__proto__"]) assert.match(validateCart({ items: [{ ...item, finish: bad }] }).error, /Oberfläche/, bad);
+  // Alphabet gibt es nur matt: eine mitgeschickte Oberfläche ändert nichts
+  const abc = validateCart({ items: [{ type: "alphabet", size: "gross", variant: "weiss", finish: "glaenzend", qty: 1 }] }).items[0];
+  assert.equal(abc.unit, 8900);
+  assert.match(abc.name, /, matt\)$/);
 });

@@ -1,4 +1,4 @@
-import { SHOP, ANNOUNCEMENTS, ANNOUNCEMENTS_SHORT, CHARS, COLORS, COLOR_BY_ID, PRODUCTS, ALPHABET, alphabetColors, alphabetSinglePrice, NEWSLETTER, POSTERS, POSTER_BY_ID, FRAME_STYLES, FRAME_BY_ID, LETTER_SIZES, letterSize, describeItem, pieces, designPrice, shippingFor, isPickup, PICKUP_NOTE, chf, cm } from "./catalog.js";
+import { SHOP, ANNOUNCEMENTS, ANNOUNCEMENTS_SHORT, CHARS, COLORS, COLOR_BY_ID, PRODUCTS, LETTER_FINISHES, letterFinish, letterPrice, ALPHABET, alphabetColors, alphabetSinglePrice, NEWSLETTER, POSTERS, POSTER_BY_ID, FRAME_STYLES, FRAME_BY_ID, LETTER_SIZES, letterSize, describeItem, pieces, designPrice, shippingFor, isPickup, PICKUP_NOTE, chf, cm } from "./catalog.js";
 import { REVIEWS } from "./reviews.js";
 
 const $ = (s) => document.querySelector(s);
@@ -66,7 +66,9 @@ if (String(state.text).trim().toUpperCase() === "HALLO MIA") { state.text = "MIA
 if (!Array.isArray(state.colors) || !state.colors.length) state.colors = [...state.text].map((_, i) => EXAMPLE[i % EXAMPLE.length]);
 state.colors = state.colors.map((id) => (COLOR_BY_ID[id] ? id : "pt-sakura"));
 if (!COLOR_BY_ID[state.fill]) state.fill = "pt-sakura";
-if (!letterSize(state.size)) state.size = LETTER_SIZES[0].id;
+state.size = letterSize(state.size)?.id || LETTER_SIZES[0].id;          // fehlt oder unbekannt → Standard
+state.finish = letterFinish(state.finish)?.id || LETTER_FINISHES[0].id;
+const glossFilter = (finishId) => (finishId === "glaenzend" ? "puff-gloss" : "puff"); // Vorschau glänzend wie lackiert
 let sel = -1;         // gewählter Buchstabe
 let qty = 1;
 let editing = null;   // id eines Warenkorb-Eintrags, der gerade bearbeitet wird
@@ -96,7 +98,7 @@ function render() {
     if (c === " ") { if (word) { html += `<span class="word">${word}</span>`; word = ""; } return; }
     if (!CHARS.includes(c)) return;
     const col = COLOR_BY_ID[state.colors[i]];
-    word += `<button class="glyph${i === sel ? " sel" : ""}${i === popIdx ? " pop" : ""}" data-i="${i}" aria-pressed="${i === sel}" aria-label="${c}, ${col.name}" title="${c} · ${col.name}">${glyphSVG(c, col, px)}</button>`;
+    word += `<button class="glyph${i === sel ? " sel" : ""}${i === popIdx ? " pop" : ""}" data-i="${i}" aria-pressed="${i === sel}" aria-label="${c}, ${col.name}" title="${c} · ${col.name}">${glyphSVG(c, col, px, glossFilter(state.finish))}</button>`;
   });
   if (word) html += `<span class="word">${word}</span>`;
   line.innerHTML = html || `<span class="empty-hint">Tippe unten ein Wort ein</span>`;
@@ -115,11 +117,14 @@ function render() {
     : `<span class="muted" style="font-size:14px">Noch keine Buchstaben.</span>`;
 
   // Grösse und Preis
-  const size = letterSize(state.size);
+  const size = letterSize(state.size), finish = letterFinish(state.finish);
   document.querySelectorAll("#sizeOpts [data-id]").forEach((b) => b.setAttribute("aria-checked", b.dataset.id === size.id));
+  document.querySelectorAll("#finishOpts [data-id]").forEach((b) => b.setAttribute("aria-checked", b.dataset.id === finish.id));
+  $("#finishNote").hidden = !finish.note;
+  $("#finishNote").textContent = finish.note || "";
   const n = validIdx().length;
-  const unit = designPrice(state.text, state.colors, size.id);
-  $("#pieceInfo").textContent = n ? `${n} ${n === 1 ? "Buchstabe" : "Buchstaben"} à ${chf(size.price)}${qty > 1 ? ` · ${qty}×` : ""}` : "";
+  const unit = designPrice(state.text, state.colors, size.id, finish.id);
+  $("#pieceInfo").textContent = n ? `${n} ${n === 1 ? "Buchstabe" : "Buchstaben"} à ${chf(letterPrice(size, finish))}${qty > 1 ? ` · ${qty}×` : ""}` : "";
   $("#price").textContent = chf(unit * qty);
   $("#qtyVal").textContent = qty;
   $("#qtyMinus").disabled = qty <= 1;
@@ -139,6 +144,11 @@ function render() {
   store.set("filamour-studio", state);
   popIdx = -1;
 }
+
+function buildFinishes() {
+  $("#finishOpts").innerHTML = LETTER_FINISHES.map((f) => `<button class="opt plain" role="radio" aria-checked="false" data-id="${f.id}">${f.name}${f.surcharge ? ` · + ${chf(f.surcharge)} pro Buchstabe` : ""}</button>`).join("");
+}
+$("#finishOpts").addEventListener("click", (e) => { const b = e.target.closest("[data-id]"); if (!b) return; state.finish = b.dataset.id; $("#added").textContent = ""; render(); });
 
 function buildSizes() {
   $("#sizeOpts").innerHTML = LETTER_SIZES.map((z) => `<button class="opt plain" role="radio" aria-checked="false" data-id="${z.id}">${z.name} · ${cm(z.heightCm)} · ${chf(z.price)}</button>`).join("");
@@ -188,7 +198,7 @@ const saveCart = () => store.set("filamour-cart", cart);
 const uid = () => Math.random().toString(36).slice(2, 10);
 
 $("#addToCart").onclick = () => {
-  const item = { type: "letters", text: state.text.toUpperCase().trim(), colors: [], size: state.size, qty };
+  const item = { type: "letters", text: state.text.toUpperCase().trim(), colors: [], size: state.size, finish: state.finish, qty };
   // führende Leerzeichen entfernen, damit Farben zum Text passen
   const lead = state.text.length - state.text.trimStart().length;
   item.colors = state.colors.slice(lead, lead + item.text.length);
@@ -235,7 +245,7 @@ function renderCart() {
   $("#cartFoot").hidden = false;
   body.innerHTML = cart.map((it) => {
     const d = describeItem(it), letters = d.type === "letters";
-    const prev = letters ? wordsHTML(it.text, it.colors, 30)
+    const prev = letters ? wordsHTML(it.text, it.colors, 30, { filter: glossFilter(it.finish) })
       : d.type === "alphabet" ? alphaMini(it)
       : d.type === "poster" ? posterMini(POSTER_BY_ID[it.variant])
       : `<div class="mini-frame">${frameSVG(it.style, COLOR_BY_ID[it.color].hex)}</div>`;
@@ -273,7 +283,7 @@ $("#cartBody").addEventListener("click", (e) => {
   if (act === "minus") it.qty = Math.max(1, it.qty - 1);
   if (act === "remove") cart = cart.filter((c) => c !== it);
   if (act === "edit") {
-    state.text = it.text; state.colors = it.colors.slice(); state.size = letterSize(it.size).id; editing = it.id; qty = it.qty; sel = -1;
+    state.text = it.text; state.colors = it.colors.slice(); state.size = letterSize(it.size).id; state.finish = letterFinish(it.finish).id; editing = it.id; qty = it.qty; sel = -1;
     $("#txt").value = it.text; $("#added").textContent = "Du bearbeitest ein Design aus dem Warenkorb.";
     closeCart(); render(); $("#studio").scrollIntoView(); return;
   }
@@ -307,7 +317,7 @@ $("#checkout").onclick = async () => {
   msg.textContent = "";
   btn.disabled = true; btn.textContent = "Einen Moment …";
   try {
-    const data = await postJSON("/api/checkout", { items: cart.map(({ type, text, colors, size, variant, style, color, qty }) => ({ type, text, colors, size, variant, style, color, qty })) });
+    const data = await postJSON("/api/checkout", { items: cart.map(({ type, text, colors, size, finish, variant, style, color, qty }) => ({ type, text, colors, size, finish, variant, style, color, qty })) });
     if (!data.url) throw new Error("Die Zahlung konnte nicht gestartet werden. Bitte versuche es nochmals.");
     location.href = data.url;
   } catch (err) {
@@ -552,7 +562,7 @@ function renderAnnounce() {
 // Texte zu den zwei Grössen (gross = Standard, klein)
 const [BIG, SMALL] = LETTER_SIZES;
 function sizeDims() { return `Grosse Buchstaben sind ${cm(BIG.heightCm)} hoch und ${cm(BIG.depthCm)} dick, kleine ${cm(SMALL.heightCm)} hoch und ${cm(SMALL.depthCm)} dick`; }
-$("#faqPrice").textContent = `Grosse Buchstaben kosten ${chf(BIG.price)}, kleine ${chf(SMALL.price)}, jeweils pro Buchstabe oder Zeichen. Ein Name mit vier Buchstaben kostet also ${chf(BIG.price * 4)} (gross) oder ${chf(SMALL.price * 4)} (klein). Der Preis wird im Studio laufend angezeigt.`;
+$("#faqPrice").textContent = `Grosse Buchstaben kosten ${chf(BIG.price)}, kleine ${chf(SMALL.price)}, jeweils pro Buchstabe oder Zeichen. Ein Name mit vier Buchstaben kostet also ${chf(BIG.price * 4)} (gross) oder ${chf(SMALL.price * 4)} (klein). Glänzend mit Klarlack kostet jeder Buchstabe ${chf(LETTER_FINISHES[1].surcharge)} mehr. Der Preis wird im Studio laufend angezeigt.`;
 // Wandbild und Fotorahmen: ein- und ausblenden über PRODUCTS.*.active in catalog.js
 const extrasActive = PRODUCTS.poster.active || PRODUCTS.frame.active;
 document.querySelectorAll("[data-product]").forEach((el) => {
@@ -667,7 +677,7 @@ window.addEventListener("scroll", () => $("#top").classList.toggle("scrolled", s
 
 $("#txt").value = state.text;
 renderPoster(); renderFrame(); renderAlpha();
-buildSizes(); buildShelf(); render(); renderCart();
+buildSizes(); buildFinishes(); buildShelf(); render(); renderCart();
 if (location.hash === "#warenkorb" && cart.length) openCart();
 try { motion(); } catch (e) { console.warn(e); } // Animationen dürfen den Shop nie blockieren
 
@@ -694,7 +704,7 @@ if (document.fonts) {
     letters: {
       label: "Bubble Letters", keys: ["buchstab", "letter", "bubble", "name", "studio", "namen"],
       topics: {
-        preis:     { label: "Preis", text: () => `Ein grosser Buchstabe kostet ${chf(BIG.price)}, ein kleiner ${chf(SMALL.price)}. Ein Name mit vier Buchstaben kommt also auf ${chf(BIG.price * 4)} (gross) oder ${chf(SMALL.price * 4)} (klein). Leerzeichen kosten nichts.`, actions: [["Zum Studio", "#studio"]] },
+        preis:     { label: "Preis", text: () => `Ein grosser Buchstabe kostet ${chf(BIG.price)}, ein kleiner ${chf(SMALL.price)}. Ein Name mit vier Buchstaben kommt also auf ${chf(BIG.price * 4)} (gross) oder ${chf(SMALL.price * 4)} (klein). Glänzend mit Klarlack kostet jeder Buchstabe ${chf(LETTER_FINISHES[1].surcharge)} mehr. Leerzeichen kosten nichts.`, actions: [["Zum Studio", "#studio"]] },
         varianten: { label: "Gestalten", text: () => "Im Studio tippst du deinen Text ein, tippst auf einen Buchstaben und wählst seine Farbe. Du siehst sofort, wie es aussieht, und legst es dann in den Warenkorb.", actions: [["Zum Studio", "#studio"]] },
         groesse:   { label: "Grösse", text: () => `Es gibt zwei Grössen: ${sizeDims()}. Die Breite hängt vom Buchstaben ab: Ein I ist schmal, ein M oder W breiter.`, actions: [["Grösse ansehen", "#groesse"]] },
         farben:    { label: "Farben", text: () => `Es gibt ${COLORS.length} Farben, zum Beispiel ${colorSample()}. Jeder Buchstabe kann eine eigene Farbe haben.`, actions: [["Farben im Studio", "#studio"]] },

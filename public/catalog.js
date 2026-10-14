@@ -22,6 +22,21 @@ export const LETTER_SIZES = [
 const byId = (list) => Object.assign(Object.create(null), Object.fromEntries(list.map((x) => [x.id, x])));
 
 export const SIZE_BY_ID = byId(LETTER_SIZES);
+// Oberfläche der Buchstaben (nicht beim Alphabet: das gibt es nur matt). surcharge = Aufpreis in Rappen pro Buchstabe
+export const LETTER_FINISHES = [
+  { id: "matt", name: "Matt", surcharge: 0 },
+  { id: "glaenzend", name: "Glänzend", surcharge: 50,
+    note: "Glänzende Buchstaben werden von Hand mit Klarlack lackiert. Der Lack kann in den ersten Tagen noch leicht riechen, lass sie am besten kurz auslüften." },
+];
+export const FINISH_BY_ID = byId(LETTER_FINISHES);
+// Oberfläche eines Designs; ältere Warenkörbe ohne Angabe sind matt. Unbekannt → null
+export function letterFinish(id) {
+  const key = id || LETTER_FINISHES[0].id;
+  return Object.hasOwn(FINISH_BY_ID, key) ? FINISH_BY_ID[key] : null;
+}
+// Preis pro Buchstabe je Grösse und Oberfläche
+export const letterPrice = (size, finish) => size.price + finish.surcharge;
+
 // Grösse eines Designs; ältere Warenkörbe ohne Grösse sind «gross». Unbekannt → null
 export function letterSize(id) {
   const key = id || LETTER_SIZES[0].id;
@@ -133,13 +148,16 @@ export function describeItem(it) {
     if (list.some((p) => !COLOR_BY_ID[p.color])) return { error: "Eine gewählte Farbe ist nicht mehr verfügbar. Bitte das Design neu einfärben." };
     const size = letterSize(it.size);
     if (!size) return { error: "Diese Buchstaben-Grösse gibt es nicht mehr." };
+    const finish = letterFinish(it.finish);
+    if (!finish) return { error: "Diese Oberfläche gibt es nicht mehr." };
+    const each = letterPrice(size, finish);
     // nur, was auch gedruckt wird (z. B. «HALLO 123» → «HALLO»)
     const text = [...String(it.text).toUpperCase()].filter((c) => c === " " || CHARS.includes(c)).join("").replace(/\s+/g, " ").trim();
     return {
-      type, unit: list.length * size.price,
-      name: `Bubble Letters «${text}» (${list.length} Teile, ${size.name} ${cm(size.heightCm)})`,
+      type, unit: list.length * each,
+      name: `Bubble Letters «${text}» (${list.length} Teile, ${size.name} ${cm(size.heightCm)}, ${finish.name.toLowerCase()})`,
       description: list.map((p) => `${p.ch} ${COLOR_BY_ID[p.color].name}`).join(" · "),
-      meta: `${size.name}, ${list.length} Buchstaben à ${chf(size.price)}`,
+      meta: `${size.name}, ${finish.name.toLowerCase()}, ${list.length} Buchstaben à ${chf(each)}`,
     };
   }
   if (type === "alphabet") {
@@ -157,7 +175,7 @@ export function describeItem(it) {
     const letters = [...ALPHABET.letters], perLetter = alphabetColors(it.variant, palette);
     return {
       type, unit: ALPHABET.price[size.id][it.variant],
-      name: `Alphabet A–Z (${letters.length} Teile, ${size.name} ${cm(size.heightCm)})`,
+      name: `Alphabet A–Z (${letters.length} Teile, ${size.name} ${cm(size.heightCm)}, matt)`,
       description: letters.map((ch, i) => `${ch} ${COLOR_BY_ID[perLetter[i]].name}`).join(" · "),
       meta: it.variant === "weiss" ? `${size.name}, ganz weiss` : `${size.name}, ${palette.length} ${palette.length === 1 ? "Farbe" : "Farben"} im Wechsel`,
     };
@@ -177,8 +195,9 @@ export function describeItem(it) {
   return { error: "Unbekannter Artikel." };
 }
 
-export function designPrice(text, colors, sizeId) {
-  return pieces(text, colors).length * (letterSize(sizeId)?.price ?? 0);
+export function designPrice(text, colors, sizeId, finishId) {
+  const size = letterSize(sizeId), finish = letterFinish(finishId);
+  return size && finish ? pieces(text, colors).length * letterPrice(size, finish) : 0;
 }
 
 // Enthält die Bestellung einen Artikel, der nur abgeholt werden kann, wird die ganze Bestellung abgeholt
