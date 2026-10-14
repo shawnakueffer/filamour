@@ -32,48 +32,48 @@
     <filter id="puff" x="-25%" y="-25%" width="150%" height="160%" color-interpolation-filters="sRGB">
       <!-- Höhenkarte: breit weichgezeichnet, damit sich die Wölbung über die ganze Strichbreite zieht (wie ein Ballon) -->
       <feGaussianBlur in="SourceAlpha" stdDeviation="7" result="b"/>
-      <feDiffuseLighting in="b" surfaceScale="7" diffuseConstant="1.36" lighting-color="#fff" result="d0"><feDistantLight azimuth="235" elevation="46"/></feDiffuseLighting>
-      <feGaussianBlur in="d0" stdDeviation="1.6" result="d"/><!-- glättet das Licht, sonst entsteht ein Körnchen-Muster -->
+      <feDiffuseLighting in="b" surfaceScale="3" diffuseConstant="1.03" lighting-color="#fff" result="d0"><feDistantLight azimuth="235" elevation="76"/></feDiffuseLighting>
+      <feGaussianBlur in="d0" stdDeviation="2.4" result="d"/><!-- glättet das Licht, sonst entsteht ein Körnchen-Muster -->
       <feComposite in="d" in2="SourceAlpha" operator="in" result="di"/>
       <feBlend in="SourceGraphic" in2="di" mode="multiply" result="shade"/>
-      <feSpecularLighting in="b" surfaceScale="7" specularConstant="0.5" specularExponent="12" lighting-color="#fff" result="s0"><feDistantLight azimuth="235" elevation="52"/></feSpecularLighting>
+      <feSpecularLighting in="b" surfaceScale="4.5" specularConstant="0.4" specularExponent="14" lighting-color="#fff" result="s0"><feDistantLight azimuth="235" elevation="62"/></feSpecularLighting>
       <feGaussianBlur in="s0" stdDeviation="1.6" result="s"/>
       <feComposite in="s" in2="SourceAlpha" operator="in" result="si"/>
-      <feComposite in="si" in2="shade" operator="arithmetic" k1="0" k2="0.35" k3="1" k4="0" result="lit"/>
+      <feComposite in="si" in2="shade" operator="arithmetic" k1="0" k2="0.18" k3="1" k4="0" result="lit"/>
       <!-- weich abgedunkelter Rand (Umgebungsschatten) -->
       <feGaussianBlur in="SourceAlpha" stdDeviation="6" result="rb"/>
       <feComposite in="SourceAlpha" in2="rb" operator="arithmetic" k1="0" k2="1" k3="-1" k4="0" result="edge"/>
-      <feFlood flood-color="#000" flood-opacity="0.14"/><feComposite in2="edge" operator="in" result="edgeShade"/>
+      <feFlood flood-color="#000" flood-opacity="0.07"/><feComposite in2="edge" operator="in" result="edgeShade"/>
       <feComposite in="edgeShade" in2="lit" operator="over" result="lit2"/>
       <feComposite in="lit2" in2="SourceAlpha" operator="in" result="lit3"/>
-      <!-- Schlagschatten -->
-      <feGaussianBlur in="SourceAlpha" stdDeviation="4" result="sb"/>
-      <feOffset in="sb" dx="2" dy="6" result="so"/>
-      <feComponentTransfer in="so" result="sh"><feFuncA type="linear" slope="0.30"/></feComponentTransfer>
+      <!-- Schatten gleichmässig rundherum, wie eine feine Umrandung (nicht versetzt, sonst wirkt z. B. das M schief) -->
+      <feGaussianBlur in="SourceAlpha" stdDeviation="1" result="sb"/>
+      <feOffset in="sb" dx="0" dy="0" result="so"/>
+      <feComponentTransfer in="so" result="sh"><feFuncA type="linear" slope="0.45"/></feComponentTransfer>
       <feMerge><feMergeNode in="sh"/><feMergeNode in="lit3"/></feMerge>
     </filter>
     <!-- glänzend (Klarlack): gleiche Wölbung, stärkeres Glanzlicht -->
     <filter id="puff-gloss" x="-25%" y="-25%" width="150%" height="160%" color-interpolation-filters="sRGB">
       <!-- Höhenkarte: breit weichgezeichnet, damit sich die Wölbung über die ganze Strichbreite zieht (wie ein Ballon) -->
       <feGaussianBlur in="SourceAlpha" stdDeviation="7" result="b"/>
-      <feDiffuseLighting in="b" surfaceScale="7" diffuseConstant="1.36" lighting-color="#fff" result="d0"><feDistantLight azimuth="235" elevation="46"/></feDiffuseLighting>
-      <feGaussianBlur in="d0" stdDeviation="1.6" result="d"/><!-- glättet das Licht, sonst entsteht ein Körnchen-Muster -->
+      <feDiffuseLighting in="b" surfaceScale="3" diffuseConstant="1.03" lighting-color="#fff" result="d0"><feDistantLight azimuth="235" elevation="76"/></feDiffuseLighting>
+      <feGaussianBlur in="d0" stdDeviation="2.4" result="d"/><!-- glättet das Licht, sonst entsteht ein Körnchen-Muster -->
       <feComposite in="d" in2="SourceAlpha" operator="in" result="di"/>
       <feBlend in="SourceGraphic" in2="di" mode="multiply" result="shade"/>
-      <feSpecularLighting in="b" surfaceScale="7" specularConstant="1.15" specularExponent="30" lighting-color="#fff" result="s0"><feDistantLight azimuth="235" elevation="52"/></feSpecularLighting>
+      <feSpecularLighting in="b" surfaceScale="4.5" specularConstant="0.7" specularExponent="22" lighting-color="#fff" result="s0"><feDistantLight azimuth="235" elevation="62"/></feSpecularLighting>
       <feGaussianBlur in="s0" stdDeviation="1.6" result="s"/>
       <feComposite in="s" in2="SourceAlpha" operator="in" result="si"/>
-      <feComposite in="si" in2="shade" operator="arithmetic" k1="0" k2="0.85" k3="1" k4="0" result="lit"/>
+      <feComposite in="si" in2="shade" operator="arithmetic" k1="0" k2="0.42" k3="1" k4="0" result="lit"/>
       <!-- weich abgedunkelter Rand (Umgebungsschatten) -->
       <feGaussianBlur in="SourceAlpha" stdDeviation="6" result="rb"/>
       <feComposite in="SourceAlpha" in2="rb" operator="arithmetic" k1="0" k2="1" k3="-1" k4="0" result="edge"/>
-      <feFlood flood-color="#000" flood-opacity="0.14"/><feComposite in2="edge" operator="in" result="edgeShade"/>
+      <feFlood flood-color="#000" flood-opacity="0.07"/><feComposite in2="edge" operator="in" result="edgeShade"/>
       <feComposite in="edgeShade" in2="lit" operator="over" result="lit2"/>
       <feComposite in="lit2" in2="SourceAlpha" operator="in" result="lit3"/>
-      <!-- Schlagschatten -->
-      <feGaussianBlur in="SourceAlpha" stdDeviation="4" result="sb"/>
-      <feOffset in="sb" dx="2" dy="6" result="so"/>
-      <feComponentTransfer in="so" result="sh"><feFuncA type="linear" slope="0.30"/></feComponentTransfer>
+      <!-- Schatten gleichmässig rundherum, wie eine feine Umrandung (nicht versetzt, sonst wirkt z. B. das M schief) -->
+      <feGaussianBlur in="SourceAlpha" stdDeviation="1" result="sb"/>
+      <feOffset in="sb" dx="0" dy="0" result="so"/>
+      <feComponentTransfer in="so" result="sh"><feFuncA type="linear" slope="0.45"/></feComponentTransfer>
       <feMerge><feMergeNode in="sh"/><feMergeNode in="lit3"/></feMerge>
     </filter>
   </defs>
