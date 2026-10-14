@@ -187,7 +187,7 @@ section.block.alt { background: var(--band); }
 /* Fotos */
 .scene.photo { margin: 0; background: #ece4da; }
 .scene.photo img { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: cover; }
-.scene.photo img.pos-r { object-position: 80% 50%; }
+.scene.photo img.pos-r { object-position: 85% 50%; }
 /* Box */
 /* Kühlschrank */
 /* Wandbild */
