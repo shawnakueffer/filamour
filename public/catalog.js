@@ -72,7 +72,7 @@ export const COLORS = [
   { id: "bl-gray",    name: "Gray",            hex: "#8E9089" },
   { id: "bl-bluegrey",name: "Blue Grey",       hex: "#5B6579" },
   { id: "bl-black",   name: "Black",           hex: "#1A1A1A" },
-  { id: "pt-white",   name: "Cotton White",    hex: "#EEE8DF" },
+  { id: "pt-white",   name: "Cotton White",    hex: "#FFFFFF" },
   { id: "pt-peanut",  name: "Peanut",          hex: "#D1A574" },
   { id: "pt-sakura",  name: "Sakura Pink",     hex: "#F1B3C5" },
   { id: "pt-sapph",   name: "Sapphire Blue",   hex: "#22509F" },
