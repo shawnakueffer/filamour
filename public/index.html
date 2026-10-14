@@ -92,10 +92,8 @@
       </div>
     </div>
     <div class="hero-visual" aria-hidden="true">
-      <div class="hv-wall">
-        <div class="art" data-word="NORA" data-colors="pt-sakura,bm-ice,pt-peanut,pt-white" data-fit="0.78" data-max="120"></div>
-      </div>
-      <div class="hv-rail"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+      <!-- Läuft stumm in Schlaufe (bei «Bewegung reduzieren» nur das fertige Bild, siehe app.js). Neues Video = neuer Dateiname (Browser-Cache 30 Tage). -->
+      <video class="hero-video" id="heroVideo" src="media/hero-hannah.mp4" muted playsinline autoplay loop preload="auto"></video>
     </div>
   </section>
 
@@ -306,8 +304,7 @@
   <section class="block" id="ueber-uns">
     <div class="container about">
       <figure class="about-visual">
-        <!-- Sobald es ein Foto gibt: <img src="images/lynn-shawna.webp" width="…" height="…" alt="Lynn und Shawna …" loading="lazy"> statt dem div -->
-        <div class="art stack" data-lines="LYNN|&|SHAWNA" data-colors="pt-sakura,bm-ice,es-matcha,sp-lemon,pm-purple,es-apricot" data-fit="0.8" data-max="96" aria-hidden="true"></div>
+        <img src="images/lynn-shawna.jpg" width="900" height="1350" alt="Lynn und Shawna, die Schwestern hinter Filamour, lächelnd im Garten" loading="lazy">
       </figure>
       <div class="about-copy">
         <div class="block-head">

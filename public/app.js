@@ -458,6 +458,17 @@ function renderDims() {
   </svg>`;
 }
 
+/* ---------- Video im Kopf ---------- */
+// Läuft in Schlaufe. Bei «Bewegung reduzieren» stattdessen direkt das fertige Bild zeigen.
+(function heroVideo() {
+  const v = $("#heroVideo"); if (!v) return;
+  const showEnd = () => { v.pause(); if (v.duration) v.currentTime = Math.max(0, v.duration - 0.05); };
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    v.removeAttribute("autoplay"); v.loop = false;
+    if (v.readyState >= 1) showEnd(); else v.addEventListener("loadedmetadata", showEnd, { once: true });
+  }
+})();
+
 /* ---------- Alphabet-Set ---------- */
 const alpha = { size: LETTER_SIZES[0].id, variant: "farbig", colors: ["pt-sakura", "bm-ice", "es-matcha", "sp-lemon", "pm-purple"] };
 const alphaItem = () => ({ type: "alphabet", size: alpha.size, variant: alpha.variant, colors: alpha.variant === "farbig" ? alpha.colors.slice() : [] });

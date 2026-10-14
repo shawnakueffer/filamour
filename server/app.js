@@ -224,7 +224,7 @@ export function createApp({ stripe = null, store = null, mailer = null, brevo = 
     dotfiles: "ignore",
     setHeaders(res, file) {
       // Schriften und Bilder ändern sich selten; JS/CSS immer frisch prüfen, damit Preise sofort stimmen
-      res.set("cache-control", /\.(woff2|jpe?g|png|webp|svg|ico)$/.test(file) ? "public, max-age=2592000" : "no-cache");
+      res.set("cache-control", /\.(woff2|jpe?g|png|webp|svg|ico|mp4)$/.test(file) ? "public, max-age=2592000" : "no-cache");
     },
   }));
 

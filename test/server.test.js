@@ -113,6 +113,10 @@ test("Seiten, 404, Sicherheits-Header und SITE_URL", async () => {
 
     assert.equal((await fetch(`${base}/catalog.js`)).headers.get("cache-control"), "no-cache");
     assert.match((await fetch(`${base}/fonts/figtree-latin-400-normal.woff2`)).headers.get("cache-control"), /max-age/);
+    const video = await fetch(`${base}/media/hero-hannah.mp4`, { headers: { range: "bytes=0-99" } });
+    assert.equal(video.status, 206, "Video in Stücken (Safari/iPhone braucht das)");
+    assert.equal(video.headers.get("content-type"), "video/mp4");
+    assert.match(video.headers.get("cache-control"), /max-age/);
     assert.equal((await fetch(`${base}/healthz`)).status, 200);
     assert.match(await (await fetch(`${base}/robots.txt`)).text(), /Sitemap: https:\/\/filamour\.ch\/sitemap\.xml/);
 
