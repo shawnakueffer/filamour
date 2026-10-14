@@ -274,6 +274,7 @@ section.block.alt { background: var(--band); }
 @media (max-width: 860px) { .material { grid-template-columns: 1fr; gap: 32px; } .material-visual { order: -1; max-width: 360px; } }
 .material-copy { display: grid; gap: 4px; min-width: 0; }
 .facts { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px 28px; }
+.facts li.wide { grid-column: 1 / -1; }
 @media (max-width: 560px) { .facts { grid-template-columns: 1fr; gap: 18px; } }
 .facts li { display: grid; gap: 6px; padding-top: 14px; border-top: 2px solid var(--line); }
 .facts li:first-child { border-top-color: var(--accent); }
