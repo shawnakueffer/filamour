@@ -96,15 +96,21 @@ const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "
 const HEX_BY_NAME = new Map([...COLORS.map((c) => [c.name, c.hex]), ...POSTERS.map((p) => [p.colorName, p.bg])]);
 
 // dunkle Schrift auf hellen Farben, weisse auf dunklen
-function ink(hex) {
+export function ink(hex) {
   const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
   return 0.299 * r + 0.587 * g + 0.114 * b > 150 ? C.fg : "#ffffff";
 }
 
 // «M Sakura Pink · I Ice Blue» → farbige Buchstaben; andere Artikel → ein Farbpunkt mit Namen
+// «M Sakura Pink · I Ice Blue» → [{ ch: "M", hex, ink }, …]; null, wenn es keine Buchstaben mit Farben sind
+export function letterColors(description) {
+  const parts = String(description || "").split(" · ").map((p) => ({ ch: p.slice(0, p.indexOf(" ")), hex: HEX_BY_NAME.get(p.slice(p.indexOf(" ") + 1)) }));
+  return parts.length && parts.every((p) => p.ch.length === 1 && p.hex) ? parts.map((p) => ({ ...p, ink: ink(p.hex) })) : null;
+}
+
 function swatches(description) {
-  const parts = description.split(" · ").map((p) => ({ ch: p.slice(0, p.indexOf(" ")), hex: HEX_BY_NAME.get(p.slice(p.indexOf(" ") + 1)) }));
-  if (parts.length && parts.every((p) => p.ch.length === 1 && p.hex)) {
+  const parts = letterColors(description);
+  if (parts) {
     return parts.map((p) => `<span style="display:inline-block;min-width:16px;margin:0 4px 6px 0;padding:6px 7px;border-radius:9px;border:1px solid rgba(0,0,0,.08);background:${p.hex};color:${ink(p.hex)};font:700 16px/1 ${ROUND};text-align:center">${esc(p.ch)}</span>`).join("")
       + `<div style="margin-top:2px;font:13px/1.5 ${SANS};color:${C.muted}">${esc(description)}</div>`;
   }

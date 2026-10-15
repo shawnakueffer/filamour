@@ -91,8 +91,9 @@ test("Admin: aus ohne Passwort, sonst geschützt, CSV ohne Formel-Injection", as
     assert.equal((await fetch(`${base}/admin`, auth("falsch"))).status, 401);
     const page = await fetch(`${base}/admin`, auth("geheim"));
     assert.equal(page.status, 200);
-    const html = await page.text();
-    assert.match(html, /mia@example\.ch/);
+    assert.match(await (await fetch(`${base}/admin?tab=newsletter`, auth("geheim"))).text(), /mia@example\.ch/);
+    const html = await (await fetch(`${base}/admin?tab=anfragen`, auth("geheim"))).text();
+    assert.match(html, /&lt;script&gt;alert/);
     assert.ok(!html.includes("<script>alert"), "HTML wird escaped");
     const csv = await (await fetch(`${base}/admin/kontakt.csv`, auth("geheim"))).text();
     assert.match(csv, /"'=HYPERLINK/);
