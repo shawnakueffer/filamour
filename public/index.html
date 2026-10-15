@@ -43,13 +43,13 @@
       <!-- weich abgedunkelter Rand (Umgebungsschatten) -->
       <feGaussianBlur in="SourceAlpha" stdDeviation="6" result="rb"/>
       <feComposite in="SourceAlpha" in2="rb" operator="arithmetic" k1="0" k2="1" k3="-1" k4="0" result="edge"/>
-      <feFlood flood-color="#000" flood-opacity="0.07"/><feComposite in2="edge" operator="in" result="edgeShade"/>
+      <feFlood flood-color="#000" flood-opacity="0"/><feComposite in2="edge" operator="in" result="edgeShade"/>
       <feComposite in="edgeShade" in2="lit" operator="over" result="lit2"/>
       <feComposite in="lit2" in2="SourceAlpha" operator="in" result="lit3"/>
-      <!-- Schatten gleichmässig rundherum, wie eine feine Umrandung (nicht versetzt, sonst wirkt z. B. das M schief) -->
-      <feGaussianBlur in="SourceAlpha" stdDeviation="1" result="sb"/>
-      <feOffset in="sb" dx="0" dy="0" result="so"/>
-      <feComponentTransfer in="so" result="sh"><feFuncA type="linear" slope="0.45"/></feComponentTransfer>
+      <!-- Weicher Schatten, leicht nach unten, ohne sichtbare Umrandung -->
+      <feGaussianBlur in="SourceAlpha" stdDeviation="4" result="sb"/>
+      <feOffset in="sb" dx="0" dy="3" result="so"/>
+      <feComponentTransfer in="so" result="sh"><feFuncA type="linear" slope="0.5"/></feComponentTransfer>
       <feMerge><feMergeNode in="sh"/><feMergeNode in="lit3"/></feMerge>
     </filter>
     <!-- glänzend (Klarlack): gleiche Wölbung, stärkeres Glanzlicht -->
@@ -67,13 +67,13 @@
       <!-- weich abgedunkelter Rand (Umgebungsschatten) -->
       <feGaussianBlur in="SourceAlpha" stdDeviation="6" result="rb"/>
       <feComposite in="SourceAlpha" in2="rb" operator="arithmetic" k1="0" k2="1" k3="-1" k4="0" result="edge"/>
-      <feFlood flood-color="#000" flood-opacity="0.07"/><feComposite in2="edge" operator="in" result="edgeShade"/>
+      <feFlood flood-color="#000" flood-opacity="0"/><feComposite in2="edge" operator="in" result="edgeShade"/>
       <feComposite in="edgeShade" in2="lit" operator="over" result="lit2"/>
       <feComposite in="lit2" in2="SourceAlpha" operator="in" result="lit3"/>
-      <!-- Schatten gleichmässig rundherum, wie eine feine Umrandung (nicht versetzt, sonst wirkt z. B. das M schief) -->
-      <feGaussianBlur in="SourceAlpha" stdDeviation="1" result="sb"/>
-      <feOffset in="sb" dx="0" dy="0" result="so"/>
-      <feComponentTransfer in="so" result="sh"><feFuncA type="linear" slope="0.45"/></feComponentTransfer>
+      <!-- Weicher Schatten, leicht nach unten, ohne sichtbare Umrandung -->
+      <feGaussianBlur in="SourceAlpha" stdDeviation="4" result="sb"/>
+      <feOffset in="sb" dx="0" dy="3" result="so"/>
+      <feComponentTransfer in="so" result="sh"><feFuncA type="linear" slope="0.5"/></feComponentTransfer>
       <feMerge><feMergeNode in="sh"/><feMergeNode in="lit3"/></feMerge>
     </filter>
   </defs>
