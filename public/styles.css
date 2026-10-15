@@ -230,6 +230,7 @@ section.block.alt { background: var(--band); }
    (von 1080). Es ist darum um 1080/1000 höher als der Rahmen und mittig gesetzt – je 40 px liegen ausserhalb, unsichtbar. */
 .hero-visual { position: relative; border-radius: 24px; overflow: hidden; aspect-ratio: 3 / 2; max-width: 100%; background: #eceae6; }
 .hero-video { position: absolute; left: 50%; top: 50%; height: calc(100% * 1080 / 1000); width: auto; aspect-ratio: 16 / 9; max-width: none; transform: translate(-50%, -50%); }
+.hero-video::-webkit-media-controls-start-playback-button, .hero-video::-webkit-media-controls { display: none !important; -webkit-appearance: none; }
 
 /* Produkte */
 .products { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }

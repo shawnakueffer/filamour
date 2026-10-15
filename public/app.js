@@ -476,7 +476,18 @@ function renderDims() {
   if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
     v.removeAttribute("autoplay"); v.loop = false;
     if (v.readyState >= 1) showEnd(); else v.addEventListener("loadedmetadata", showEnd, { once: true });
+    return;
   }
+  // Handys (z. B. iPhone im Stromsparmodus) starten Videos manchmal nicht von selbst:
+  // dann selbst starten und spätestens bei der ersten Berührung oder beim Scrollen nochmals versuchen.
+  v.muted = true;
+  const play = () => { const p = v.play(); if (p) p.catch(() => {}); };
+  const events = ["touchstart", "pointerdown", "scroll", "keydown"];
+  const retry = () => { if (!v.paused) return events.forEach((e) => removeEventListener(e, retry)); play(); };
+  play();
+  v.addEventListener("canplay", () => { if (v.paused) play(); }, { once: true });
+  events.forEach((e) => addEventListener(e, retry, { passive: true }));
+  document.addEventListener("visibilitychange", () => { if (!document.hidden && v.paused) play(); });
 })();
 
 /* ---------- Alphabet-Set ---------- */
