@@ -488,6 +488,15 @@ footer a:hover, .foot-link:hover { color: var(--fg); }
 }
 
 /* Newsletter */
+/* Instagram */
+.insta { margin-top: 40px; display: flex; align-items: center; gap: 20px; padding: 24px 28px; border: 1.5px solid var(--line); border-radius: 24px; background: var(--surface); text-decoration: none; color: var(--fg); transition: border-color .15s, transform .3s; }
+.insta:hover { border-color: var(--hover-line); transform: translateY(-2px); }
+.insta-icon { flex: none; display: grid; place-items: center; width: 60px; height: 60px; border-radius: 18px; color: #fff; background: linear-gradient(45deg, #f6b347, #e1306c 55%, #8a3ab9); }
+.insta-copy { display: grid; gap: 2px; flex: 1; min-width: 0; }
+.insta-copy b { font-family: var(--font-display); font-size: 26px; font-weight: 500; line-height: 1.2; }
+.insta-btn { flex: 0 0 auto; display: inline-grid; place-items: center; }
+@media (max-width: 760px) { .insta { flex-wrap: wrap; padding: 20px; gap: 14px; } .insta-copy { flex-basis: calc(100% - 80px); } .insta-btn { flex: 1 1 100%; } }
+.foot-insta { display: inline-flex; align-items: center; gap: 6px; }
 .news-card { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); gap: 40px; align-items: center; background: var(--studio-bg); border: 1.5px solid var(--studio-line); border-radius: 28px; padding: 40px; }
 @media (max-width: 860px) { .news-card { grid-template-columns: 1fr; gap: 20px; padding: 28px 22px; } }
 .news-art { aspect-ratio: 16 / 9; max-width: 100%; display: grid; place-items: center; }
