@@ -62,7 +62,7 @@ export const CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZÄÃ&!?-.,:~";
 
 // Filamente (Farbtöne sind Bildschirm-Annäherungen)
 export const COLORS = [
-  { id: "bl-green",   name: "Bambu Green",     hex: "#00AE42" },
+  { id: "bl-green",   name: "Green",           hex: "#00AE42" },
   { id: "bl-mistle",  name: "Mistletoe Green", hex: "#3F8E43" },
   { id: "bl-yellow",  name: "Yellow",          hex: "#F4EE2A" },
   { id: "bl-orange",  name: "Orange",          hex: "#FF6A13" },
