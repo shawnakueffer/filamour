@@ -581,7 +581,7 @@ document.querySelectorAll("[data-product]").forEach((el) => {
   el.hidden = !(id === "extras" ? extrasActive : id === "alphabet" ? ALPHABET.active : PRODUCTS[id]?.active);
 });
 const posterPickup = PRODUCTS.poster.active ? " Wandbilder gibt es vorerst nur zur Abholung." : "";
-$("#faqShip").textContent = `In die Schweiz und nach Liechtenstein. Der Versand kostet ${chf(SHOP.shipping)}${SHOP.freeShippingFrom ? `, ab einem Bestellwert von ${chf(SHOP.freeShippingFrom)} ist er gratis` : ""}.${posterPickup}`;
+$("#faqShip").textContent = `In die Schweiz und nach Liechtenstein. Der Versand kostet ${chf(SHOP.shipping)}${SHOP.freeShippingFrom ? `, ab einem Bestellwert von ${chf(SHOP.freeShippingFrom)} ist er gratis` : ""}. Deine Bestellung kommt innerhalb von 5–7 Tagen bei dir an, und wir schreiben dir, sobald sie unterwegs ist.${posterPickup}`;
 $("#year").textContent = new Date().getFullYear();
 $("#footShip").textContent = `Lieferung in die Schweiz und nach Liechtenstein. Versand ${chf(SHOP.shipping)}${SHOP.freeShippingFrom ? `, ab ${chf(SHOP.freeShippingFrom)} gratis` : ""}.${PRODUCTS.poster.active ? " Wandbilder vorerst nur zur Abholung." : ""}`;
 $("#footChat").onclick = () => $("#chatFab").click();
@@ -754,7 +754,7 @@ if (document.fonts) {
   // ---- Allgemeine Themen rund um Bestellung
   const ORDER_TOPICS = {
     versand:    { label: "Versand", text: () => `Wir liefern in die Schweiz und nach Liechtenstein. Der Versand kostet ${chf(SHOP.shipping)}${free}.${PRODUCTS.poster.active ? " Wandbilder gibt es vorerst nur zur Abholung, den Termin vereinbaren wir per E-Mail." : ""}` },
-    dauer:      { label: "Lieferzeit", text: () => "Jede Bestellung wird nach Eingang für dich gedruckt und danach so schnell wie möglich verschickt. Brauchst du sie bis zu einem bestimmten Datum? Hinterlass mir deine E-Mail, dann sagen wir dir, ob es klappt.", lead: true },
+    dauer:      { label: "Lieferzeit", text: () => "Jede Bestellung wird nach Eingang für dich gedruckt und kommt innerhalb von 5–7 Tagen bei dir an. Sobald sie unterwegs ist, schreiben wir dir eine E-Mail. Brauchst du sie bis zu einem bestimmten Datum? Hinterlass mir deine E-Mail, dann sagen wir dir, ob es klappt.", lead: true },
     zahlung:    { label: "Zahlung", text: () => "Bezahlt wird nach dem Warenkorb auf der sicheren Zahlungsseite von Stripe. Dort siehst du alle verfügbaren Zahlungsarten. Danach bekommst du eine Bestätigung per E-Mail." },
     retour:     { label: "Rückgabe", text: () => "Personalisierte Artikel werden extra für dich gedruckt und sind deshalb vom Umtausch ausgeschlossen. Ist etwas beschädigt oder falsch angekommen, finden wir eine Lösung. Hinterlass mir deine E-Mail, dann melden wir uns.", lead: true },
     bestellung: { label: "Meine Bestellung", text: () => "Zu einer bestehenden Bestellung helfen wir dir gern persönlich. Hinterlass mir deine E-Mail und am besten die Bestellnummer, dann melden wir uns.", lead: true },

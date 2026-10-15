@@ -55,6 +55,11 @@ export async function createPgStore(connectionString) {
     async releaseOrderMail(sessionId, kind) {
       await pool.query("DELETE FROM order_mails WHERE session_id = $1 AND kind = $2", [sessionId, kind]);
     },
+    // Zeitpunkt pro Bestellung, z. B. kind «versand» → wann die Versandbestätigung rausging
+    async orderMailTimes(kind) {
+      const r = await pool.query("SELECT session_id, sent_at FROM order_mails WHERE kind = $1", [kind]);
+      return new Map(r.rows.map((row) => [row.session_id, row.sent_at]));
+    },
     async addContact(m) {
       await pool.query("INSERT INTO contact_messages (name, email, question, history) VALUES ($1, $2, $3, $4)", [m.name, m.email, m.question, m.history]);
     },
@@ -93,6 +98,11 @@ export function createMemoryStore() {
       return true;
     },
     async releaseOrderMail(sessionId, kind) { orderMails.delete(`${sessionId} ${kind}`); },
+    async orderMailTimes(kind) {
+      const out = new Map();
+      for (const [key, at] of orderMails) { const [id, k] = key.split(" "); if (k === kind) out.set(id, at); }
+      return out;
+    },
     async addContact(m) { contacts.unshift({ ...m, created_at: m.created_at || new Date() }); },
     async purgeOld() {
       const limit = cutoff();

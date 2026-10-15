@@ -3,7 +3,7 @@
 import { COLORS, POSTERS, PICKUP_NOTE, chf } from "../public/catalog.js";
 
 // Artikel aus den Metadaten (siehe buildSession): «2× Name – Beschreibung», lange Werte sind auf artikel_1_1, artikel_1_2 … verteilt
-function articles(s) {
+export function articles(s) {
   const meta = s.metadata || {}, prices = s.line_items?.data || [];
   const count = Number(meta.artikel) || prices.length;
   const list = [];
@@ -20,7 +20,7 @@ function articles(s) {
   return list;
 }
 
-function addressLines(a) {
+export function addressLines(a) {
   if (!a) return [];
   return [a.line1, a.line2, [a.postal_code, a.city].filter(Boolean).join(" "), a.country !== "CH" ? a.country : ""].filter(Boolean);
 }
@@ -187,4 +187,47 @@ function customerHtml({ number, firstName, list, rows, pickup, address, note, si
       + p("Hast du eine Frage? Antworte einfach auf diese E-Mail.", 24)
       + p("Liebe Grüsse<br>Lynn von Filamour"),
   });
+}
+
+/* ---------- Versandbestätigung ----------
+   Verschickt aus dem Admin-Bereich mit dem Knopf «Verschickt». Sendungsnummer ist freiwillig. */
+
+export const TRACKING = /^[A-Za-z0-9][A-Za-z0-9 .\-]{3,39}$/;
+
+export function shippingEmail(s, { tracking = "", siteUrl = "" } = {}) {
+  const customer = s.customer_details || {};
+  if (!customer.email) return null;
+  const number = s.id.slice(-8).toUpperCase();
+  const ship = s.collected_information?.shipping_details;
+  const firstName = (customer.name || ship?.name || "").split(" ")[0];
+  const list = articles(s);
+  const address = [ship?.name, ...addressLines(ship?.address)].filter(Boolean);
+  const intro = "Deine Bestellung ist fertig und mit der Post unterwegs zu dir. In den nächsten Tagen sollte sie bei dir ankommen.";
+  return {
+    to: customer.email,
+    subject: `Deine Filamour-Bestellung ist unterwegs (Nr. ${number})`,
+    text: [
+      `Hallo${firstName ? ` ${firstName}` : ""}`,
+      intro,
+      tracking ? `Sendungsnummer: ${tracking}\nDu kannst sie auf post.ch verfolgen.` : "",
+      `Bestellnummer: ${number}\n\n${list.map((a) => `- ${a.text}`).join("\n")}`,
+      address.length ? `Lieferadresse:\n${address.join("\n")}` : "",
+      `Viel Freude damit! Ist etwas nicht in Ordnung, antworte einfach auf diese E-Mail.`,
+      `Liebe Grüsse\nLynn von Filamour`,
+    ].filter(Boolean).join("\n\n"),
+    html: layout({
+      title: "Deine Bestellung ist unterwegs",
+      preheader: `Bestellung ${number} ist mit der Post unterwegs zu dir.`,
+      eyebrow: `Bestellung ${number}`,
+      heading: `Deine Bestellung ist unterwegs${firstName ? `, ${esc(firstName)}` : ""}!`,
+      intro,
+      home: siteUrl || "https://filamour.ch",
+      body: (tracking ? box("Sendungsnummer", `${esc(tracking)}<br><span style="color:${C.muted}">Du kannst sie auf post.ch verfolgen.</span>`) : "")
+        + `<div style="margin-top:12px"></div>`
+        + orderTable(list.map((a) => ({ ...a, amount: null })), [])
+        + (address.length ? box("Lieferadresse", address.map(esc).join("<br>")) : "")
+        + p("Viel Freude damit! Ist etwas nicht in Ordnung, antworte einfach auf diese E-Mail.", 24)
+        + p("Liebe Grüsse<br>Lynn von Filamour"),
+    }),
+  };
 }

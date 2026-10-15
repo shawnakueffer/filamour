@@ -4,7 +4,7 @@
 //   POST /api/stripe-webhook  Stripe meldet bezahlte Bestellungen → E-Mails an Kundschaft und Shop
 //   POST /api/newsletter  Newsletter-Anmeldung (mit Brevo: Double-Opt-in, sonst eigene Datenbank)
 //   POST /api/contact     Kontaktanfrage aus dem Chat
-//   GET  /admin           Anmeldungen und Anfragen ansehen (ADMIN_PASSWORD)
+//   GET  /admin           Bestellungen (Knopf «Verschickt»), Anmeldungen und Anfragen (ADMIN_PASSWORD)
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -203,7 +203,7 @@ export function createApp({ stripe = null, store = null, mailer = null, brevo = 
 
   // Admin: höchstens 10 falsche Passwörter pro 15 Minuten und IP, erfolgreiche Aufrufe zählen nicht
   const adminLimit = rateLimit({ windowMs: 15 * 60_000, limit: 10, skipSuccessfulRequests: true, standardHeaders: "draft-8", legacyHeaders: false });
-  app.use("/admin", limit(15, 60), adminLimit, adminRouter({ store, password: adminPassword, newsletterInBrevo: Boolean(brevo) }));
+  app.use("/admin", limit(15, 60), adminLimit, adminRouter({ store, password: adminPassword, newsletterInBrevo: Boolean(brevo), stripe, mailer, siteUrl }));
 
   /* ---------- Seiten ---------- */
   const raw = new Map();
