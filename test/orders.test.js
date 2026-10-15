@@ -49,7 +49,7 @@ test("Bestell-Mails enthalten Artikel, Farben, Adresse und Bemerkung", () => {
   assert.match(toCustomer.text, /Geschenk verpacken/);
   assert.match(toCustomer.html, /^<!doctype html>/);
   assert.match(toCustomer.html, /Danke für deine Bestellung, Mia!/);
-  assert.match(toCustomer.html, /background:#F1B3C5;color:#1c191a;[^>]*>M<\/span>/, "M in Sakura Pink");
+  assert.match(toCustomer.html, /background:#EDBFCB;color:#1c191a;[^>]*>M<\/span>/, "M in Sakura Pink");
   assert.match(toCustomer.html, /Bahnhofstrasse 1<br>8001 Zürich/);
 
   assert.equal(toShop.to, undefined, "geht an NOTIFY_EMAIL");

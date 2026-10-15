@@ -62,27 +62,28 @@ export const CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZÄÃ&!?-.,:~";
 
 // Filamente (Farbtöne sind Bildschirm-Annäherungen)
 export const COLORS = [
-  { id: "bl-green",   name: "Green",           hex: "#00AE42" },
-  { id: "bl-mistle",  name: "Mistletoe Green", hex: "#3F8E43" },
-  { id: "bl-yellow",  name: "Yellow",          hex: "#F4EE2A" },
-  { id: "bl-orange",  name: "Orange",          hex: "#FF6A13" },
-  { id: "bl-red",     name: "Red",             hex: "#C12E1F" },
-  { id: "bl-magenta", name: "Magenta",         hex: "#EC008C" },
-  { id: "bl-cocoa",   name: "Cocoa Brown",     hex: "#6F5034" },
-  { id: "bl-gray",    name: "Gray",            hex: "#8E9089" },
-  { id: "bl-bluegrey",name: "Blue Grey",       hex: "#5B6579" },
-  { id: "bl-black",   name: "Black",           hex: "#1A1A1A" },
+  // Reihenfolge und Farbtöne genau nach der Farbkarte (Oktober 2026), Black dazu
   { id: "pt-white",   name: "Cotton White",    hex: "#FFFFFF" },
-  { id: "pt-peanut",  name: "Peanut",          hex: "#D1A574" },
-  { id: "pt-sakura",  name: "Sakura Pink",     hex: "#F1B3C5" },
-  { id: "pt-sapph",   name: "Sapphire Blue",   hex: "#22509F" },
-  { id: "bm-ice",     name: "Ice Blue",        hex: "#A6D7E2" },
-  { id: "es-matcha",  name: "Matcha Green",    hex: "#BFD080" },   // eSUN PLA-Matte
-  { id: "es-apricot", name: "Apricot",         hex: "#EA9A45" },   // eSUN PLA+HS
-  { id: "sp-lemon",   name: "Lemon Cream",     hex: "#FBEEB2" },   // Spectrum Pastello
-  { id: "sp-mauve",   name: "Cosmetic Mauve",  hex: "#E3CFDF" },   // Spectrum Pastello
-  { id: "sp-flamingo",name: "Flamingo Red",    hex: "#F6A49A" },   // Spectrum Pastello
-  { id: "pm-purple",  name: "Muted Purple",    hex: "#9E88B2" },   // Polymaker PolyTerra
+  { id: "sp-lemon",   name: "Lemon Cream",     hex: "#F7E484" },
+  { id: "bl-yellow",  name: "Yellow",          hex: "#F5DD32" },
+  { id: "es-apricot", name: "Apricot",         hex: "#F3B572" },
+  { id: "bl-orange",  name: "Orange",          hex: "#F67931" },
+  { id: "bl-red",     name: "Red",             hex: "#BD2C38" },
+  { id: "sp-flamingo",name: "Flamingo Red",    hex: "#F28E88" },
+  { id: "pt-sakura",  name: "Sakura Pink",     hex: "#EDBFCB" },
+  { id: "bl-magenta", name: "Magenta",         hex: "#E35ABC" },
+  { id: "sp-mauve",   name: "Mauve",           hex: "#E3CDE0" },
+  { id: "pm-purple",  name: "Muted Purple",    hex: "#987292" },
+  { id: "bm-ice",     name: "Ice Blue",        hex: "#A7E1EB" },
+  { id: "pt-sapph",   name: "Sapphire Blue",   hex: "#1F70A4" },
+  { id: "bl-bluegrey",name: "Blue Grey",       hex: "#616C76" },
+  { id: "bl-gray",    name: "Grey",            hex: "#B0AFAA" },
+  { id: "es-matcha",  name: "Matcha Green",    hex: "#C9DD86" },
+  { id: "bl-green",   name: "Green",           hex: "#23BE65" },
+  { id: "bl-mistle",  name: "Mistletoe Green", hex: "#00825C" },
+  { id: "bl-cocoa",   name: "Cocoa Brown",     hex: "#755240" },
+  { id: "pt-peanut",  name: "Peanut",          hex: "#D7B892" },
+  { id: "bl-black",   name: "Black",           hex: "#000000" },
 ];
 
 export const COLOR_BY_ID = byId(COLORS);
