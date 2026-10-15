@@ -299,8 +299,8 @@ section.block.alt { background: var(--band); }
 
 /* Über uns: Bild links, Text rechts (wie Material, gespiegelt) */
 .about { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); gap: 48px; align-items: center; }
-@media (max-width: 860px) { .about { grid-template-columns: 1fr; gap: 32px; } .about-visual { max-width: 360px; } }
-.about-visual { margin: 0; position: relative; aspect-ratio: 2 / 3; width: 100%; border-radius: 24px; background: #f3ece6; overflow: hidden; display: grid; place-items: center; }
+@media (max-width: 860px) { .about { grid-template-columns: 1fr; gap: 32px; } .about-visual { max-width: 560px; } }
+.about-visual { margin: 0; position: relative; aspect-ratio: 1012 / 944; width: 100%; border-radius: 24px; background: #fff; overflow: hidden; display: grid; place-items: center; }
 .about-visual img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; } /* Gesichter bleiben im Bild */
 .about-copy { display: grid; gap: 4px; min-width: 0; }
 .about-copy .block-head p + p { margin-top: 4px; }
