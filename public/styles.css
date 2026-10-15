@@ -294,9 +294,9 @@ section.block.alt { background: var(--band); }
 .alpha-row { display: flex; justify-content: center; }
 .cdot[aria-pressed="true"] { outline: 2px solid var(--fg); outline-offset: 2px; }
 .cdot:disabled { opacity: .35; cursor: default; }
-#alphaPrice { display: grid; grid-template-columns: auto auto; column-gap: 10px; align-items: baseline; justify-content: start; }
-#alphaPrice .was { color: var(--muted); font-weight: 500; font-size: 17px; text-decoration-thickness: 1.5px; }
-#alphaPrice .now { color: var(--accent); font-size: 24px; }
+#alphaPrice { display: grid; grid-template-columns: auto auto; column-gap: 8px; align-items: baseline; justify-content: start; }
+#alphaPrice .was { color: var(--muted); font-weight: 500; font-size: 15px; text-decoration-thickness: 1px; }
+#alphaPrice .now { color: var(--accent); font-size: 19px; }
 
 /* Über uns: Bild links, Text rechts (wie Material, gespiegelt) */
 .about { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); gap: 48px; align-items: center; }
