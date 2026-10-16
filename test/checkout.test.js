@@ -77,6 +77,7 @@ test("Gratisversand ab der Grenze, sonst Versandkosten", () => {
   assert.equal(small.shipping_options[0].shipping_rate_data.fixed_amount.amount, 650, "Versand CHF 6.50");
   assert.deepEqual(small.shipping_address_collection.allowed_countries, ["CH", "LI"], "nur Schweiz und Liechtenstein");
   assert.match(small.custom_text.shipping_address.message, /nur in die Schweiz und nach Liechtenstein/);
+  assert.equal(small.custom_text.submit.message, "Mit deiner Bestellung akzeptierst du unsere AGB: https://x.ch/rechtliches.html#agb");
   const big = buildSession(validateCart({ items: [{ type: "frame", style: "wave", color: "bl-red", qty: 4 }] }).items, "https://x.ch");
   assert.equal(big.shipping_options[0].shipping_rate_data.fixed_amount.amount, 0, "ab CHF 60 gratis");
 });
@@ -92,7 +93,7 @@ test("Wandbild: ganze Bestellung wird abgeholt, ohne Adresse und Versandkosten",
   assert.equal(s.line_items[1].price_data.unit_amount, 3950);
   assert.equal(s.shipping_address_collection, undefined, "keine Lieferadresse");
   assert.equal(s.shipping_options, undefined, "keine Versandkosten");
-  assert.match(s.custom_text.submit.message, /Abholung/);
+  assert.match(s.custom_text.submit.message, /Abholung.*AGB: https:\/\/x\.ch\/rechtliches\.html#agb$/);
   assert.equal(s.metadata.lieferung, "Abholung");
   assert.equal(summarizeSession({ id: "cs_test_x", metadata: s.metadata }).pickup, true);
 });

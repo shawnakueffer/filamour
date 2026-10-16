@@ -34,6 +34,9 @@ export function validateCart(body) {
   return { items: clean };
 }
 
+// Hinweis über dem Bezahlknopf: mit der Bestellung gelten die AGB
+const AGB_NOTE = (origin) => `Mit deiner Bestellung akzeptierst du unsere AGB: ${origin}/rechtliches.html#agb`;
+
 export function buildSession(items, origin) {
   const subtotal = items.reduce((s, it) => s + it.unit * it.qty, 0);
   const pickup = isPickup(items);
@@ -60,9 +63,9 @@ export function buildSession(items, origin) {
     metadata,
     payment_intent_data: { metadata },
     // Abholung: keine Adresse, keine Versandkosten, dafür ein Hinweis über dem Bezahlknopf
-    ...(pickup ? { custom_text: { submit: { message: PICKUP_NOTE } } } : {
+    ...(pickup ? { custom_text: { submit: { message: `${PICKUP_NOTE} ${AGB_NOTE(origin)}` } } } : {
       shipping_address_collection: { allowed_countries: SHOP.shippingCountries },
-      custom_text: { shipping_address: { message: "Wir liefern nur in die Schweiz und nach Liechtenstein." } },
+      custom_text: { shipping_address: { message: "Wir liefern nur in die Schweiz und nach Liechtenstein." }, submit: { message: AGB_NOTE(origin) } },
       shipping_options: [{
         shipping_rate_data: {
           type: "fixed_amount",
