@@ -169,16 +169,26 @@ test("GET /api/order prüft die Session-ID und fasst zusammen", async () => {
   });
 });
 
-test("Alphabet: Preis je Grösse, ganz weiss oder bis zu 5 Farben im Wechsel", () => {
+test("Alphabet: ausgeblendet nicht bestellbar", () => {
+  const was = ALPHABET.active;
+  ALPHABET.active = false;
+  assert.match(validateCart({ items: [{ type: "alphabet", size: "gross", variant: "weiss", qty: 1 }] }).error, /gibt es im Moment nicht/);
+  ALPHABET.active = was;
+});
+
+test("Alphabet: Preis je Grösse, ganz weiss oder bis zu 5 Farben im Wechsel", (t) => {
+  const was = ALPHABET.active;
+  ALPHABET.active = true; // auch wenn es gerade ausgeblendet ist, sollen die Preise stimmen
+  t.after(() => { ALPHABET.active = was; });
   const five = ["pt-sakura", "bm-ice", "es-matcha", "sp-lemon", "pm-purple"];
   const weiss = validateCart({ items: [{ type: "alphabet", size: "gross", variant: "weiss", colors: ["bl-red"], qty: 1, price: 1 }] }).items[0];
-  assert.equal(weiss.unit, 8900, "gross weiss CHF 89, Preis vom Server");
+  assert.equal(weiss.unit, 6300, "gross weiss CHF 63, Preis vom Server");
   assert.equal(weiss.name, "Alphabet A–Z (26 Teile, Gross 6,5 cm, matt)");
   assert.match(weiss.description, /^A Cotton White · B Cotton White .* Z Cotton White$/, "weiss ignoriert mitgeschickte Farben");
   const bunt = validateCart({ items: [{ type: "alphabet", size: "klein", variant: "farbig", colors: five, qty: 2 }] }).items[0];
-  assert.equal(bunt.unit, 5900, "klein farbig CHF 59");
-  assert.equal(validateCart({ items: [{ type: "alphabet", size: "gross", variant: "farbig", colors: five, qty: 1 }] }).items[0].unit, 9900);
-  assert.equal(validateCart({ items: [{ type: "alphabet", size: "klein", variant: "weiss", qty: 1 }] }).items[0].unit, 4900);
+  assert.equal(bunt.unit, 4900, "klein farbig CHF 49");
+  assert.equal(validateCart({ items: [{ type: "alphabet", size: "gross", variant: "farbig", colors: five, qty: 1 }] }).items[0].unit, 6900);
+  assert.equal(validateCart({ items: [{ type: "alphabet", size: "klein", variant: "weiss", qty: 1 }] }).items[0].unit, 4300);
   assert.equal(alphabetSinglePrice("gross"), 26 * 490, "Vergleichspreis = echte Einzelpreise");
   assert.equal(alphabetSinglePrice("klein"), 26 * 290);
   for (const size of ["gross", "klein"]) for (const v of ["farbig", "weiss"]) assert.ok(ALPHABET.price[size][v] < alphabetSinglePrice(size), "Set günstiger als einzeln");
@@ -207,7 +217,10 @@ test("Glänzend kostet 50 Rappen mehr pro Buchstabe, matt ist Standard", () => {
   assert.equal(validateCart({ items: [{ ...item, finish: "matt" }] }).items[0].unit, 3 * 490);
   for (const bad of ["seidenmatt", "__proto__"]) assert.match(validateCart({ items: [{ ...item, finish: bad }] }).error, /Oberfläche/, bad);
   // Alphabet gibt es nur matt: eine mitgeschickte Oberfläche ändert nichts
+  const was = ALPHABET.active;
+  ALPHABET.active = true;
   const abc = validateCart({ items: [{ type: "alphabet", size: "gross", variant: "weiss", finish: "glaenzend", qty: 1 }] }).items[0];
-  assert.equal(abc.unit, 8900);
+  ALPHABET.active = was;
+  assert.equal(abc.unit, 6300);
   assert.match(abc.name, /, matt\)$/);
 });

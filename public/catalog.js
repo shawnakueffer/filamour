@@ -95,7 +95,7 @@ export const ALPHABET = {
   letters: "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
   white: "pt-white",
   maxColors: 5,
-  price: { gross: { farbig: 9900, weiss: 8900 }, klein: { farbig: 5900, weiss: 4900 } }, // Rappen
+  price: { gross: { farbig: 6900, weiss: 6300 }, klein: { farbig: 4900, weiss: 4300 } }, // Rappen
 };
 // Vergleichspreis (durchgestrichen): was die 26 Buchstaben einzeln im Studio kosten. Muss ein echter Preis sein (PBV).
 export const alphabetSinglePrice = (sizeId) => [...ALPHABET.letters].length * (letterSize(sizeId)?.price ?? 0);
