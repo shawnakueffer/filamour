@@ -1,4 +1,4 @@
-import { SHOP, ANNOUNCEMENTS, ANNOUNCEMENTS_SHORT, CHARS, COLORS, COLOR_BY_ID, PRODUCTS, LETTER_FINISHES, letterFinish, letterPrice, ALPHABET, alphabetColors, alphabetSinglePrice, NEWSLETTER, POSTERS, POSTER_BY_ID, FRAME_STYLES, FRAME_BY_ID, LETTER_SIZES, letterSize, describeItem, pieces, designPrice, shippingFor, isPickup, PICKUP_NOTE, chf, cm } from "./catalog.js";
+import { SHOP, ANNOUNCEMENTS, ANNOUNCEMENTS_SHORT, CHARS, normalizeText, COLORS, COLOR_BY_ID, PRODUCTS, LETTER_FINISHES, letterFinish, letterPrice, ALPHABET, alphabetColors, alphabetSinglePrice, NEWSLETTER, POSTERS, POSTER_BY_ID, FRAME_STYLES, FRAME_BY_ID, LETTER_SIZES, letterSize, describeItem, pieces, designPrice, shippingFor, isPickup, PICKUP_NOTE, chf, cm } from "./catalog.js";
 import { REVIEWS } from "./reviews.js";
 
 const $ = (s) => document.querySelector(s);
@@ -163,7 +163,7 @@ $("#txt").addEventListener("input", (e) => {
   let p = 0; while (p < old.length && p < nu.length && old[p] === nu[p]) p++;
   let s = 0; while (s < old.length - p && s < nu.length - p && old[old.length - 1 - s] === nu[nu.length - 1 - s]) s++;
   state.colors = [...state.colors.slice(0, p), ...Array(nu.length - p - s).fill(state.fill), ...state.colors.slice(old.length - s)];
-  state.text = e.target.value; sel = -1; $("#added").textContent = ""; render();
+  state.text = normalizeText(e.target.value); sel = -1; $("#added").textContent = ""; render();
 });
 $("#stage").addEventListener("click", (e) => {
   if (e.target.closest(".bgbtn")) return;
@@ -719,7 +719,7 @@ if (document.fonts) {
         varianten: { label: "Gestalten", text: () => "Im Studio tippst du deinen Text ein, tippst auf einen Buchstaben und wählst seine Farbe. Du siehst sofort, wie es aussieht, und legst es dann in den Warenkorb.", actions: [["Zum Studio", "#studio"]] },
         groesse:   { label: "Grösse", text: () => `Es gibt zwei Grössen: ${sizeDims()}. Die Breite hängt vom Buchstaben ab: Ein I ist schmal, ein M oder W breiter.`, actions: [["Grösse ansehen", "#groesse"]] },
         farben:    { label: "Farben", text: () => `Es gibt ${COLORS.length} Farben, zum Beispiel ${colorSample()}. Jeder Buchstabe kann eine eigene Farbe haben.`, actions: [["Farben im Studio", "#studio"]] },
-        zeichen:   { label: "Zeichen", text: () => "Es gibt alle Buchstaben von A bis Z, Ä, Ã und die Zeichen & ! ? - . , : ~. Zahlen und Kleinbuchstaben haben wir noch nicht." },
+        zeichen:   { label: "Zeichen", text: () => "Es gibt alle Buchstaben von A bis Z, auch mit Akzent (É, È), Punkten (Ä, Ö, Ü, Ë) oder Tilde (Ñ, Ã), und die Zeichen & ! ? - . , : ~ '. Zahlen und Kleinbuchstaben haben wir noch nicht." },
         anbringen: { label: "Anbringen", text: () => "Die Rückseite ist flach. Am einfachsten halten die Buchstaben mit Klebepads oder doppelseitigem Klebeband an Tür und Wand. Für den Kühlschrank klebst du einen kleinen Magneten auf die Rückseite, im Bilderrahmen genügt ein Tropfen Leim.", actions: [["Ideen ansehen", "#ideen"]] },
         material:  { label: "Material", text: () => "Die Buchstaben sind aus PLA. " + PLA, actions: [["Mehr zum Material", "#material"]] },
         kinder:    { label: "Für Kinder?", text: () => SAFETY + " An der Tür, an der Wand oder im Rahmen sind die Buchstaben gut aufgehoben." },

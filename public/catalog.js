@@ -58,7 +58,15 @@ export const ANNOUNCEMENTS = [
 export const ANNOUNCEMENTS_SHORT = ["Personalisierbar", "Gratis ab CHF 60", "PLA aus Pflanzen"];
 
 // Zeichen, die auf der Druckplatte vorhanden sind
-export const CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZÄÃ&!?-.,:~";
+// Erlaubte Zeichen (Grossbuchstaben; Eingaben werden umgewandelt, «ß» wird zu «SS»). Alle sind in der Bubble-Schrift vorhanden.
+export const CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+  + "ÁÉÍÓÚÝ"  // Akzent aigu
+  + "ÀÈÌÒÙ"   // Akzent grave
+  + "ÄËÏÖÜŸ"  // Punkte (Umlaut, Trema)
+  + "ÃÑÕ"     // Tilde
+  + "&!?-.,:~'";
+// Gleiche Schreibweise für Akzente (macOS liefert é manchmal als e + Akzent)
+export const normalizeText = (t) => String(t ?? "").normalize("NFC");
 
 // Filamente (Farbtöne sind Bildschirm-Annäherungen)
 export const COLORS = [
@@ -130,7 +138,7 @@ export const FRAME_BY_ID = byId(FRAME_STYLES);
 
 // Nur druckbare Zeichen zählen (Leerzeichen und unbekannte Zeichen nicht)
 export function pieces(text, colors) {
-  const up = String(text || "").toUpperCase();
+  const up = normalizeText(text).toUpperCase();
   const out = [];
   [...up].forEach((ch, i) => {
     if (CHARS.includes(ch)) out.push({ ch, color: colors?.[i] });
@@ -153,7 +161,7 @@ export function describeItem(it) {
     if (!finish) return { error: "Diese Oberfläche gibt es nicht mehr." };
     const each = letterPrice(size, finish);
     // nur, was auch gedruckt wird (z. B. «HALLO 123» → «HALLO»)
-    const text = [...String(it.text).toUpperCase()].filter((c) => c === " " || CHARS.includes(c)).join("").replace(/\s+/g, " ").trim();
+    const text = [...normalizeText(it.text).toUpperCase()].filter((c) => c === " " || CHARS.includes(c)).join("").replace(/\s+/g, " ").trim();
     return {
       type, unit: list.length * each,
       name: `Bubble Letters «${text}» (${list.length} Teile, ${size.name} ${cm(size.heightCm)}, ${finish.name.toLowerCase()})`,

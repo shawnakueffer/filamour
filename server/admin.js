@@ -96,7 +96,7 @@ const STYLE = `
   @font-face { font-family: "Figtree"; font-weight: 400; src: url("/fonts/figtree-latin-400-normal.woff2") format("woff2"); }
   @font-face { font-family: "Figtree"; font-weight: 600; src: url("/fonts/figtree-latin-600-normal.woff2") format("woff2"); }
   @font-face { font-family: "Cormorant Garamond"; font-weight: 600; src: url("/fonts/cormorant-garamond-latin-600-normal.woff2") format("woff2"); }
-  @font-face { font-family: "Cherry Bomb One"; src: url("/fonts/cherry-bomb-one.woff2") format("woff2"); }
+  @font-face { font-family: "Cherry Bomb One"; src: url("/fonts/cherry-bomb-one-latin-400-normal.woff2") format("woff2"); }
   :root { --bg: #f4f0ef; --card: #fff; --fg: #1c191a; --muted: #736b6d; --line: #ebe6e7; --accent: #d6406a; --soft: #f8f5f5; --ok: #2e7d45; color-scheme: only light; }
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.5 "Figtree", system-ui, sans-serif; }

@@ -2,7 +2,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { validateCart, buildSession, summarizeSession } from "../server/checkout.js";
-import { isPickup, PRODUCTS, ALPHABET, alphabetSinglePrice } from "../public/catalog.js";
+import { isPickup, PRODUCTS, ALPHABET, alphabetSinglePrice, CHARS } from "../public/catalog.js";
 import { withServer } from "./helpers.js";
 
 const HALLO_MIA = ["pt-sakura", "bm-ice", "pt-white", "pt-peanut", "bm-ice", "pt-sakura", "pt-white", "pt-peanut", "bl-magenta"];
@@ -223,4 +223,15 @@ test("Glänzend kostet 50 Rappen mehr pro Buchstabe, matt ist Standard", () => {
   ALPHABET.active = was;
   assert.equal(abc.unit, 6300);
   assert.match(abc.name, /, matt\)$/);
+});
+
+test("Akzente: aigu, grave, Punkte und Tilde werden gedruckt, auch als e + Akzent (macOS)", () => {
+  const nfd = "Léa Zoë Àñç".normalize("NFD"); // so tippt der Mac manchmal
+  const colors = [...nfd.normalize("NFC")].map(() => "bl-red");
+  const d = validateCart({ items: [{ text: nfd, colors, qty: 1 }] }).items[0];
+  assert.equal(d.unit, 8 * 490, "8 Buchstaben, Leerzeichen gratis, Ç gibt es nicht");
+  assert.match(d.name, /«LÉA ZOË ÀÑ»/);
+  assert.match(d.description, /^L Red · É Red · A Red · Z Red · O Red · Ë Red · À Red · Ñ Red$/);
+  for (const ch of "ÁÉÍÓÚÀÈÌÒÙÄËÏÖÜÃÑÕ") assert.ok(CHARS.includes(ch), ch);
+  for (const ch of "ÇÂÊÅØŠČ") assert.ok(!CHARS.includes(ch), ch);
 });
