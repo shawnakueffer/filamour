@@ -531,12 +531,8 @@ function renderAlpha() {
     const on = alpha.colors.includes(c.id);
     return `<button class="cdot" type="button" aria-pressed="${on}" aria-label="${c.name}" title="${c.name}" data-c="${c.id}" style="background:${c.hex}" ${!on && full ? "disabled" : ""}></button>`;
   }).join("");
-  // Set-Preis; durchgestrichen nur bei Bubble: dort ist es ein echter Vergleichspreis (26 Buchstaben einzeln im Studio, PBV).
-  // Arial-Black-Buchstaben gibt es nicht einzeln, also auch keinen Vergleichspreis.
-  const price = ALPHABET.price[alpha.size][alpha.variant], single = alphabetSinglePrice(alpha.size);
-  $("#alphaPrice").innerHTML = alpha.font === "bubble"
-    ? `<s class="was" aria-label="einzeln ${chf(single)}">${chf(single)}</s> <span class="now">${chf(price)}</span>`
-    : `<span class="now">${chf(price)}</span>`;
+  // Set-Preis ohne durchgestrichenen Vergleichspreis (seit Oktober 2026 bewusst schlicht, schwarz)
+  $("#alphaPrice").innerHTML = `<span class="now plain">${chf(ALPHABET.price[alpha.size][alpha.variant])}</span>`;
   $("#alphaAdd").disabled = Boolean(describeItem(alphaItem()).error);
   renderAlphaPreview();
 }
