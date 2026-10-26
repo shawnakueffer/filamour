@@ -184,27 +184,31 @@ test("Alphabet: Preis je Grösse, ganz weiss oder bis zu 5 Farben im Wechsel", (
   ALPHABET.active = true; // auch wenn es gerade ausgeblendet ist, sollen die Preise stimmen
   t.after(() => { ALPHABET.active = was; });
   const five = ["pt-sakura", "bm-ice", "es-matcha", "sp-lemon", "pm-purple"];
-  const weiss = validateCart({ items: [{ type: "alphabet", size: "gross", variant: "weiss", colors: ["bl-red"], qty: 1, price: 1 }] }).items[0];
-  assert.equal(weiss.unit, 6300, "gross weiss CHF 63, Preis vom Server");
-  assert.equal(weiss.name, "Alphabet A–Z (26 Teile, Gross 6,5 cm, matt)");
+  const weiss = validateCart({ items: [{ type: "alphabet", size: "standard", variant: "weiss", colors: ["bl-red"], qty: 1, price: 1 }] }).items[0];
+  assert.equal(weiss.unit, 6300, "weiss CHF 63, Preis vom Server");
+  assert.equal(weiss.name, "Alphabet A–Z (26 Teile, Standard 5 cm, matt)");
   assert.match(weiss.description, /^A Cotton White · B Cotton White .* Z Cotton White$/, "weiss ignoriert mitgeschickte Farben");
-  const bunt = validateCart({ items: [{ type: "alphabet", size: "klein", variant: "farbig", colors: five, qty: 2 }] }).items[0];
-  assert.equal(bunt.unit, 4900, "klein farbig CHF 49");
-  assert.equal(validateCart({ items: [{ type: "alphabet", size: "gross", variant: "farbig", colors: five, qty: 1 }] }).items[0].unit, 6900);
-  assert.equal(validateCart({ items: [{ type: "alphabet", size: "klein", variant: "weiss", qty: 1 }] }).items[0].unit, 4300);
-  assert.equal(alphabetSinglePrice("gross"), 26 * 690, "Vergleichspreis = echte Einzelpreise");
-  assert.match(validateCart({ items: [{ type: "alphabet", size: "standard", variant: "weiss", qty: 1 }] }).error, /nur in diesen Grössen: Klein, Gross/);
-  assert.equal(alphabetSinglePrice("klein"), 26 * 290);
-  for (const size of ["gross", "klein"]) for (const v of ["farbig", "weiss"]) assert.ok(ALPHABET.price[size][v] < alphabetSinglePrice(size), "Set günstiger als einzeln");
-  assert.equal(bunt.name, "Alphabet A–Z (26 Teile, Klein 3 cm, matt)");
+  const bunt = validateCart({ items: [{ type: "alphabet", variant: "farbig", colors: five, qty: 2 }] }).items[0];
+  assert.equal(bunt.unit, 6900, "farbig CHF 69, ohne Grösse gilt Standard");
+  assert.equal(bunt.name, "Alphabet A–Z (26 Teile, Standard 5 cm, matt)");
   assert.match(bunt.description, /^A Sakura Pink · B Ice Blue · C Matcha Green · D Lemon Cream · E Muted Purple · F Sakura Pink/);
   assert.match(bunt.description, /Z Sakura Pink$/, "26. Buchstabe = Farbe 1 (26 = 5 × 5 + 1)");
-  assert.equal(validateCart({ items: [{ type: "alphabet", size: "klein", variant: "farbig", colors: ["bl-red"], qty: 1 }] }).items[0].meta, "Klein, 1 Farbe im Wechsel");
+  assert.equal(validateCart({ items: [{ type: "alphabet", variant: "farbig", colors: ["bl-red"], qty: 1 }] }).items[0].meta, "Bubble, Standard, 1 Farbe im Wechsel");
+  // Arial Black: gleicher Preis, Schrift im Namen
+  const arial = validateCart({ items: [{ type: "alphabet", font: "arial", variant: "farbig", colors: five, qty: 1 }] }).items[0];
+  assert.equal(arial.unit, 6900);
+  assert.equal(arial.name, "Alphabet A–Z in Arial Black (26 Teile, Standard 5 cm, matt)");
+  assert.equal(arial.meta, "Arial Black, Standard, 5 Farben im Wechsel");
+  assert.match(validateCart({ items: [{ type: "alphabet", font: "comic", variant: "weiss", qty: 1 }] }).error, /Schrift/);
+  // nur Standard 5 cm
+  for (const size of ["klein", "gross"]) assert.match(validateCart({ items: [{ type: "alphabet", size, variant: "weiss", qty: 1 }] }).error, /nur in diesen Grössen: Standard/);
+  assert.equal(alphabetSinglePrice("standard"), 26 * 490, "Vergleichspreis = echte Einzelpreise im Studio");
+  for (const v of ["farbig", "weiss"]) assert.ok(ALPHABET.price.standard[v] < alphabetSinglePrice("standard"), "Set günstiger als einzeln");
   for (const colors of [[], [...five, "bl-red"], ["bl-red", "bl-red"], ["gibtsnicht"], ["__proto__"], "bl-red"]) {
-    assert.match(validateCart({ items: [{ type: "alphabet", size: "gross", variant: "farbig", colors, qty: 1 }] }).error, /1 bis 5 verschiedene Farben/, JSON.stringify(colors));
+    assert.match(validateCart({ items: [{ type: "alphabet", variant: "farbig", colors, qty: 1 }] }).error, /1 bis 5 verschiedene Farben/, JSON.stringify(colors));
   }
   assert.match(validateCart({ items: [{ type: "alphabet", size: "riesig", variant: "weiss", qty: 1 }] }).error, /Grösse/);
-  assert.match(validateCart({ items: [{ type: "alphabet", size: "gross", variant: "regenbogen", qty: 1 }] }).error, /Variante/);
+  assert.match(validateCart({ items: [{ type: "alphabet", variant: "regenbogen", qty: 1 }] }).error, /Variante/);
   ALPHABET.active = false;
   try { assert.match(validateCart({ items: [{ type: "alphabet", size: "gross", variant: "weiss", qty: 1 }] }).error, /im Moment nicht/); }
   finally { ALPHABET.active = true; }
@@ -222,7 +226,7 @@ test("Nur noch matt: ältere Warenkörbe mit «glänzend» werden matt berechnet
   // Alphabet gibt es nur matt
   const was = ALPHABET.active;
   ALPHABET.active = true;
-  const abc = validateCart({ items: [{ type: "alphabet", size: "gross", variant: "weiss", finish: "glaenzend", qty: 1 }] }).items[0];
+  const abc = validateCart({ items: [{ type: "alphabet", variant: "weiss", finish: "glaenzend", qty: 1 }] }).items[0];
   ALPHABET.active = was;
   assert.equal(abc.unit, 6300);
   assert.match(abc.name, /, matt\)$/);

@@ -105,9 +105,15 @@ export const ALPHABET = {
   letters: "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
   white: "pt-white",
   maxColors: 5,
-  price: { gross: { farbig: 6900, weiss: 6300 }, klein: { farbig: 4900, weiss: 4300 } }, // Rappen
+  price: { standard: { farbig: 6900, weiss: 6300 } }, // Rappen; nur Grössen mit Preis sind bestellbar
+  // Schrift des Alphabets; «bubble» ist dieselbe Schrift wie im Studio
+  fonts: [{ id: "bubble", name: "Bubble" }, { id: "arial", name: "Arial Black" }],
 };
 // Vergleichspreis (durchgestrichen): was die 26 Buchstaben einzeln im Studio kosten. Muss ein echter Preis sein (PBV).
+// Schrift des Alphabets; ohne Angabe Bubble. Unbekannt → null
+export function alphabetFont(id) {
+  return ALPHABET.fonts.find((f) => f.id === (id || ALPHABET.fonts[0].id)) || null;
+}
 // Grössen, in denen es das Alphabet gibt (die mit einem Preis in ALPHABET.price)
 export const alphabetSizes = () => LETTER_SIZES.filter((z) => ALPHABET.price[z.id]);
 export const alphabetSinglePrice = (sizeId) => [...ALPHABET.letters].length * (letterSize(sizeId)?.price ?? 0);
@@ -175,7 +181,7 @@ export function describeItem(it) {
   }
   if (type === "alphabet") {
     if (!ALPHABET.active) return { error: "Das Alphabet gibt es im Moment nicht." };
-    const size = letterSize(it.size || "gross");
+    const size = letterSize(it.size || alphabetSizes()[0]?.id);
     if (!size || !ALPHABET.price[size.id]) return { error: `Das Alphabet gibt es nur in diesen Grössen: ${alphabetSizes().map((z) => z.name).join(", ")}.` };
     let palette;
     if (it.variant === "weiss") palette = [ALPHABET.white];
@@ -185,12 +191,14 @@ export function describeItem(it) {
         return { error: `Bitte wähle für das Alphabet 1 bis ${ALPHABET.maxColors} verschiedene Farben.` };
       }
     } else return { error: "Diese Alphabet-Variante gibt es nicht." };
+    const font = alphabetFont(it.font);
+    if (!font) return { error: "Diese Schrift gibt es für das Alphabet nicht." };
     const letters = [...ALPHABET.letters], perLetter = alphabetColors(it.variant, palette);
     return {
       type, unit: ALPHABET.price[size.id][it.variant],
-      name: `Alphabet A–Z (${letters.length} Teile, ${size.name} ${cm(size.heightCm)}, matt)`,
+      name: `Alphabet A–Z${font.id === "bubble" ? "" : ` in ${font.name}`} (${letters.length} Teile, ${size.name} ${cm(size.heightCm)}, matt)`,
       description: letters.map((ch, i) => `${ch} ${COLOR_BY_ID[perLetter[i]].name}`).join(" · "),
-      meta: it.variant === "weiss" ? `${size.name}, ganz weiss` : `${size.name}, ${palette.length} ${palette.length === 1 ? "Farbe" : "Farben"} im Wechsel`,
+      meta: `${font.name}, ${size.name}, ` + (it.variant === "weiss" ? "ganz weiss" : `${palette.length} ${palette.length === 1 ? "Farbe" : "Farben"} im Wechsel`),
     };
   }
   if (type === "poster") {

@@ -1,4 +1,11 @@
 /* Layout: eine ruhige Spalte. Oben das Studio als Bühne, darunter Anwendungen, Fragen, Fuss. Warenkorb als Seitenleiste. */
+/* Ersatz für Arial Black (Alphabet), falls das Gerät Arial Black nicht hat (Fontsource, OFL) */
+@font-face {
+  font-family: "Archivo Black";
+  font-weight: 400;
+  font-display: swap;
+  src: url("fonts/archivo-black-latin-400-normal.woff2") format("woff2");
+}
 /* Bubble-Schrift (Fontsource, OFL), Teil «Latin»: A–Z und die Akzente É È Ä Ñ … */
 @font-face {
   font-family: "Cherry Bomb One";
@@ -293,6 +300,8 @@ section.block.alt { background: var(--band); }
 .alpha-scene { border-radius: 22px; background: #f1eeeb; box-shadow: inset 0 0 0 1px #e3ded9; padding: 28px 20px; display: grid; place-items: center; min-height: 200px; }
 .alpha-lines { display: grid; justify-items: center; row-gap: 2px; }
 .alpha-row { display: flex; justify-content: center; }
+.opt.font-bubble { font-family: var(--font-letter); font-size: 16px; }
+.opt.font-arial { font-family: "Arial Black", "Archivo Black", sans-serif; }
 .cdot[aria-pressed="true"] { outline: 2px solid var(--fg); outline-offset: 2px; }
 .cdot:disabled { opacity: .35; cursor: default; }
 #alphaPrice { display: grid; grid-template-columns: auto auto; column-gap: 8px; align-items: baseline; justify-content: start; }

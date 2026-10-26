@@ -1,4 +1,4 @@
-import { SHOP, ANNOUNCEMENTS, ANNOUNCEMENTS_SHORT, CHARS, normalizeText, COLORS, COLOR_BY_ID, PRODUCTS, LETTER_FINISHES, letterFinish, letterPrice, ALPHABET, alphabetColors, alphabetSinglePrice, NEWSLETTER, POSTERS, POSTER_BY_ID, FRAME_STYLES, FRAME_BY_ID, LETTER_SIZES, DEFAULT_SIZE, alphabetSizes, letterSize, describeItem, pieces, designPrice, shippingFor, isPickup, PICKUP_NOTE, chf, cm } from "./catalog.js";
+import { SHOP, ANNOUNCEMENTS, ANNOUNCEMENTS_SHORT, CHARS, normalizeText, COLORS, COLOR_BY_ID, PRODUCTS, LETTER_FINISHES, letterFinish, letterPrice, ALPHABET, alphabetColors, alphabetSinglePrice, NEWSLETTER, POSTERS, POSTER_BY_ID, FRAME_STYLES, FRAME_BY_ID, LETTER_SIZES, DEFAULT_SIZE, alphabetSizes, alphabetFont, letterSize, describeItem, pieces, designPrice, shippingFor, isPickup, PICKUP_NOTE, chf, cm } from "./catalog.js";
 import { REVIEWS } from "./reviews.js";
 
 const $ = (s) => document.querySelector(s);
@@ -21,29 +21,32 @@ async function postJSON(url, data) {
 }
 
 /* ---------- Buchstaben zeichnen ---------- */
+// Schriften der Buchstaben: Bubble (Studio) und Arial Black (Alphabet; ohne Arial Black auf dem Gerät: Archivo Black)
+const FONT_FAMILY = { bubble: "'Cherry Bomb One','Arial Rounded MT Bold',sans-serif", arial: "'Arial Black','Archivo Black',sans-serif" };
 const widthCache = {};
 let fontReady = false;
-function measure(ch) {
-  if (widthCache[ch]) return widthCache[ch];
+function measure(ch, font = "bubble") {
+  const key = font + ch;
+  if (widthCache[key]) return widthCache[key];
   const ns = "http://www.w3.org/2000/svg";
   const svg = document.createElementNS(ns, "svg");
   svg.setAttribute("style", "position:absolute;visibility:hidden");
   const t = document.createElementNS(ns, "text");
-  t.setAttribute("font-family", "'Cherry Bomb One'");
+  t.setAttribute("font-family", FONT_FAMILY[font]);
   t.setAttribute("font-size", "100");
   t.textContent = ch;
   svg.appendChild(t); document.body.appendChild(svg);
   let b; try { b = t.getBBox(); } catch { b = { x: 0, width: 60 }; }
   svg.remove();
   const r = { x: b.x, w: Math.max(b.width, 18) };
-  if (fontReady) widthCache[ch] = r;
+  if (fontReady) widthCache[key] = r;
   return r;
 }
 const PAD = 4, VB_Y = -100, VB_H = 124;
-function glyphSVG(ch, color, px, filter = "puff") {
-  const m = measure(ch), w = m.w + PAD * 2;
+function glyphSVG(ch, color, px, filter = "puff", font = "bubble") {
+  const m = measure(ch, font), w = m.w + PAD * 2;
   const esc = ch === "&" ? "&amp;" : ch;
-  return `<svg width="${(px * w / VB_H).toFixed(1)}" height="${px}" viewBox="${(m.x - PAD).toFixed(1)} ${VB_Y} ${w.toFixed(1)} ${VB_H}" aria-hidden="true"><text x="0" y="0" font-family="'Cherry Bomb One','Arial Rounded MT Bold',sans-serif" font-size="100" fill="${color.hex}" stroke="${color.hex}" stroke-width="2.5" stroke-linejoin="round" paint-order="stroke" filter="url(#${filter})">${esc}</text></svg>`;
+  return `<svg width="${(px * w / VB_H).toFixed(1)}" height="${px}" viewBox="${(m.x - PAD).toFixed(1)} ${VB_Y} ${w.toFixed(1)} ${VB_H}" aria-hidden="true"><text x="0" y="0" font-family="${FONT_FAMILY[font]}" font-size="100" fill="${color.hex}" stroke="${color.hex}" stroke-width="2.5" stroke-linejoin="round" paint-order="stroke" filter="url(#${filter})">${esc}</text></svg>`;
 }
 function wordsHTML(text, colors, px, opts = {}) {
   // kleine, nicht klickbare Vorschau (Warenkorb, Szenen)
@@ -53,7 +56,7 @@ function wordsHTML(text, colors, px, opts = {}) {
     if (c === " ") { if (word) { html += `<span class="mini">${word}</span>`; word = ""; } return; }
     if (!opts.keepCase && !CHARS.includes(c)) return;
     const col = opts.hex ? { hex: opts.hex } : (COLOR_BY_ID[colors[i]] || COLORS[0]);
-    word += glyphSVG(c, col, px, opts.filter);
+    word += glyphSVG(c, col, px, opts.filter, opts.font);
   });
   if (word) html += `<span class="mini">${word}</span>`;
   return html;
@@ -217,7 +220,7 @@ $("#addToCart").onclick = () => {
 function addProduct(item, msgEl) {
   // gleiche Variante schon im Warenkorb? Dann Menge erhöhen
   const same = cart.find((c) => c.type === item.type && c.variant === item.variant && c.style === item.style && c.color === item.color
-    && c.size === item.size && JSON.stringify(c.colors || []) === JSON.stringify(item.colors || []));
+    && c.size === item.size && c.font === item.font && JSON.stringify(c.colors || []) === JSON.stringify(item.colors || []));
   if (same) same.qty = Math.min(SHOP.maxQuantity, same.qty + 1); else cart.push({ id: uid(), qty: 1, ...item });
   saveCart(); renderCart();
   msgEl.innerHTML = `Im Warenkorb. <button class="btn link">Ansehen</button>`;
@@ -317,7 +320,7 @@ $("#checkout").onclick = async () => {
   msg.textContent = "";
   btn.disabled = true; btn.textContent = "Einen Moment …";
   try {
-    const data = await postJSON("/api/checkout", { items: cart.map(({ type, text, colors, size, finish, variant, style, color, qty }) => ({ type, text, colors, size, finish, variant, style, color, qty })) });
+    const data = await postJSON("/api/checkout", { items: cart.map(({ type, text, colors, size, finish, font, variant, style, color, qty }) => ({ type, text, colors, size, finish, font, variant, style, color, qty })) });
     if (!data.url) throw new Error("Die Zahlung konnte nicht gestartet werden. Bitte versuche es nochmals.");
     location.href = data.url;
   } catch (err) {
@@ -491,8 +494,8 @@ function renderDims() {
 })();
 
 /* ---------- Alphabet-Set ---------- */
-const alpha = { size: "gross", variant: "farbig", colors: ["pt-sakura", "bm-ice", "es-matcha", "sp-lemon", "pm-purple"] };
-const alphaItem = () => ({ type: "alphabet", size: alpha.size, variant: alpha.variant, colors: alpha.variant === "farbig" ? alpha.colors.slice() : [] });
+const alpha = { size: alphabetSizes()[0]?.id, font: ALPHABET.fonts[0].id, variant: "farbig", colors: ["pt-sakura", "bm-ice", "es-matcha", "sp-lemon", "pm-purple"] };
+const alphaItem = () => ({ type: "alphabet", size: alpha.size, font: alpha.font, variant: alpha.variant, colors: alpha.variant === "farbig" ? alpha.colors.slice() : [] });
 // Farbe pro Buchstabe; ohne gewählte Farbe vorerst weiss
 const alphaPerLetter = (variant, colors) => alphabetColors(variant === "farbig" && !colors.length ? "weiss" : variant, colors);
 
@@ -505,18 +508,19 @@ function renderAlphaPreview() {
   for (let i = 0; i < ALPHABET.letters.length; i += perRow) rows.push(i);
   box.innerHTML = rows.map((start) => {
     const row = ALPHABET.letters.slice(start, start + perRow);
-    return `<div class="alpha-row">${wordsHTML(row, perLetter.slice(start, start + perRow), px)}</div>`;
+    return `<div class="alpha-row">${wordsHTML(row, perLetter.slice(start, start + perRow), px, { font: alpha.font })}</div>`;
   }).join("");
 }
 // Kleine Vorschau im Warenkorb: A–M und N–Z
 function alphaMini(it) {
   const perLetter = alphaPerLetter(it.variant, it.colors || []);
   const half = Math.ceil(ALPHABET.letters.length / 2);
-  return wordsHTML(ALPHABET.letters.slice(0, half) + " " + ALPHABET.letters.slice(half), [...perLetter.slice(0, half), null, ...perLetter.slice(half)], 20);
+  return wordsHTML(ALPHABET.letters.slice(0, half) + " " + ALPHABET.letters.slice(half), [...perLetter.slice(0, half), null, ...perLetter.slice(half)], 20, { font: alphabetFont(it.font)?.id || "bubble" });
 }
 
 function renderAlpha() {
   if (!$("#alphabet") || !ALPHABET.active) return;
+  $("#alphaFonts").innerHTML = ALPHABET.fonts.map((f) => `<button class="opt plain font-${f.id}" role="radio" aria-checked="${f.id === alpha.font}" data-font="${f.id}">${f.name}</button>`).join("");
   $("#alphaSizes").innerHTML = alphabetSizes().map((z) => `<button class="opt plain" role="radio" aria-checked="${z.id === alpha.size}" data-size="${z.id}">${z.name} · ${cm(z.heightCm)}</button>`).join("");
   $("#alphaVariants").innerHTML = [["weiss", "Ganz weiss"], ["farbig", "Farbig"]]
     .map(([id, label]) => `<button class="opt plain" role="radio" aria-checked="${id === alpha.variant}" data-variant="${id}">${label}</button>`).join("");
@@ -527,13 +531,25 @@ function renderAlpha() {
     const on = alpha.colors.includes(c.id);
     return `<button class="cdot" type="button" aria-pressed="${on}" aria-label="${c.name}" title="${c.name}" data-c="${c.id}" style="background:${c.hex}" ${!on && full ? "disabled" : ""}></button>`;
   }).join("");
-  // Set-Preis mit echtem Vergleichspreis (26 Buchstaben einzeln) durchgestrichen
+  // Set-Preis; durchgestrichen nur bei Bubble: dort ist es ein echter Vergleichspreis (26 Buchstaben einzeln im Studio, PBV).
+  // Arial-Black-Buchstaben gibt es nicht einzeln, also auch keinen Vergleichspreis.
   const price = ALPHABET.price[alpha.size][alpha.variant], single = alphabetSinglePrice(alpha.size);
-  $("#alphaPrice").innerHTML = `<s class="was" aria-label="einzeln ${chf(single)}">${chf(single)}</s> <span class="now">${chf(price)}</span>`;
+  $("#alphaPrice").innerHTML = alpha.font === "bubble"
+    ? `<s class="was" aria-label="einzeln ${chf(single)}">${chf(single)}</s> <span class="now">${chf(price)}</span>`
+    : `<span class="now">${chf(price)}</span>`;
   $("#alphaAdd").disabled = Boolean(describeItem(alphaItem()).error);
   renderAlphaPreview();
 }
 if ($("#alphabet")) {
+  $("#alphaFonts").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-font]"); if (!b) return;
+    alpha.font = b.dataset.font; $("#alphaAdded").textContent = ""; renderAlpha();
+    // Ersatzschrift erst laden, wenn jemand Arial Black wählt; danach neu messen und zeichnen
+    if (alpha.font === "arial" && document.fonts) document.fonts.load("100px 'Archivo Black'", "A").then(() => {
+      for (const k in widthCache) if (k.startsWith("arial")) delete widthCache[k];
+      renderAlpha();
+    }).catch(() => {});
+  });
   $("#alphaSizes").addEventListener("click", (e) => { const b = e.target.closest("[data-size]"); if (!b) return; alpha.size = b.dataset.size; $("#alphaAdded").textContent = ""; renderAlpha(); });
   $("#alphaVariants").addEventListener("click", (e) => { const b = e.target.closest("[data-variant]"); if (!b) return; alpha.variant = b.dataset.variant; $("#alphaAdded").textContent = ""; renderAlpha(); });
   // Farbe antippen: hinzufügen (bis 5) oder wieder entfernen; die Reihenfolge bestimmt den Wechsel
