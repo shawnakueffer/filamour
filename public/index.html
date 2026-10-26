@@ -28,7 +28,7 @@
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <defs>
-    <!-- matt -->
+    <!-- Bubble-Look der Buchstaben -->
     <filter id="puff" x="-25%" y="-25%" width="150%" height="160%" color-interpolation-filters="sRGB">
       <!-- Höhenkarte: breit weichgezeichnet, damit sich die Wölbung über die ganze Strichbreite zieht (wie ein Ballon) -->
       <feGaussianBlur in="SourceAlpha" stdDeviation="7" result="b"/>
@@ -40,30 +40,6 @@
       <feGaussianBlur in="s0" stdDeviation="1.6" result="s"/>
       <feComposite in="s" in2="SourceAlpha" operator="in" result="si"/>
       <feComposite in="si" in2="shade" operator="arithmetic" k1="0" k2="0.18" k3="1" k4="0" result="lit"/>
-      <!-- weich abgedunkelter Rand (Umgebungsschatten) -->
-      <feGaussianBlur in="SourceAlpha" stdDeviation="6" result="rb"/>
-      <feComposite in="SourceAlpha" in2="rb" operator="arithmetic" k1="0" k2="1" k3="-1" k4="0" result="edge"/>
-      <feFlood flood-color="#000" flood-opacity="0"/><feComposite in2="edge" operator="in" result="edgeShade"/>
-      <feComposite in="edgeShade" in2="lit" operator="over" result="lit2"/>
-      <feComposite in="lit2" in2="SourceAlpha" operator="in" result="lit3"/>
-      <!-- Weicher Schatten, leicht nach unten, ohne sichtbare Umrandung -->
-      <feGaussianBlur in="SourceAlpha" stdDeviation="4" result="sb"/>
-      <feOffset in="sb" dx="0" dy="3" result="so"/>
-      <feComponentTransfer in="so" result="sh"><feFuncA type="linear" slope="0.5"/></feComponentTransfer>
-      <feMerge><feMergeNode in="sh"/><feMergeNode in="lit3"/></feMerge>
-    </filter>
-    <!-- glänzend (Klarlack): gleiche Wölbung, stärkeres Glanzlicht -->
-    <filter id="puff-gloss" x="-25%" y="-25%" width="150%" height="160%" color-interpolation-filters="sRGB">
-      <!-- Höhenkarte: breit weichgezeichnet, damit sich die Wölbung über die ganze Strichbreite zieht (wie ein Ballon) -->
-      <feGaussianBlur in="SourceAlpha" stdDeviation="7" result="b"/>
-      <feDiffuseLighting in="b" surfaceScale="3" diffuseConstant="1.03" lighting-color="#fff" result="d0"><feDistantLight azimuth="235" elevation="76"/></feDiffuseLighting>
-      <feGaussianBlur in="d0" stdDeviation="2.4" result="d"/><!-- glättet das Licht, sonst entsteht ein Körnchen-Muster -->
-      <feComposite in="d" in2="SourceAlpha" operator="in" result="di"/>
-      <feBlend in="SourceGraphic" in2="di" mode="multiply" result="shade"/>
-      <feSpecularLighting in="b" surfaceScale="4.5" specularConstant="0.7" specularExponent="22" lighting-color="#fff" result="s0"><feDistantLight azimuth="235" elevation="62"/></feSpecularLighting>
-      <feGaussianBlur in="s0" stdDeviation="1.6" result="s"/>
-      <feComposite in="s" in2="SourceAlpha" operator="in" result="si"/>
-      <feComposite in="si" in2="shade" operator="arithmetic" k1="0" k2="0.42" k3="1" k4="0" result="lit"/>
       <!-- weich abgedunkelter Rand (Umgebungsschatten) -->
       <feGaussianBlur in="SourceAlpha" stdDeviation="6" result="rb"/>
       <feComposite in="SourceAlpha" in2="rb" operator="arithmetic" k1="0" k2="1" k3="-1" k4="0" result="edge"/>
@@ -122,7 +98,7 @@
       <div class="block-head">
         <p class="eyebrow studio-tag">Letter Studio</p>
         <h2>Deine Buchstaben gestalten</h2>
-        <p class="muted">Text eintippen, auf einen Buchstaben tippen, Farbe wählen. Du siehst sofort, wie es aussieht. Zwei Grössen, ab <b class="price-inline" id="letterPrice"></b> pro Buchstabe.</p>
+        <p class="muted">Text eintippen, auf einen Buchstaben tippen, Farbe wählen. Du siehst sofort, wie es aussieht. Drei Grössen, ab <b class="price-inline" id="letterPrice"></b> pro Buchstabe.</p>
       </div>
       <div class="stage" id="stage" data-bg="wand">
         <p class="stage-hint" id="stageHint">Buchstaben antippen zum Einfärben</p>
@@ -146,7 +122,7 @@
             <span class="label" id="sizeLabel">Grösse</span>
             <div class="opts" role="radiogroup" aria-labelledby="sizeLabel" id="sizeOpts"></div>
           </div>
-          <div class="field">
+          <div class="field" id="finishField" hidden>
             <span class="label" id="finishLabel">Oberfläche</span>
             <div class="opts" role="radiogroup" aria-labelledby="finishLabel" id="finishOpts"></div>
             <p class="foot-note" id="finishNote" hidden></p>
@@ -274,8 +250,8 @@
             <p>Jeder Buchstabe wird erst gedruckt, wenn du bestellst. So gibt es kein Lager voller Ware und kaum Abfall.</p>
           </li>
           <li>
-            <h3>Matt oder glänzend</h3>
-            <p>Unsere Buchstaben sind normalerweise matt. Auf Wunsch veredeln wir sie von Hand mit Klarlack, dann glänzen sie (+ CHF 0.50 pro Buchstabe).</p>
+            <h3>Glatt und robust</h3>
+            <p>Die Oberfläche ist glatt, die Farbe ist durchgefärbt und blättert nicht ab. Abwischen mit einem feuchten Tuch genügt.</p>
           </li>
         </ul>
         <p class="safety">Dekoration, kein Spielzeug. Wegen verschluckbarer Kleinteile nicht für Kinder unter 3 Jahren.</p>
@@ -306,7 +282,7 @@
         <div class="block-head">
           <p class="eyebrow">Alphabet</p>
           <h2>Das ganze Alphabet</h2>
-          <p class="muted">Alle 26 Buchstaben von A bis Z in matt, ganz in Weiss oder in bis zu fünf Farben im Wechsel. Schön zum Spielen mit Wörtern oder als Geschenk zur Geburt.</p>
+          <p class="muted">Alle 26 Buchstaben von A bis Z, ganz in Weiss oder in bis zu fünf Farben im Wechsel. Schön zum Spielen mit Wörtern oder als Geschenk zur Geburt.</p>
         </div>
         <div class="opts" role="radiogroup" aria-label="Grösse" id="alphaSizes"></div>
         <div class="opts" role="radiogroup" aria-label="Ausführung" id="alphaVariants"></div>
@@ -361,11 +337,11 @@
       </div>
       <div class="products two">
         <article class="product" id="p-poster" data-product="poster">
-          <div class="scene s-wall wide"><div class="poster" id="posterPrev"><div class="art stack" id="posterArt" data-gloss="1" data-fit="0.82" data-max="80"></div></div></div>
+          <div class="scene s-wall wide"><div class="poster" id="posterPrev"><div class="art stack" id="posterArt" data-fit="0.82" data-max="80"></div></div></div>
           <div class="product-info">
             <div>
               <h3>Wandbild</h3>
-              <p class="muted">Ein Spruch aus glänzenden Bubble Letters auf farbigem Grund, fertig zum Aufhängen. Grösse <b class="price-inline" id="posterSize"></b>.</p>
+              <p class="muted">Ein Spruch aus Bubble Letters auf farbigem Grund, fertig zum Aufhängen. Grösse <b class="price-inline" id="posterSize"></b>.</p>
               <p class="pickup-tag">Vorerst nur zur Abholung</p>
             </div>
             <div class="opts" role="radiogroup" aria-label="Sujet" id="posterOpts"></div>

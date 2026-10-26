@@ -14,32 +14,34 @@ export const SHOP = {
 };
 
 // Buchstaben-Grössen, die erste ist der Standard. price = Rappen pro Buchstabe/Zeichen (490 = CHF 4.90)
+// Reihenfolge = Anzeige im Studio (klein → gross); vorgewählt ist DEFAULT_SIZE
 export const LETTER_SIZES = [
-  { id: "gross", name: "Gross", heightCm: 6.5, depthCm: 2.2, price: 490 },
-  { id: "klein", name: "Klein", heightCm: 3,   depthCm: 1,   price: 290 },
+  { id: "klein",    name: "Klein",    heightCm: 3,   depthCm: 1,   price: 290 },
+  { id: "standard", name: "Standard", heightCm: 5,   depthCm: 1.7, price: 490 },
+  { id: "gross",    name: "Gross",    heightCm: 6.5, depthCm: 2.2, price: 690 },
 ];
+export const DEFAULT_SIZE = "standard";
 // Nachschlage-Tabellen ohne Prototyp: «__proto__» oder «constructor» aus dem Browser finden so nichts
 const byId = (list) => Object.assign(Object.create(null), Object.fromEntries(list.map((x) => [x.id, x])));
 
 export const SIZE_BY_ID = byId(LETTER_SIZES);
-// Oberfläche der Buchstaben (nicht beim Alphabet: das gibt es nur matt). surcharge = Aufpreis in Rappen pro Buchstabe
+// Oberfläche der Buchstaben: zurzeit nur matt (glänzend mit Klarlack seit Oktober 2026 nicht mehr im Angebot).
+// surcharge = Aufpreis in Rappen pro Buchstabe. Mehr als eine Oberfläche → im Studio erscheint wieder die Auswahl.
 export const LETTER_FINISHES = [
   { id: "matt", name: "Matt", surcharge: 0 },
-  { id: "glaenzend", name: "Glänzend", surcharge: 50,
-    note: "Glänzende Buchstaben werden von Hand mit Klarlack lackiert. Der Lack kann in den ersten Tagen noch leicht riechen, lass sie am besten kurz auslüften." },
 ];
 export const FINISH_BY_ID = byId(LETTER_FINISHES);
-// Oberfläche eines Designs; ältere Warenkörbe ohne Angabe sind matt. Unbekannt → null
+// Oberfläche eines Designs; ohne Angabe matt. Ältere Warenkörbe mit «glaenzend» gelten als matt. Unbekannt → null
 export function letterFinish(id) {
-  const key = id || LETTER_FINISHES[0].id;
+  const key = !id || id === "glaenzend" ? LETTER_FINISHES[0].id : id;
   return Object.hasOwn(FINISH_BY_ID, key) ? FINISH_BY_ID[key] : null;
 }
 // Preis pro Buchstabe je Grösse und Oberfläche
 export const letterPrice = (size, finish) => size.price + finish.surcharge;
 
-// Grösse eines Designs; ältere Warenkörbe ohne Grösse sind «gross». Unbekannt → null
+// Grösse eines Designs; ohne Angabe die Standardgrösse. Unbekannt → null
 export function letterSize(id) {
-  const key = id || LETTER_SIZES[0].id;
+  const key = id || DEFAULT_SIZE;
   return Object.hasOwn(SIZE_BY_ID, key) ? SIZE_BY_ID[key] : null;
 }
 
@@ -106,6 +108,8 @@ export const ALPHABET = {
   price: { gross: { farbig: 6900, weiss: 6300 }, klein: { farbig: 4900, weiss: 4300 } }, // Rappen
 };
 // Vergleichspreis (durchgestrichen): was die 26 Buchstaben einzeln im Studio kosten. Muss ein echter Preis sein (PBV).
+// Grössen, in denen es das Alphabet gibt (die mit einem Preis in ALPHABET.price)
+export const alphabetSizes = () => LETTER_SIZES.filter((z) => ALPHABET.price[z.id]);
 export const alphabetSinglePrice = (sizeId) => [...ALPHABET.letters].length * (letterSize(sizeId)?.price ?? 0);
 // Farbe pro Buchstabe (Liste von Farb-IDs in der Reihenfolge von ALPHABET.letters)
 export function alphabetColors(variant, colors) {
@@ -171,8 +175,8 @@ export function describeItem(it) {
   }
   if (type === "alphabet") {
     if (!ALPHABET.active) return { error: "Das Alphabet gibt es im Moment nicht." };
-    const size = letterSize(it.size);
-    if (!size) return { error: "Diese Buchstaben-Grösse gibt es nicht mehr." };
+    const size = letterSize(it.size || "gross");
+    if (!size || !ALPHABET.price[size.id]) return { error: `Das Alphabet gibt es nur in diesen Grössen: ${alphabetSizes().map((z) => z.name).join(", ")}.` };
     let palette;
     if (it.variant === "weiss") palette = [ALPHABET.white];
     else if (it.variant === "farbig") {
