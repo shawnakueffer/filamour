@@ -65,6 +65,8 @@ test("Kontakt: speichert und schickt eine Mail mit Antwortadresse", async () => 
   assert.equal(c.question, "Passt ein Foto 10×15?");
   assert.equal(mails[0].replyTo, "mia@example.ch");
   assert.match(mails[0].text, /Passt ein Foto/);
+  assert.equal(mails[0].subject, "Neue Frage von «Mia»");
+  assert.doesNotMatch(mails[0].text, /Chatverlauf|Kunde: Hallo/, "Chatverlauf nur im Admin-Bereich");
 });
 
 test("Kontakt: Mail-Fehler ist egal, solange gespeichert wurde", async () => {

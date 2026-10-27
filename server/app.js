@@ -182,10 +182,11 @@ export function createApp({ stripe = null, store = null, mailer = null, brevo = 
     }
     if (mailer) {
       try {
+        // Kurz und nur Text: Name, E-Mail und Frage. Den Chatverlauf gibt es im Admin-Bereich (Anfragen).
         await mailer.send({
-          subject: `Neue Anfrage von ${(m.name || m.email).replace(/[\r\n]+/g, " ")}`,
+          subject: `Neue Frage von «${(m.name || m.email).replace(/[\r\n]+/g, " ")}»`,
           replyTo: m.email,
-          text: `${m.name ? `Name: ${m.name}\n` : ""}E-Mail: ${m.email}\n\nFrage:\n${m.question || "–"}\n\n--- Chatverlauf ---\n${m.history || "–"}`,
+          text: `${m.name ? `Name: ${m.name}\n` : ""}E-Mail: ${m.email}\n\nFrage:\n${m.question || "–"}`,
         });
         delivered = true;
       } catch (err) { console.error("Kontakt-Mail:", err?.message); }
