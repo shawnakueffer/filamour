@@ -93,6 +93,19 @@ function orderCard(s, doneAt, canSend) {
 </article>`;
 }
 
+function contactCard(c) {
+  const done = Boolean(c.done_at);
+  return `<article class="card msg${done ? " is-done" : ""}">
+  <div class="from"><b>${esc(c.name) || "–"}</b><span>${esc(when(c.created_at))}</span></div>
+  <a href="mailto:${esc(c.email)}">${esc(c.email)}</a>
+  <div class="q">${esc(c.question) || '<span class="pill">–</span>'}</div>
+  ${c.history ? `<details><summary>Chatverlauf</summary><pre>${esc(c.history)}</pre></details>` : ""}
+  ${Number.isInteger(c.id) ? `<form method="post" action="/admin/anfragen/${c.id}/${done ? "offen" : "erledigt"}" class="act">
+    ${done ? `<p class="pill done">✓ Erledigt am ${esc(when(c.done_at))}</p><button type="submit" class="btn light">Wieder öffnen</button>` : `<button type="submit" class="btn">Erledigt – beantwortet</button>`}
+  </form>` : ""}
+</article>`;
+}
+
 const STYLE = `
   @font-face { font-family: "Figtree"; font-weight: 400; src: url("/fonts/figtree-latin-400-normal.woff2") format("woff2"); }
   @font-face { font-family: "Figtree"; font-weight: 600; src: url("/fonts/figtree-latin-600-normal.woff2") format("woff2"); }
@@ -152,6 +165,9 @@ const STYLE = `
   .field input { font: inherit; font-size: 15px; color: var(--fg); padding: 10px 12px; border: 1px solid #d9d2d4; border-radius: 10px; background: #fff; }
   .btn { font: inherit; font-weight: 600; padding: 11px 16px; border: 0; border-radius: 999px; background: var(--fg); color: #fff; cursor: pointer; }
   .btn:hover { background: #3a3436; }
+  .btn.light { background: var(--soft); color: var(--fg); } .btn.light:hover { background: #ece6e7; }
+  .msg .act { margin-top: 6px; } .msg.is-done { opacity: .85; }
+  .done-list { margin-top: 24px; } .done-list > summary { font-weight: 600; color: var(--fg); margin-bottom: 12px; }
   .pill { margin: 0; font-size: 14px; color: var(--muted); } .pill.done { color: var(--ok); font-weight: 600; }
   .stripe { font-size: 13px; color: var(--muted); text-decoration: none; } .stripe:hover { text-decoration: underline; }
   .empty { background: var(--card); border: 1px dashed #d9d2d4; border-radius: 16px; padding: 28px 16px; text-align: center; color: var(--muted); }
@@ -231,11 +247,19 @@ export function adminRouter({ store, password, newsletterInBrevo = false, stripe
     res.redirect(303, `/admin?abgeholt=${session.id.slice(-8).toUpperCase()}`);
   });
 
+  // Anfrage als erledigt markieren oder wieder öffnen
+  r.post("/anfragen/:id/:state", async (req, res) => {
+    const id = Number(req.params.id), state = req.params.state;
+    if (!Number.isInteger(id) || id < 1 || !["erledigt", "offen"].includes(state)) return res.redirect(303, "/admin?tab=anfragen");
+    await store.setContactDone(id, state === "erledigt");
+    res.redirect(303, "/admin?tab=anfragen");
+  });
+
   r.get("/newsletter.csv", async (req, res) => {
     res.type("text/csv").attachment("newsletter.csv").send(csv(await store.listNewsletter(), ["email", "created_at"]));
   });
   r.get("/kontakt.csv", async (req, res) => {
-    res.type("text/csv").attachment("kontakt.csv").send(csv(await store.listContacts(), ["created_at", "name", "email", "question", "history"]));
+    res.type("text/csv").attachment("kontakt.csv").send(csv(await store.listContacts(), ["created_at", "name", "email", "question", "history", "done_at"]));
   });
 
   r.get("/", async (req, res) => {
@@ -249,6 +273,7 @@ export function adminRouter({ store, password, newsletterInBrevo = false, stripe
       try { orders = await recentOrders(stripe); } catch (err) { ordersError = true; console.error("Stripe-Fehler (Admin):", err?.message); }
     }
     const doneAt = (s) => (isPickup(s) ? collected : shipped).get(s.id);
+    const openContacts = contacts.filter((c) => !c.done_at), doneContacts = contacts.filter((c) => c.done_at);
     const open = orders.filter((s) => !doneAt(s)).sort((a, b) => a.created - b.created); // älteste zuerst
     const done = orders.filter((s) => doneAt(s)).sort((a, b) => doneAt(b) - doneAt(a));  // zuletzt erledigte zuerst
     const live = orders.filter((s) => s.livemode);
@@ -271,12 +296,9 @@ ${ordersBlock(open, "Alles erledigt, keine offenen Bestellungen 🎉")}`;
 <p class="hint">Verschickte und abgeholte Bestellungen der letzten ${ORDER_DAYS} Tage. Ältere findest du in Stripe.</p>
 ${ordersBlock(done, "Noch nichts erledigt.")}`;
     else if (tab === "anfragen") content = `<div class="head"><h1>Kontaktanfragen</h1><a href="/admin/kontakt.csv">CSV herunterladen</a></div>
-${contacts.length ? `<div class="grid">${contacts.map((c) => `<article class="card msg">
-  <div class="from"><b>${esc(c.name) || "–"}</b><span>${esc(when(c.created_at))}</span></div>
-  <a href="mailto:${esc(c.email)}">${esc(c.email)}</a>
-  <div class="q">${esc(c.question) || '<span class="pill">–</span>'}</div>
-  ${c.history ? `<details><summary>Chatverlauf</summary><pre>${esc(c.history)}</pre></details>` : ""}
-</article>`).join("")}</div>` : `<p class="empty">Noch keine Anfragen.</p>`}`;
+<p class="hint">Hast du geantwortet, markiere die Anfrage als erledigt. Sie wandert dann nach unten.</p>
+${openContacts.length ? `<div class="grid">${openContacts.map(contactCard).join("")}</div>` : `<p class="empty">Keine offenen Anfragen.</p>`}
+${doneContacts.length ? `<details class="done-list"><summary>Erledigt (${doneContacts.length})</summary><div class="grid">${doneContacts.map(contactCard).join("")}</div></details>` : ""}`;
     else content = `<div class="head"><h1>Newsletter</h1><a href="/admin/newsletter.csv">CSV herunterladen</a></div>
 ${news.length ? `<div class="card"><table>${news.map((n) => `<tr><td>${esc(n.email)}</td><td class="d">${esc(when(n.created_at))}</td></tr>`).join("")}</table></div>` : `<p class="empty">Noch keine Anmeldungen.</p>`}`;
 
@@ -291,7 +313,7 @@ ${news.length ? `<div class="card"><table>${news.map((n) => `<tr><td>${esc(n.ema
   <div class="store">${store.kind === "postgres" ? "" : `Speicher: ${esc(store.kind)} (nicht dauerhaft)`}</div>
 </div>
 <nav class="wrap tabs" aria-label="Bereiche">
-  ${tabLink("offen", "Offen", open.length, true)}${tabLink("erledigt", "Erledigt", done.length)}${tabLink("anfragen", "Anfragen", contacts.length)}${tabs.includes("newsletter") ? tabLink("newsletter", "Newsletter", news.length) : ""}
+  ${tabLink("offen", "Offen", open.length, true)}${tabLink("erledigt", "Erledigt", done.length)}${tabLink("anfragen", "Anfragen", openContacts.length, true)}${tabs.includes("newsletter") ? tabLink("newsletter", "Newsletter", news.length) : ""}
 </nav></header>
 <main class="wrap">
 ${flash}

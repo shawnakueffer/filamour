@@ -138,3 +138,30 @@ test("Mit Brevo: kein Newsletter-Reiter, ältere Anmeldungen bleiben als CSV", a
     assert.match(csv, /alt@example\.ch/);
   });
 });
+
+test("Anfragen: als erledigt markieren und wieder öffnen", async () => {
+  const opts = setup();
+  await opts.store.addContact({ name: "Nora", email: "nora@example.ch", question: "Bis Freitag?", history: "" });
+  await opts.store.addContact({ name: "Leo", email: "leo@example.ch", question: "Gibt es Gold?", history: "" });
+  const [leo, nora] = await opts.store.listContacts();
+  const post = (id, state, origin = "") => fetch(`${opts.base}/admin/anfragen/${id}/${state}`, { method: "POST", redirect: "manual", headers: { authorization: AUTH, origin: origin || opts.base } });
+  await withServer(opts, async (base) => {
+    opts.base = base;
+    let html = await page(base, "?tab=anfragen");
+    assert.match(html, /Anfragen<span class="count hot">2<\/span>/);
+    assert.match(html, new RegExp(`action="/admin/anfragen/${nora.id}/erledigt"`));
+
+    const res = await post(nora.id, "erledigt");
+    assert.equal(res.status, 303);
+    assert.equal(res.headers.get("location"), "/admin?tab=anfragen");
+    html = await page(base, "?tab=anfragen");
+    assert.match(html, /Anfragen<span class="count hot">1<\/span>/);
+    assert.match(html, /Erledigt \(1\)/);
+    assert.match(html, /✓ Erledigt am/);
+
+    await post(nora.id, "offen");
+    assert.match(await page(base, "?tab=anfragen"), /Anfragen<span class="count hot">2<\/span>/);
+    assert.equal((await post(leo.id, "erledigt", "https://boese.example")).status, 403, "fremde Seite");
+    assert.equal((await opts.store.listContacts()).find((c) => c.id === leo.id).done_at, null);
+  });
+});

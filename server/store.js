@@ -21,6 +21,8 @@ CREATE TABLE IF NOT EXISTS contact_messages (
   history    TEXT NOT NULL DEFAULT '',
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+-- Anfrage als erledigt markiert (im Admin-Bereich), NULL = offen
+ALTER TABLE contact_messages ADD COLUMN IF NOT EXISTS done_at TIMESTAMPTZ;
 CREATE TABLE IF NOT EXISTS order_mails (
   session_id TEXT NOT NULL,
   kind       TEXT NOT NULL,
@@ -73,7 +75,12 @@ export async function createPgStore(connectionString) {
       return (await pool.query("SELECT email, created_at FROM newsletter_signups ORDER BY created_at DESC")).rows;
     },
     async listContacts() {
-      return (await pool.query("SELECT name, email, question, history, created_at FROM contact_messages ORDER BY created_at DESC LIMIT 500")).rows;
+      return (await pool.query("SELECT id, name, email, question, history, created_at, done_at FROM contact_messages ORDER BY created_at DESC LIMIT 500")).rows;
+    },
+    // Anfrage erledigt (true) oder wieder offen (false); false, wenn es die Anfrage nicht gibt
+    async setContactDone(id, done) {
+      const r = await pool.query("UPDATE contact_messages SET done_at = CASE WHEN $2 THEN COALESCE(done_at, now()) ELSE NULL END WHERE id = $1", [id, done]);
+      return r.rowCount === 1;
     },
     async ping() { await pool.query("SELECT 1"); },
     close: () => pool.end(),
@@ -83,6 +90,7 @@ export async function createPgStore(connectionString) {
 // Nur für Tests und lokales Ausprobieren
 export function createMemoryStore() {
   const newsletter = [], contacts = [], orderMails = new Map(); // Schlüssel → Zeitpunkt
+  let nextId = 1;
   const cutoff = () => { const d = new Date(); d.setMonth(d.getMonth() - RETENTION_MONTHS); return d; };
   return {
     kind: "memory",
@@ -103,7 +111,17 @@ export function createMemoryStore() {
       for (const [key, at] of orderMails) { const [id, k] = key.split(" "); if (k === kind) out.set(id, at); }
       return out;
     },
-    async addContact(m) { contacts.unshift({ ...m, created_at: m.created_at || new Date() }); },
+    async addContact(m) {
+      const id = Number.isInteger(m.id) ? m.id : nextId;
+      nextId = Math.max(nextId, id + 1);
+      contacts.unshift({ ...m, id, created_at: m.created_at || new Date(), done_at: m.done_at || null });
+    },
+    async setContactDone(id, done) {
+      const c = contacts.find((x) => x.id === id);
+      if (!c) return false;
+      c.done_at = done ? c.done_at || new Date() : null;
+      return true;
+    },
     async purgeOld() {
       const limit = cutoff();
       const before = contacts.length;
@@ -127,7 +145,7 @@ export async function createFileStore(dir) {
   try {
     const saved = JSON.parse(await fs.readFile(file, "utf8"));
     for (const n of saved.newsletter.reverse()) await mem.addNewsletter(n.email);
-    for (const c of saved.contacts.reverse()) await mem.addContact({ ...c, created_at: new Date(c.created_at) });
+    for (const c of saved.contacts.reverse()) await mem.addContact({ ...c, created_at: new Date(c.created_at), done_at: c.done_at ? new Date(c.done_at) : null });
   } catch {}
   const save = async () => fs.writeFile(file, JSON.stringify({ newsletter: await mem.listNewsletter(), contacts: await mem.listContacts() }, null, 2));
   return {
@@ -135,6 +153,7 @@ export async function createFileStore(dir) {
     kind: "file",
     async addNewsletter(email) { const r = await mem.addNewsletter(email); await save(); return r; },
     async addContact(m) { await mem.addContact(m); await save(); },
+    async setContactDone(id, done) { const ok = await mem.setContactDone(id, done); await save(); return ok; },
     async purgeOld() { const r = await mem.purgeOld(); await save(); return r; },
   };
 }
