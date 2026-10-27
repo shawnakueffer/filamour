@@ -147,21 +147,24 @@ export const FRAME_STYLES = [
 export const FRAME_BY_ID = byId(FRAME_STYLES);
 
 // Nur druckbare Zeichen zählen (Leerzeichen und unbekannte Zeichen nicht)
-export function pieces(text, colors) {
+// fuzzy: pro Zeichen true = Fuzzy Skin (raue, körnige Oberfläche), gleiche Stelle wie bei colors
+export function pieces(text, colors, fuzzy) {
   const up = normalizeText(text).toUpperCase();
   const out = [];
   [...up].forEach((ch, i) => {
-    if (CHARS.includes(ch)) out.push({ ch, color: colors?.[i] });
+    if (CHARS.includes(ch)) out.push({ ch, color: colors?.[i], fuzzy: fuzzy?.[i] === true });
   });
   return out;
 }
+// Fuzzy Skin: ohne Aufpreis, für einzelne Buchstaben oder alle
+export const FUZZY = { name: "Fuzzy Skin", note: "Fuzzy Skin gibt dem Buchstaben eine raue, leicht körnige Oberfläche. Gleicher Preis, gleiche Farben." };
 
 // Ein Warenkorb-Eintrag → Preis und Beschreibung. Wird von Shop und Server gleich verwendet.
 // Gibt { error } zurück, wenn der Eintrag ungültig ist.
 export function describeItem(it) {
   const type = it?.type || "letters";
   if (type === "letters") {
-    const list = pieces(it.text, it.colors);
+    const list = pieces(it.text, it.colors, it.fuzzy);
     if (!list.length) return { error: "Ein Design enthält keine bestellbaren Buchstaben." };
     if (list.length > SHOP.maxLettersPerDesign) return { error: `Maximal ${SHOP.maxLettersPerDesign} Buchstaben pro Design.` };
     if (list.some((p) => !COLOR_BY_ID[p.color])) return { error: "Eine gewählte Farbe ist nicht mehr verfügbar. Bitte das Design neu einfärben." };
@@ -172,11 +175,14 @@ export function describeItem(it) {
     const each = letterPrice(size, finish);
     // nur, was auch gedruckt wird (z. B. «HALLO 123» → «HALLO»)
     const text = [...normalizeText(it.text).toUpperCase()].filter((c) => c === " " || CHARS.includes(c)).join("").replace(/\s+/g, " ").trim();
+    // Oberfläche: «matt», «Fuzzy Skin» (alle) oder «matt, 2× Fuzzy Skin»
+    const nFuzzy = list.filter((p) => p.fuzzy).length;
+    const surface = nFuzzy === 0 ? finish.name.toLowerCase() : nFuzzy === list.length ? FUZZY.name : `${finish.name.toLowerCase()}, ${nFuzzy}× ${FUZZY.name}`;
     return {
       type, unit: list.length * each,
-      name: `Bubble Letters «${text}» (${list.length} Teile, ${size.name} ${cm(size.heightCm)}, ${finish.name.toLowerCase()})`,
-      description: list.map((p) => `${p.ch} ${COLOR_BY_ID[p.color].name}`).join(" · "),
-      meta: `${size.name}, ${finish.name.toLowerCase()}, ${list.length} Buchstaben à ${chf(each)}`,
+      name: `Bubble Letters «${text}» (${list.length} Teile, ${size.name} ${cm(size.heightCm)}, ${surface})`,
+      description: list.map((p) => `${p.ch} ${COLOR_BY_ID[p.color].name}${p.fuzzy ? ` (${FUZZY.name})` : ""}`).join(" · "),
+      meta: `${size.name}, ${surface}, ${list.length} Buchstaben à ${chf(each)}`,
     };
   }
   if (type === "alphabet") {

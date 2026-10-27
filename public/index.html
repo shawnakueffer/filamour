@@ -52,6 +52,41 @@
       <feComponentTransfer in="so" result="sh"><feFuncA type="linear" slope="0.5"/></feComponentTransfer>
       <feMerge><feMergeNode in="sh"/><feMergeNode in="lit3"/></feMerge>
     </filter>
+    <!-- Fuzzy Skin: gleicher Bubble-Look mit rauer, körniger Oberfläche -->
+    <filter id="fuzzy" x="-25%" y="-25%" width="150%" height="160%" color-interpolation-filters="sRGB">
+      <!-- Rauschen für Körnung und leicht ausgefransten Rand -->
+      <feTurbulence type="fractalNoise" baseFrequency="1.3" numOctaves="3" seed="7" result="noise"/>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="1.5" xChannelSelector="R" yChannelSelector="G" result="rough"/>
+      <feColorMatrix in="rough" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" result="ra"/>
+      <!-- Höhenkarte: breit weichgezeichnet, damit sich die Wölbung über die ganze Strichbreite zieht (wie ein Ballon) -->
+      <feGaussianBlur in="ra" stdDeviation="7" result="b"/>
+      <feDiffuseLighting in="b" surfaceScale="3" diffuseConstant="1.03" lighting-color="#fff" result="d0"><feDistantLight azimuth="235" elevation="76"/></feDiffuseLighting>
+      <feGaussianBlur in="d0" stdDeviation="2.4" result="d"/><!-- glättet das Licht, sonst entsteht ein Körnchen-Muster -->
+      <feComposite in="d" in2="ra" operator="in" result="di"/>
+      <feBlend in="rough" in2="di" mode="multiply" result="shade"/>
+      <feSpecularLighting in="b" surfaceScale="4.5" specularConstant="0.4" specularExponent="14" lighting-color="#fff" result="s0"><feDistantLight azimuth="235" elevation="62"/></feSpecularLighting>
+      <feGaussianBlur in="s0" stdDeviation="1.6" result="s"/>
+      <feComposite in="s" in2="ra" operator="in" result="si"/>
+      <feComposite in="si" in2="shade" operator="arithmetic" k1="0" k2="0.18" k3="1" k4="0" result="lit"/>
+      <!-- weich abgedunkelter Rand (Umgebungsschatten) -->
+      <feGaussianBlur in="ra" stdDeviation="6" result="rb"/>
+      <feComposite in="ra" in2="rb" operator="arithmetic" k1="0" k2="1" k3="-1" k4="0" result="edge"/>
+      <feFlood flood-color="#000" flood-opacity="0"/><feComposite in2="edge" operator="in" result="edgeShade"/>
+      <feComposite in="edgeShade" in2="lit" operator="over" result="lit2"/>
+      <feComposite in="lit2" in2="ra" operator="in" result="lit3"/>
+      <!-- Weicher Schatten, leicht nach unten, ohne sichtbare Umrandung -->
+      <feGaussianBlur in="ra" stdDeviation="4" result="sb"/>
+      <feOffset in="sb" dx="0" dy="3" result="so"/>
+      <feComponentTransfer in="so" result="sh"><feFuncA type="linear" slope="0.5"/></feComponentTransfer>
+      <!-- Fuzzy Skin: feine, weiche Körnung als eigene Schattierung, Helligkeit ausgeglichen (Farben bleiben gleich) -->
+      <feColorMatrix in="noise" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" result="na"/>
+      <feGaussianBlur in="na" stdDeviation="0.4" result="nab"/>
+      <feDiffuseLighting in="nab" surfaceScale="1.6" diffuseConstant="1.22" lighting-color="#fff" result="grain"><feDistantLight azimuth="235" elevation="55"/></feDiffuseLighting>
+      <feBlend in="grain" in2="lit3" mode="multiply" result="g1"/>
+      <feComposite in="g1" in2="lit3" operator="arithmetic" k1="0" k2="0.35" k3="0.65" k4="0" result="g2"/>
+      <feComposite in="g2" in2="ra" operator="in" result="lit3"/>
+      <feMerge><feMergeNode in="sh"/><feMergeNode in="lit3"/></feMerge>
+    </filter>
   </defs>
 </svg>
 
@@ -98,7 +133,7 @@
       <div class="block-head">
         <p class="eyebrow studio-tag">Letter Studio</p>
         <h2>Deine Buchstaben gestalten</h2>
-        <p class="muted">Text eintippen, auf einen Buchstaben tippen, Farbe wählen. Du siehst sofort, wie es aussieht. Drei Grössen, ab <b class="price-inline" id="letterPrice"></b> pro Buchstabe.</p>
+        <p class="muted">Text eintippen, auf einen Buchstaben tippen, Farbe wählen, auf Wunsch mit Fuzzy Skin. Du siehst sofort, wie es aussieht. Drei Grössen, ab <b class="price-inline" id="letterPrice"></b> pro Buchstabe.</p>
       </div>
       <div class="stage" id="stage" data-bg="wand">
         <p class="stage-hint" id="stageHint">Buchstaben antippen zum Einfärben</p>
@@ -153,6 +188,14 @@
             <div class="pick-title idle" id="pickTitle">Tippe oben auf einen Buchstaben, um ihn einzufärben.</div>
             <button class="btn link" id="toAll" hidden>Diese Farbe für alle</button>
           </div>
+          <div class="fuzzy-row">
+            <div class="opts" role="radiogroup" aria-label="Oberfläche des Buchstabens" id="fuzzyOpts">
+              <button class="opt plain" role="radio" aria-checked="false" data-fz="0" disabled>Glatt</button>
+              <button class="opt plain fuzzy-opt" role="radio" aria-checked="false" data-fz="1" disabled>Fuzzy Skin</button>
+            </div>
+            <button class="btn link" id="fuzzyAll" hidden>Fuzzy Skin für alle</button>
+          </div>
+          <p class="foot-note fuzzy-note">Fuzzy Skin gibt dem Buchstaben eine raue, leicht körnige Oberfläche. Gleicher Preis, gleiche Farben.</p>
           <div class="swatches" id="shelf"></div>
           <p class="foot-note" id="studioNote">Die Farben am Bildschirm sind Annäherungen an das echte Filament.</p>
         </div>

@@ -161,6 +161,11 @@ input[type="text"]:focus { outline: none; border-color: var(--accent); }
 .btn.link:hover { color: var(--fg); background: none; }
 .added { font-size: 14px; color: var(--muted); min-height: 1.3em; }
 
+.fuzzy-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin: 4px 0 2px; }
+.fuzzy-row .opt:disabled { opacity: .45; cursor: not-allowed; }
+.opt.fuzzy-opt { background-image: radial-gradient(rgba(0,0,0,.14) 1px, transparent 1.2px); background-size: 4px 4px; }
+.fuzzy-note { margin: 0 0 12px; }
+.fuzzy-dot { background: radial-gradient(rgba(0,0,0,.35) 1px, transparent 1.3px) 0 0 / 3px 3px, #e9e3e3; }
 .pick-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
 .pick-title { font-size: 17px; font-weight: 600; }
 .pick-title b { color: var(--accent); font-family: var(--font-letter); font-weight: 400; font-size: 22px; }

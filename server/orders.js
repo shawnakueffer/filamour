@@ -102,16 +102,19 @@ export function ink(hex) {
 }
 
 // «M Sakura Pink · I Ice Blue» → farbige Buchstaben; andere Artikel → ein Farbpunkt mit Namen
-// «M Sakura Pink · I Ice Blue» → [{ ch: "M", hex, ink }, …]; null, wenn es keine Buchstaben mit Farben sind
+// «M Sakura Pink · I Ice Blue (Fuzzy Skin)» → [{ ch: "M", hex, ink, fuzzy }, …]; null, wenn es keine Buchstaben mit Farben sind
 export function letterColors(description) {
-  const parts = String(description || "").split(" · ").map((p) => ({ ch: p.slice(0, p.indexOf(" ")), hex: HEX_BY_NAME.get(p.slice(p.indexOf(" ") + 1)) }));
+  const parts = String(description || "").split(" · ").map((p) => {
+    const fuzzy = p.endsWith(" (Fuzzy Skin)"), rest = fuzzy ? p.slice(0, -13) : p;
+    return { ch: rest.slice(0, rest.indexOf(" ")), hex: HEX_BY_NAME.get(rest.slice(rest.indexOf(" ") + 1)), fuzzy };
+  });
   return parts.length && parts.every((p) => p.ch.length === 1 && p.hex) ? parts.map((p) => ({ ...p, ink: ink(p.hex) })) : null;
 }
 
 function swatches(description) {
   const parts = letterColors(description);
   if (parts) {
-    return parts.map((p) => `<span style="display:inline-block;min-width:16px;margin:0 4px 6px 0;padding:6px 7px;border-radius:9px;border:1px solid rgba(0,0,0,.08);background:${p.hex};color:${ink(p.hex)};font:700 16px/1 ${ROUND};text-align:center">${esc(p.ch)}</span>`).join("")
+    return parts.map((p) => `<span style="display:inline-block;min-width:16px;margin:0 4px 6px 0;padding:6px 7px;border-radius:9px;border:${p.fuzzy ? "2px dashed rgba(0,0,0,.4)" : "1px solid rgba(0,0,0,.08)"};background:${p.hex};color:${ink(p.hex)};font:700 16px/1 ${ROUND};text-align:center"${p.fuzzy ? ' title="Fuzzy Skin"' : ""}>${esc(p.ch)}</span>`).join("")
       + `<div style="margin-top:2px;font:13px/1.5 ${SANS};color:${C.muted}">${esc(description)}</div>`;
   }
   const hex = HEX_BY_NAME.get(description);

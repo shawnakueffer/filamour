@@ -27,6 +27,7 @@ export function validateCart(body) {
       size: String(raw?.size ?? ""),
       finish: String(raw?.finish ?? ""),
       font: String(raw?.font ?? ""),
+      fuzzy: Array.isArray(raw?.fuzzy) ? raw.fuzzy.slice(0, 80).map((v) => v === true) : [],
     };
     const d = describeItem(item);
     if (d.error) return { error: d.error };

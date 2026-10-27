@@ -1,4 +1,4 @@
-import { SHOP, ANNOUNCEMENTS, ANNOUNCEMENTS_SHORT, CHARS, normalizeText, COLORS, COLOR_BY_ID, PRODUCTS, LETTER_FINISHES, letterFinish, letterPrice, ALPHABET, alphabetColors, alphabetSinglePrice, NEWSLETTER, POSTERS, POSTER_BY_ID, FRAME_STYLES, FRAME_BY_ID, LETTER_SIZES, DEFAULT_SIZE, alphabetSizes, alphabetFont, letterSize, describeItem, pieces, designPrice, shippingFor, isPickup, PICKUP_NOTE, chf, cm } from "./catalog.js";
+import { SHOP, ANNOUNCEMENTS, ANNOUNCEMENTS_SHORT, CHARS, normalizeText, COLORS, COLOR_BY_ID, PRODUCTS, LETTER_FINISHES, letterFinish, FUZZY, letterPrice, ALPHABET, alphabetColors, alphabetSinglePrice, NEWSLETTER, POSTERS, POSTER_BY_ID, FRAME_STYLES, FRAME_BY_ID, LETTER_SIZES, DEFAULT_SIZE, alphabetSizes, alphabetFont, letterSize, describeItem, pieces, designPrice, shippingFor, isPickup, PICKUP_NOTE, chf, cm } from "./catalog.js";
 import { REVIEWS } from "./reviews.js";
 
 const $ = (s) => document.querySelector(s);
@@ -56,7 +56,7 @@ function wordsHTML(text, colors, px, opts = {}) {
     if (c === " ") { if (word) { html += `<span class="mini">${word}</span>`; word = ""; } return; }
     if (!opts.keepCase && !CHARS.includes(c)) return;
     const col = opts.hex ? { hex: opts.hex } : (COLOR_BY_ID[colors[i]] || COLORS[0]);
-    word += glyphSVG(c, col, px, opts.filter, opts.font);
+    word += glyphSVG(c, col, px, opts.fuzzy?.[i] ? "fuzzy" : opts.filter, opts.font);
   });
   if (word) html += `<span class="mini">${word}</span>`;
   return html;
@@ -68,6 +68,7 @@ let state = store.get("filamour-studio", null) || { text: "MIA", colors: [], bg:
 if (String(state.text).trim().toUpperCase() === "HALLO MIA") { state.text = "MIA"; state.colors = []; } // alter Standardtext → neuer Standard
 if (!Array.isArray(state.colors) || !state.colors.length) state.colors = [...state.text].map((_, i) => EXAMPLE[i % EXAMPLE.length]);
 state.colors = state.colors.map((id) => (COLOR_BY_ID[id] ? id : "pt-sakura"));
+state.fuzzy = Array.isArray(state.fuzzy) ? state.fuzzy.map((v) => v === true) : []; // pro Zeichen: Fuzzy Skin ja/nein
 if (!COLOR_BY_ID[state.fill]) state.fill = "pt-sakura";
 state.size = letterSize(state.size)?.id || DEFAULT_SIZE;          // fehlt oder unbekannt → Standard
 state.finish = letterFinish(state.finish)?.id || LETTER_FINISHES[0].id;
@@ -90,6 +91,8 @@ function render() {
   const up = state.text.toUpperCase();
   while (state.colors.length < up.length) state.colors.push(state.fill);
   state.colors.length = up.length;
+  while (state.fuzzy.length < up.length) state.fuzzy.push(false);
+  state.fuzzy.length = up.length;
   if (sel >= 0 && !validIdx().includes(sel)) sel = -1;
 
   const px = stageSize();
@@ -100,7 +103,8 @@ function render() {
     if (c === " ") { if (word) { html += `<span class="word">${word}</span>`; word = ""; } return; }
     if (!CHARS.includes(c)) return;
     const col = COLOR_BY_ID[state.colors[i]];
-    word += `<button class="glyph${i === sel ? " sel" : ""}${i === popIdx ? " pop" : ""}" data-i="${i}" aria-pressed="${i === sel}" aria-label="${c}, ${col.name}" title="${c} · ${col.name}">${glyphSVG(c, col, px, "puff")}</button>`;
+    const fz = state.fuzzy[i], label = `${c}, ${col.name}${fz ? `, ${FUZZY.name}` : ""}`;
+    word += `<button class="glyph${i === sel ? " sel" : ""}${i === popIdx ? " pop" : ""}" data-i="${i}" aria-pressed="${i === sel}" aria-label="${label}" title="${label.replaceAll(", ", " · ")}">${glyphSVG(c, col, px, fz ? "fuzzy" : "puff")}</button>`;
   });
   if (word) html += `<span class="word">${word}</span>`;
   line.innerHTML = html || `<span class="empty-hint">Tippe unten ein Wort ein</span>`;
@@ -117,6 +121,8 @@ function render() {
   $("#summary").innerHTML = Object.keys(groups).length
     ? Object.entries(groups).map(([id, chars]) => `<div class="srow"><span class="dot" style="background:${COLOR_BY_ID[id].hex}"></span><span>${COLOR_BY_ID[id].name} <code>${chars.join(" ")}</code></span><span class="n">${chars.length}×</span></div>`).join("")
     : `<span class="muted" style="font-size:14px">Noch keine Buchstaben.</span>`;
+  const fuzzyChars = validIdx().filter((i) => state.fuzzy[i]).map((i) => up[i]);
+  if (fuzzyChars.length) $("#summary").innerHTML += `<div class="srow"><span class="dot fuzzy-dot"></span><span>${FUZZY.name} <code>${fuzzyChars.map((c) => (c === "&" ? "&amp;" : c)).join(" ")}</code></span><span class="n">${fuzzyChars.length}×</span></div>`;
 
   // Grösse und Preis
   const size = letterSize(state.size), finish = letterFinish(state.finish);
@@ -138,8 +144,12 @@ function render() {
 
   // Farbwahl
   const t = $("#pickTitle");
-  if (sel >= 0) { t.className = "pick-title"; t.innerHTML = `Farbe für <b>${up[sel] === "&" ? "&amp;" : up[sel]}</b>`; }
-  else { t.className = "pick-title idle"; t.textContent = "Tippe oben auf einen Buchstaben, um ihn einzufärben."; }
+  if (sel >= 0) { t.className = "pick-title"; t.innerHTML = `Farbe und Oberfläche für <b>${up[sel] === "&" ? "&amp;" : up[sel]}</b>`; }
+  else { t.className = "pick-title idle"; t.textContent = "Tippe oben auf einen Buchstaben, um Farbe und Oberfläche zu wählen."; }
+  document.querySelectorAll("#fuzzyOpts [data-fz]").forEach((b) => { b.disabled = sel < 0; b.setAttribute("aria-checked", sel >= 0 && String(state.fuzzy[sel] ? 1 : 0) === b.dataset.fz); });
+  const allFuzzy = validIdx().length > 0 && validIdx().every((i) => state.fuzzy[i]);
+  $("#fuzzyAll").textContent = allFuzzy ? "Alle glatt" : `${FUZZY.name} für alle`;
+  $("#fuzzyAll").hidden = !validIdx().length;
   $("#toAll").hidden = sel < 0;
   document.querySelectorAll(".sw").forEach((b) => { b.disabled = sel < 0; b.setAttribute("aria-pressed", sel >= 0 && b.dataset.c === state.colors[sel]); });
 
@@ -166,6 +176,7 @@ $("#txt").addEventListener("input", (e) => {
   let p = 0; while (p < old.length && p < nu.length && old[p] === nu[p]) p++;
   let s = 0; while (s < old.length - p && s < nu.length - p && old[old.length - 1 - s] === nu[nu.length - 1 - s]) s++;
   state.colors = [...state.colors.slice(0, p), ...Array(nu.length - p - s).fill(state.fill), ...state.colors.slice(old.length - s)];
+  state.fuzzy = [...state.fuzzy.slice(0, p), ...Array(nu.length - p - s).fill(false), ...state.fuzzy.slice(old.length - s)];
   state.text = normalizeText(e.target.value); sel = -1; $("#added").textContent = ""; render();
 });
 $("#stage").addEventListener("click", (e) => {
@@ -181,6 +192,16 @@ $("#shelf").addEventListener("click", (e) => {
   sel = k >= 0 && k < v.length - 1 ? v[k + 1] : -1;   // weiter zum nächsten Buchstaben
   render();
 });
+// Fuzzy Skin für den gewählten Buchstaben (ohne zum nächsten zu springen) oder für alle
+$("#fuzzyOpts").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-fz]"); if (!b || sel < 0) return;
+  state.fuzzy[sel] = b.dataset.fz === "1"; popIdx = sel; $("#added").textContent = ""; render();
+});
+$("#fuzzyAll").onclick = () => {
+  const on = !validIdx().every((i) => state.fuzzy[i]);
+  validIdx().forEach((i) => (state.fuzzy[i] = on)); $("#added").textContent = ""; render();
+  $("#line").classList.remove("wave"); void $("#line").offsetWidth; $("#line").classList.add("wave");
+};
 $("#toAll").onclick = () => { if (sel < 0) return; const id = state.colors[sel]; validIdx().forEach((i) => (state.colors[i] = id)); state.fill = id; sel = -1; render(); $("#line").classList.remove("wave"); void $("#line").offsetWidth; $("#line").classList.add("wave"); };
 $("#sizeOpts").addEventListener("click", (e) => { const b = e.target.closest("[data-id]"); if (!b) return; state.size = b.dataset.id; $("#added").textContent = ""; render(); });
 document.querySelectorAll(".bgbtn").forEach((b) => (b.onclick = () => { state.bg = b.dataset.bg; render(); }));
@@ -205,6 +226,8 @@ $("#addToCart").onclick = () => {
   // führende Leerzeichen entfernen, damit Farben zum Text passen
   const lead = state.text.length - state.text.trimStart().length;
   item.colors = state.colors.slice(lead, lead + item.text.length);
+  const fz = state.fuzzy.slice(lead, lead + item.text.length);
+  item.fuzzy = fz.some(Boolean) ? fz : undefined; // undefined: beim Bearbeiten auch alte Angabe entfernen
   if (editing && cart.find((c) => c.id === editing)) {
     Object.assign(cart.find((c) => c.id === editing), item);
     $("#added").textContent = "Gespeichert.";
@@ -248,7 +271,7 @@ function renderCart() {
   $("#cartFoot").hidden = false;
   body.innerHTML = cart.map((it) => {
     const d = describeItem(it), letters = d.type === "letters";
-    const prev = letters ? wordsHTML(it.text, it.colors, 30, {})
+    const prev = letters ? wordsHTML(it.text, it.colors, 30, { fuzzy: it.fuzzy })
       : d.type === "alphabet" ? alphaMini(it)
       : d.type === "poster" ? posterMini(POSTER_BY_ID[it.variant])
       : `<div class="mini-frame">${frameSVG(it.style, COLOR_BY_ID[it.color].hex)}</div>`;
@@ -286,7 +309,7 @@ $("#cartBody").addEventListener("click", (e) => {
   if (act === "minus") it.qty = Math.max(1, it.qty - 1);
   if (act === "remove") cart = cart.filter((c) => c !== it);
   if (act === "edit") {
-    state.text = it.text; state.colors = it.colors.slice(); state.size = letterSize(it.size).id; state.finish = letterFinish(it.finish).id; editing = it.id; qty = it.qty; sel = -1;
+    state.text = it.text; state.colors = it.colors.slice(); state.fuzzy = Array.isArray(it.fuzzy) ? it.fuzzy.slice() : []; state.size = letterSize(it.size).id; state.finish = letterFinish(it.finish).id; editing = it.id; qty = it.qty; sel = -1;
     $("#txt").value = it.text; $("#added").textContent = "Du bearbeitest ein Design aus dem Warenkorb.";
     closeCart(); render(); $("#studio").scrollIntoView(); return;
   }
@@ -320,7 +343,7 @@ $("#checkout").onclick = async () => {
   msg.textContent = "";
   btn.disabled = true; btn.textContent = "Einen Moment …";
   try {
-    const data = await postJSON("/api/checkout", { items: cart.map(({ type, text, colors, size, finish, font, variant, style, color, qty }) => ({ type, text, colors, size, finish, font, variant, style, color, qty })) });
+    const data = await postJSON("/api/checkout", { items: cart.map(({ type, text, colors, fuzzy, size, finish, font, variant, style, color, qty }) => ({ type, text, colors, fuzzy, size, finish, font, variant, style, color, qty })) });
     if (!data.url) throw new Error("Die Zahlung konnte nicht gestartet werden. Bitte versuche es nochmals.");
     location.href = data.url;
   } catch (err) {

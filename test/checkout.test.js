@@ -242,3 +242,20 @@ test("Akzente: aigu, grave, Punkte und Tilde werden gedruckt, auch als e + Akzen
   for (const ch of "ÁÉÍÓÚÀÈÌÒÙÄËÏÖÜÃÑÕ") assert.ok(CHARS.includes(ch), ch);
   for (const ch of "ÇÂÊÅØŠČ") assert.ok(!CHARS.includes(ch), ch);
 });
+
+test("Fuzzy Skin: einzelne Buchstaben, ohne Aufpreis, in Name und Beschreibung", () => {
+  const item = { text: "MIA", colors: ["pt-sakura", "bm-ice", "pt-peanut"], qty: 1 };
+  const eins = validateCart({ items: [{ ...item, fuzzy: [false, true, false] }] }).items[0];
+  assert.equal(eins.unit, 3 * 490, "kein Aufpreis");
+  assert.equal(eins.name, "Bubble Letters «MIA» (3 Teile, Standard 5 cm, matt, 1× Fuzzy Skin)");
+  assert.equal(eins.description, "M Sakura Pink · I Ice Blue (Fuzzy Skin) · A Peanut");
+  const alle = validateCart({ items: [{ ...item, fuzzy: [true, true, true] }] }).items[0];
+  assert.equal(alle.name, "Bubble Letters «MIA» (3 Teile, Standard 5 cm, Fuzzy Skin)");
+  // nur echtes true zählt; Unsinn wird ignoriert
+  const komisch = validateCart({ items: [{ ...item, fuzzy: ["ja", 1, null] }] }).items[0];
+  assert.equal(komisch.description, "M Sakura Pink · I Ice Blue · A Peanut");
+  assert.equal(validateCart({ items: [{ ...item, fuzzy: "alle" }] }).items[0].description, "M Sakura Pink · I Ice Blue · A Peanut");
+  // Leerzeichen zählen bei der Position mit (wie bei den Farben)
+  const zwei = validateCart({ items: [{ text: "AB C", colors: ["bl-red", "bl-red", "bl-red", "bl-red"], fuzzy: [false, false, false, true], qty: 1 }] }).items[0];
+  assert.equal(zwei.description, "A Red · B Red · C Red (Fuzzy Skin)");
+});

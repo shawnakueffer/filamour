@@ -52,7 +52,7 @@ async function recentOrders(stripe) {
 function itemHtml(a) {
   const letters = letterColors(a.description);
   return `<li><div class="item-name">${a.qty > 1 ? `<b>${a.qty}×</b> ` : ""}${esc(a.name)}</div>${letters
-    ? `<div class="chips">${letters.map((l) => `<span class="chip" style="background:${l.hex};color:${l.ink}">${esc(l.ch)}</span>`).join("")}</div><div class="item-desc">${esc(a.description)}</div>`
+    ? `<div class="chips">${letters.map((l) => `<span class="chip${l.fuzzy ? " fuzzy" : ""}" style="background:${l.hex};color:${l.ink}"${l.fuzzy ? ' title="Fuzzy Skin"' : ""}>${esc(l.ch)}</span>`).join("")}</div><div class="item-desc">${esc(a.description)}</div>`
     : a.description ? `<div class="item-desc">${esc(a.description)}</div>` : ""}</li>`;
 }
 
@@ -138,6 +138,7 @@ const STYLE = `
   .item-name { font-weight: 600; }
   .chips { display: flex; flex-wrap: wrap; gap: 4px; margin: 6px 0 4px; }
   .chip { display: inline-grid; place-items: center; min-width: 28px; height: 30px; padding: 0 6px; border-radius: 9px; border: 1px solid rgba(0,0,0,.08); font: 17px/1 "Cherry Bomb One", "Arial Rounded MT Bold", sans-serif; }
+  .chip.fuzzy { border: 2px dashed rgba(0,0,0,.45); }
   .item-desc { color: var(--muted); font-size: 13px; }
   .ship-to, .note { background: var(--soft); border-radius: 12px; padding: 10px 12px; font-size: 14px; }
   .note { background: #fff6dc; }

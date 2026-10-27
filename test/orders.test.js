@@ -157,3 +157,9 @@ test("Webhook: Gratis-Bestellung und spät bestätigte Zahlung schicken Mails, S
     assert.equal((await sendWebhook(base, { type: "checkout.session.completed", data: { object: SESSION } })).status, 500);
   });
 });
+
+test("Bestellmail: Fuzzy-Skin-Buchstaben farbig und markiert", () => {
+  const { toCustomer } = orderEmails({ ...SESSION, metadata: { ...SESSION.metadata, artikel: "1", artikel_1: "1× Bubble Letters «MIA» (3 Teile, Standard 5 cm, matt, 1× Fuzzy Skin) – M Sakura Pink · I Ice Blue (Fuzzy Skin) · A Peanut" } });
+  assert.match(toCustomer.html, /border:2px dashed[^>]*background:#A7E1EB[^>]*title="Fuzzy Skin">I<\/span>/);
+  assert.match(toCustomer.html, /background:#EDBFCB;[^>]*>M<\/span>/);
+});
