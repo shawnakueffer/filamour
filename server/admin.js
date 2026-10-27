@@ -1,7 +1,8 @@
 // /admin – Bestellungen als verschickt melden, Newsletter-Anmeldungen und Kontaktanfragen ansehen und als CSV herunterladen.
 // Geschützt mit ADMIN_PASSWORD (Benutzername beliebig). Ohne Passwort ist der Bereich aus.
 // Bestellungen kommen direkt aus Stripe; gespeichert wird nur, wann eine Bestellung verschickt oder abgeholt wurde.
-// Reiter über ?tab=offen|erledigt|anfragen|newsletter, damit die Seite ohne JavaScript auskommt.
+// Reiter über ?tab=offen|erledigt|anfragen(|newsletter), damit die Seite ohne JavaScript auskommt.
+// Mit Brevo gibt es keinen Newsletter-Reiter: Anmeldungen stehen dort unter Kontakte (ältere weiterhin als CSV unter /admin/newsletter.csv).
 import crypto from "node:crypto";
 import express from "express";
 import { chf } from "../public/catalog.js";
@@ -238,7 +239,8 @@ export function adminRouter({ store, password, newsletterInBrevo = false, stripe
   });
 
   r.get("/", async (req, res) => {
-    const tab = TABS.includes(req.query.tab) ? req.query.tab : "offen";
+    const tabs = newsletterInBrevo ? TABS.filter((t) => t !== "newsletter") : TABS;
+    const tab = tabs.includes(req.query.tab) ? req.query.tab : "offen";
     const [news, contacts, shipped, collected] = await Promise.all([
       store.listNewsletter(), store.listContacts(), store.orderMailTimes("versand"), store.orderMailTimes("abgeholt"),
     ]);
@@ -276,7 +278,6 @@ ${contacts.length ? `<div class="grid">${contacts.map((c) => `<article class="ca
   ${c.history ? `<details><summary>Chatverlauf</summary><pre>${esc(c.history)}</pre></details>` : ""}
 </article>`).join("")}</div>` : `<p class="empty">Noch keine Anfragen.</p>`}`;
     else content = `<div class="head"><h1>Newsletter</h1><a href="/admin/newsletter.csv">CSV herunterladen</a></div>
-${newsletterInBrevo ? `<p class="hint">Neue Anmeldungen gehen an Brevo (mit Bestätigung per E-Mail) und stehen dort unter Kontakte. Hier stehen nur ältere Anmeldungen.</p>` : ""}
 ${news.length ? `<div class="card"><table>${news.map((n) => `<tr><td>${esc(n.email)}</td><td class="d">${esc(when(n.created_at))}</td></tr>`).join("")}</table></div>` : `<p class="empty">Noch keine Anmeldungen.</p>`}`;
 
     const tabLink = (id, label, count, hot = false) =>
@@ -290,7 +291,7 @@ ${news.length ? `<div class="card"><table>${news.map((n) => `<tr><td>${esc(n.ema
   <div class="store">${store.kind === "postgres" ? "" : `Speicher: ${esc(store.kind)} (nicht dauerhaft)`}</div>
 </div>
 <nav class="wrap tabs" aria-label="Bereiche">
-  ${tabLink("offen", "Offen", open.length, true)}${tabLink("erledigt", "Erledigt", done.length)}${tabLink("anfragen", "Anfragen", contacts.length)}${tabLink("newsletter", "Newsletter", news.length)}
+  ${tabLink("offen", "Offen", open.length, true)}${tabLink("erledigt", "Erledigt", done.length)}${tabLink("anfragen", "Anfragen", contacts.length)}${tabs.includes("newsletter") ? tabLink("newsletter", "Newsletter", news.length) : ""}
 </nav></header>
 <main class="wrap">
 ${flash}

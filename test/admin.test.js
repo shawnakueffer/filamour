@@ -127,3 +127,14 @@ test("Knopf «Verschickt»: Abholung, falsche Nummer, fremde Seite und Mailfehle
     assert.equal(noAuth.status, 401);
   });
 });
+
+test("Mit Brevo: kein Newsletter-Reiter, ältere Anmeldungen bleiben als CSV", async () => {
+  const opts = { ...setup(), brevo: {} }; // irgendein Brevo-Objekt genügt: Anmeldungen gehen dann an Brevo
+  await opts.store.addNewsletter("alt@example.ch");
+  await withServer(opts, async (base) => {
+    assert.doesNotMatch(await page(base), /tab=newsletter/);
+    assert.match(await page(base, "?tab=newsletter"), /Offene Bestellungen/, "unbekannter Reiter → Offen");
+    const csv = await (await fetch(`${base}/admin/newsletter.csv`, { headers: { authorization: AUTH } })).text();
+    assert.match(csv, /alt@example\.ch/);
+  });
+});
