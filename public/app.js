@@ -360,7 +360,7 @@ function motion() {
   document.documentElement.classList.add("anim-ready");
   if (reduce || !("IntersectionObserver" in window)) return;
   // nur Elemente unterhalb des sichtbaren Bereichs werden versteckt und beim Scrollen eingeblendet
-  const targets = document.querySelectorAll(".news-card, .block-head, .studio-card .stage, .controls .panel, .size-photo, .dims, .specs, .idea, .facts li, .material-visual, .product, .review, .faq details");
+  const targets = document.querySelectorAll(".news-card, .block-head, .studio-card .stage, .controls .panel, .size-photo, .dims, .specs, .idea, .surface, .facts li, .material-visual, .product, .review, .faq details");
   const io = new IntersectionObserver((entries) => {
     entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } });
   }, { rootMargin: "0px 0px -8% 0px", threshold: 0.08 });
@@ -514,6 +514,13 @@ function renderDims() {
   v.addEventListener("canplay", () => { if (v.paused) play(); }, { once: true });
   events.forEach((e) => addEventListener(e, retry, { passive: true }));
   document.addEventListener("visibilitychange", () => { if (!document.hidden && v.paused) play(); });
+})();
+
+/* ---------- Vergleich glatt / Fuzzy Skin ---------- */
+(function compareSlider() {
+  const box = $("#compare"), range = $("#compareRange"); if (!box || !range) return;
+  const set = () => box.style.setProperty("--pos", `${range.value}%`);
+  range.addEventListener("input", set); set();
 })();
 
 /* ---------- Alphabet-Set ---------- */

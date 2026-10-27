@@ -204,6 +204,31 @@
     </div>
   </section>
 
+  <!-- Oberfläche: glatt oder Fuzzy Skin -->
+  <section class="block" id="oberflaeche">
+    <div class="container">
+      <div class="block-head">
+        <p class="eyebrow">Oberfläche</p>
+        <h2>Glatt oder Fuzzy Skin?</h2>
+        <p class="muted">Im Studio wählst du für jeden Buchstaben die Oberfläche, auch gemischt in einem Wort. Beide kosten gleich viel und gibt es in allen Farben.</p>
+      </div>
+      <!-- Vergleich mit Schieber: oben glatt (links), darunter Fuzzy Skin (rechts); Steuerung in app.js -->
+      <div class="compare" id="compare">
+        <img src="images/oberflaeche-fuzzy-tilo.jpg" width="820" height="615" alt="Der Name TILO mit Fuzzy Skin, einer rauen, körnigen Oberfläche" loading="lazy">
+        <img class="compare-top" src="images/oberflaeche-glatt-tilo.jpg" width="820" height="615" alt="Der gleiche Name TILO mit glatter Oberfläche" loading="lazy">
+        <span class="compare-label left" aria-hidden="true">Glatt</span>
+        <span class="compare-label right" aria-hidden="true">Fuzzy Skin</span>
+        <span class="compare-line" aria-hidden="true"><span class="compare-knob">‹ ›</span></span>
+        <input class="compare-range" id="compareRange" type="range" min="0" max="100" value="50" aria-label="Vergleich verschieben: links glatt, rechts Fuzzy Skin">
+      </div>
+      <p class="compare-hint">Ziehe den Schieber, um den Unterschied zu sehen.</p>
+      <div class="surfaces">
+        <p class="surface"><b>Glatt</b> Weich gerundet und gleichmässig, der klassische Bubble-Look.</p>
+        <p class="surface"><b>Fuzzy Skin</b> Eine feine, raue Struktur, die man sieht und spürt. Wirkt samtig und handgemacht.</p>
+      </div>
+    </div>
+  </section>
+
   <!-- Grösse -->
   <section class="block" id="groesse">
     <div class="container size">
