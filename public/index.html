@@ -206,25 +206,30 @@
 
   <!-- Oberfläche: glatt oder Fuzzy Skin -->
   <section class="block" id="oberflaeche">
-    <div class="container">
-      <div class="block-head">
-        <p class="eyebrow">Oberfläche</p>
-        <h2>Glatt oder Fuzzy Skin?</h2>
-        <p class="muted">Im Studio wählst du für jeden Buchstaben die Oberfläche, auch gemischt in einem Wort. Beide kosten gleich viel und gibt es in allen Farben.</p>
+    <div class="container surface-wrap">
+      <!-- Computer: Text links, Vergleichsbild rechts; Handy: untereinander -->
+      <div class="surface-copy">
+        <div class="block-head">
+          <p class="eyebrow">Oberfläche</p>
+          <h2>Glatt oder Fuzzy Skin?</h2>
+          <p class="muted">Im Studio wählst du für jeden Buchstaben die Oberfläche, auch gemischt in einem Wort. Beide kosten gleich viel und gibt es in allen Farben.</p>
+        </div>
+        <div class="surfaces">
+          <p class="surface"><b>Glatt</b> Weich gerundet und gleichmässig, der klassische Bubble-Look.</p>
+          <p class="surface"><b>Fuzzy Skin</b> Eine feine, raue Struktur, die man sieht und spürt, wie ein 3D-gedruckter Teddy-Look.</p>
+        </div>
       </div>
-      <!-- Vergleich mit Schieber: oben glatt (links), darunter Fuzzy Skin (rechts); Steuerung in app.js -->
-      <div class="compare" id="compare">
-        <img src="images/oberflaeche-fuzzy-tilo.jpg" width="820" height="615" alt="Der Name TILO mit Fuzzy Skin, einer rauen, körnigen Oberfläche" loading="lazy">
-        <img class="compare-top" src="images/oberflaeche-glatt-tilo.jpg" width="820" height="615" alt="Der gleiche Name TILO mit glatter Oberfläche" loading="lazy">
-        <span class="compare-label left" aria-hidden="true">Glatt</span>
-        <span class="compare-label right" aria-hidden="true">Fuzzy Skin</span>
-        <span class="compare-line" aria-hidden="true"><span class="compare-knob">‹ ›</span></span>
-        <input class="compare-range" id="compareRange" type="range" min="0" max="100" value="50" aria-label="Vergleich verschieben: links glatt, rechts Fuzzy Skin">
-      </div>
-      <p class="compare-hint">Ziehe den Schieber, um den Unterschied zu sehen.</p>
-      <div class="surfaces">
-        <p class="surface"><b>Glatt</b> Weich gerundet und gleichmässig, der klassische Bubble-Look.</p>
-        <p class="surface"><b>Fuzzy Skin</b> Eine feine, raue Struktur, die man sieht und spürt. Wirkt samtig und handgemacht.</p>
+      <div class="surface-visual">
+        <!-- Vergleich mit Schieber: oben glatt (links), darunter Fuzzy Skin (rechts); Steuerung in app.js -->
+        <div class="compare" id="compare">
+          <img src="images/oberflaeche-fuzzy-tilo.jpg" width="820" height="615" alt="Der Name TILO mit Fuzzy Skin, einer rauen, körnigen Oberfläche" loading="lazy">
+          <img class="compare-top" src="images/oberflaeche-glatt-tilo.jpg" width="820" height="615" alt="Der gleiche Name TILO mit glatter Oberfläche" loading="lazy">
+          <span class="compare-label left" aria-hidden="true">Glatt</span>
+          <span class="compare-label right" aria-hidden="true">Fuzzy Skin</span>
+          <span class="compare-line" aria-hidden="true"><span class="compare-knob">‹ ›</span></span>
+          <input class="compare-range" id="compareRange" type="range" min="0" max="100" value="50" aria-label="Vergleich verschieben: links glatt, rechts Fuzzy Skin">
+        </div>
+        <p class="compare-hint">Ziehe den Schieber, um den Unterschied zu sehen.</p>
       </div>
     </div>
   </section>
@@ -232,8 +237,9 @@
   <!-- Grösse -->
   <section class="block" id="groesse">
     <div class="container size">
-      <figure class="size-photo">
-        <img src="images/groesse-a-i.jpg" width="1757" height="642" alt="A und I in Rosa: gross 6,5 cm hoch und 2,2 cm dick, klein 3 cm hoch und 1 cm dick" loading="lazy">
+      <!-- Grafik wird aus LETTER_SIZES gezeichnet (renderDims in app.js), stimmt also immer mit den Grössen im Katalog -->
+      <figure class="size-photo size-graphic">
+        <div class="dims" id="dims" role="img" aria-label="Die drei Grössen im Vergleich"></div>
       </figure>
       <div class="size-copy">
         <div class="block-head">
@@ -241,7 +247,6 @@
           <h2>So gross sind die Buchstaben</h2>
           <p class="muted" id="sizeLead"></p>
         </div>
-        <div class="dims" id="dims" aria-hidden="true" hidden></div>
         <dl class="specs">
           <div><dt>Höhe</dt><dd id="specH"></dd></div>
           <div><dt>Dicke</dt><dd id="specD"></dd></div>

@@ -471,26 +471,28 @@ function renderDims() {
     if (m.actualBoundingBoxAscent) asc = m.actualBoundingBoxAscent + (m.actualBoundingBoxDescent || 0);
     wA = m.width;
   } catch {}
-  // alle Grössen im echten Verhältnis: die grösste wird 120 Einheiten hoch gezeichnet
-  const unit = 120 / Math.max(...LETTER_SIZES.map((z) => z.heightCm));
-  const top = 30, base = top + 120, col = COLOR_BY_ID["bm-ice"].hex;
-  let x = 70, svg = "";
+  // alle Grössen im echten Verhältnis: die grösste wird 200 Einheiten hoch gezeichnet.
+  // Pro Grösse: A von vorne mit Höhe, daneben das A von der Seite mit der Dicke.
+  const H = 200, unit = H / Math.max(...LETTER_SIZES.map((z) => z.heightCm));
+  const top = 64, base = top + H, col = COLOR_BY_ID["pt-sakura"].hex;
+  let x = 96, svg = "";
   for (const z of LETTER_SIZES) {
     const h = z.heightCm * unit, depth = z.depthCm * unit, s = h / asc, t = base - h;
-    const sideX = x + wA * s + 56;
+    const sideX = x + wA * s + 34, right = sideX + depth;
     svg += `
-    <text class="sub" x="${x}" y="14">${z.name}</text>
+    <text class="sub" x="${(x - 40 + right) / 2}" y="30" text-anchor="middle">${z.name}</text>
     <text x="${x}" y="${base}" font-family="'Cherry Bomb One'" font-size="${100 * s}" fill="${col}" stroke="${col}" stroke-width="2.5" paint-order="stroke" filter="url(#puff)">A</text>
-    <line x1="${x - 14}" y1="${t}" x2="${x - 14}" y2="${base}"/>
-    <line x1="${x - 20}" y1="${t}" x2="${x - 8}" y2="${t}"/><line x1="${x - 20}" y1="${base}" x2="${x - 8}" y2="${base}"/>
-    <text class="cap" x="${x - 22}" y="${(t + base) / 2 + 4}" text-anchor="end">${cm(z.heightCm)}</text>
+    <line x1="${x - 16}" y1="${t}" x2="${x - 16}" y2="${base}"/>
+    <line x1="${x - 24}" y1="${t}" x2="${x - 8}" y2="${t}"/><line x1="${x - 24}" y1="${base}" x2="${x - 8}" y2="${base}"/>
+    <text class="cap" x="${x - 28}" y="${(t + base) / 2 + 9}" text-anchor="end">${cm(z.heightCm)}</text>
     <path d="M${sideX} ${t} H${sideX + depth * 0.5} C ${sideX + depth * 1.1667} ${t}, ${sideX + depth * 1.1667} ${base}, ${sideX + depth * 0.5} ${base} H${sideX} Z" fill="${col}" filter="url(#puff)"/>
-    <line x1="${sideX}" y1="${base + 18}" x2="${sideX + depth}" y2="${base + 18}"/>
-    <line x1="${sideX}" y1="${base + 12}" x2="${sideX}" y2="${base + 24}"/><line x1="${sideX + depth}" y1="${base + 12}" x2="${sideX + depth}" y2="${base + 24}"/>
-    <text class="cap" x="${sideX + depth * 0.5}" y="${base + 40}" text-anchor="middle">${cm(z.depthCm)}</text>`;
-    x = sideX + depth + 100;
+    <line x1="${sideX}" y1="${base + 26}" x2="${right}" y2="${base + 26}"/>
+    <line x1="${sideX}" y1="${base + 18}" x2="${sideX}" y2="${base + 34}"/><line x1="${right}" y1="${base + 18}" x2="${right}" y2="${base + 34}"/>
+    <text class="cap" x="${sideX + depth * 0.5}" y="${base + 64}" text-anchor="middle">${cm(z.depthCm)}</text>`;
+    x = right + 190;
   }
-  el.innerHTML = `<svg viewBox="0 0 ${x - 60} ${base + 46}">${svg}
+  el.setAttribute("aria-label", `Die Grössen im Vergleich: ${LETTER_SIZES.map((z) => `${z.name} ${cm(z.heightCm)} hoch und ${cm(z.depthCm)} dick`).join(", ")}`);
+  el.innerHTML = `<svg viewBox="0 0 ${x - 150} ${base + 76}">${svg}
   </svg>`;
 }
 
