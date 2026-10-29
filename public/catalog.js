@@ -102,6 +102,7 @@ export const COLOR_BY_ID = byId(COLORS);
 // Farbig: bis zu 5 Farben, die sich in der gewählten Reihenfolge abwechseln (A = Farbe 1, B = Farbe 2 …).
 export const ALPHABET = {
   active: true,
+  soldOut: true, // ausverkauft: sichtbar, aber nicht bestellbar; man kann sich benachrichtigen lassen
   letters: "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
   white: "pt-white",
   maxColors: 5,
@@ -187,6 +188,7 @@ export function describeItem(it) {
   }
   if (type === "alphabet") {
     if (!ALPHABET.active) return { error: "Das Alphabet gibt es im Moment nicht." };
+    if (ALPHABET.soldOut) return { error: "Das Alphabet ist im Moment ausverkauft." };
     const size = letterSize(it.size || alphabetSizes()[0]?.id);
     if (!size || !ALPHABET.price[size.id]) return { error: `Das Alphabet gibt es nur in diesen Grössen: ${alphabetSizes().map((z) => z.name).join(", ")}.` };
     let palette;

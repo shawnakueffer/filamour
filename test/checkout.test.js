@@ -179,10 +179,21 @@ test("Alphabet: ausgeblendet nicht bestellbar", () => {
   ALPHABET.active = was;
 });
 
+test("Alphabet: ausverkauft nicht bestellbar, egal welche Schrift", (t) => {
+  const was = ALPHABET.soldOut;
+  ALPHABET.soldOut = true;
+  t.after(() => { ALPHABET.soldOut = was; });
+  for (const font of ["bubble", "arial"]) {
+    assert.match(validateCart({ items: [{ type: "alphabet", font, variant: "weiss", qty: 1 }] }).error, /ausverkauft/, font);
+  }
+  assert.equal(validateCart({ items: [{ text: "MIA", colors: ["bl-red", "bl-red", "bl-red"], qty: 1 }] }).error, undefined, "Buchstaben gehen weiterhin");
+});
+
 test("Alphabet: Preis je Grösse, ganz weiss oder bis zu 5 Farben im Wechsel", (t) => {
-  const was = ALPHABET.active;
-  ALPHABET.active = true; // auch wenn es gerade ausgeblendet ist, sollen die Preise stimmen
-  t.after(() => { ALPHABET.active = was; });
+  const was = ALPHABET.active, wasSold = ALPHABET.soldOut;
+  ALPHABET.active = true; // auch wenn es gerade ausgeblendet oder ausverkauft ist, sollen die Preise stimmen
+  ALPHABET.soldOut = false;
+  t.after(() => { ALPHABET.active = was; ALPHABET.soldOut = wasSold; });
   const five = ["pt-sakura", "bm-ice", "es-matcha", "sp-lemon", "pm-purple"];
   const weiss = validateCart({ items: [{ type: "alphabet", size: "standard", variant: "weiss", colors: ["bl-red"], qty: 1, price: 1 }] }).items[0];
   assert.equal(weiss.unit, 6300, "weiss CHF 63, Preis vom Server");
@@ -224,10 +235,10 @@ test("Nur noch matt: ältere Warenkörbe mit «glänzend» werden matt berechnet
   assert.equal(validateCart({ items: [{ ...item, size: "gross", finish: "glaenzend" }] }).items[0].unit, 3 * 690);
   for (const bad of ["seidenmatt", "__proto__"]) assert.match(validateCart({ items: [{ ...item, finish: bad }] }).error, /Oberfläche/, bad);
   // Alphabet gibt es nur matt
-  const was = ALPHABET.active;
-  ALPHABET.active = true;
+  const was = ALPHABET.active, wasSold = ALPHABET.soldOut;
+  ALPHABET.active = true; ALPHABET.soldOut = false;
   const abc = validateCart({ items: [{ type: "alphabet", variant: "weiss", finish: "glaenzend", qty: 1 }] }).items[0];
-  ALPHABET.active = was;
+  ALPHABET.active = was; ALPHABET.soldOut = wasSold;
   assert.equal(abc.unit, 6300);
   assert.match(abc.name, /, matt\)$/);
 });

@@ -333,6 +333,9 @@ section.block.alt { background: var(--band); }
 #alphaPrice .was { color: var(--muted); font-weight: 500; font-size: 15px; text-decoration-thickness: 1px; }
 #alphaPrice .now { color: var(--accent); font-size: 19px; }
 #alphaPrice .now.plain { color: var(--fg); }
+#alphaPrice .sold { justify-self: start; align-self: center; font-size: 13px; font-weight: 600; color: var(--fg); background: #f1eeeb; border-radius: 999px; padding: 4px 10px; }
+.alpha-soldout { display: grid; gap: 10px; }
+.alpha-soldout p { margin: 0; }
 
 /* Über uns: Bild links, Text rechts (wie Material, gespiegelt) */
 .about { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); gap: 48px; align-items: center; }

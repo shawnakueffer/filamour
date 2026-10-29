@@ -564,7 +564,9 @@ function renderAlpha() {
     return `<button class="cdot" type="button" aria-pressed="${on}" aria-label="${c.name}" title="${c.name}" data-c="${c.id}" style="background:${c.hex}" ${!on && full ? "disabled" : ""}></button>`;
   }).join("");
   // Set-Preis ohne durchgestrichenen Vergleichspreis (seit Oktober 2026 bewusst schlicht, schwarz)
-  $("#alphaPrice").innerHTML = `<span class="now plain">${chf(ALPHABET.price[alpha.size][alpha.variant])}</span>`;
+  $("#alphaPrice").innerHTML = `<span class="now plain">${chf(ALPHABET.price[alpha.size][alpha.variant])}</span>${ALPHABET.soldOut ? `<span class="sold">Ausverkauft</span>` : ""}`;
+  $("#alphaAdd").hidden = ALPHABET.soldOut;
+  $("#alphaNotifyOpen").hidden = !ALPHABET.soldOut || !$("#alphaSoldOut").hidden;
   $("#alphaAdd").disabled = Boolean(describeItem(alphaItem()).error);
   renderAlphaPreview();
 }
@@ -588,6 +590,26 @@ if ($("#alphabet")) {
     $("#alphaAdded").textContent = ""; renderAlpha();
   });
   $("#alphaAdd").onclick = () => addProduct(alphaItem(), $("#alphaAdded"));
+  // Ausverkauft: «Benachrichtige mich» landet als Anfrage im Admin-Bereich (wie eine Frage aus dem Chat)
+  $("#alphaNotifyOpen").onclick = (e) => {
+    e.currentTarget.hidden = true; e.currentTarget.setAttribute("aria-expanded", "true");
+    $("#alphaSoldOut").hidden = false; $("#alphaEmail").focus();
+  };
+  $("#alphaNotify").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const f = e.target, email = f.email.value.trim(), note = $("#alphaAdded"), btn = f.querySelector("button");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) { note.textContent = "Bitte gib eine gültige E-Mail-Adresse ein."; f.email.focus(); return; }
+    btn.disabled = true; btn.textContent = "Einen Moment …";
+    try {
+      const font = alphabetFont(alpha.font).name;
+      await postJSON("/api/contact", { email, question: `Bitte benachrichtigen, wenn das Alphabet wieder erhältlich ist (Schrift: ${font}).`, website: f.website.value });
+      f.hidden = true;
+      note.textContent = `Danke! Wir schreiben dir an ${email}, sobald das Alphabet wieder da ist.`;
+    } catch (err) {
+      note.textContent = err.message || "Das hat leider nicht geklappt. Bitte versuch es nochmals.";
+      btn.disabled = false; btn.textContent = "Eintragen";
+    }
+  });
 }
 
 /* ---------- Bewertungen ---------- */
