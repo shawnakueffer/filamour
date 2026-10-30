@@ -6,7 +6,7 @@ export const SHOP = {
   name: "Filamour",
   currency: "chf",
   shipping: 650,              // Rappen Versand pro Bestellung (CHF 6.50)
-  freeShippingFrom: 6000,     // ab diesem Warenwert gratis Versand (0 = nie)
+  freeShippingFrom: 10000,    // ab diesem Warenwert gratis Versand (0 = nie)
   shippingCountries: ["CH", "LI"],
   maxLettersPerDesign: 40,
   maxQuantity: 20,
@@ -52,12 +52,12 @@ export const NEWSLETTER = { code: "GIFT10", percent: 10 };
 // Hinweise: die ersten drei stehen in der schwarzen Leiste ganz oben
 export const ANNOUNCEMENTS = [
   "Personalisierbare Geschenke",
-  "Gratisversand ab CHF 60",
+  "Gratisversand ab CHF 100",
   "Aus pflanzenbasiertem PLA",
   "Gedruckt in der Schweiz",
 ];
 // Kurzfassungen der ersten drei für schmale Handy-Bildschirme
-export const ANNOUNCEMENTS_SHORT = ["Personalisierbar", "Gratis ab CHF 60", "PLA aus Pflanzen"];
+export const ANNOUNCEMENTS_SHORT = ["Personalisierbar", "Gratis ab CHF 100", "PLA aus Pflanzen"];
 
 // Zeichen, die auf der Druckplatte vorhanden sind
 // Erlaubte Zeichen (Grossbuchstaben; Eingaben werden umgewandelt, «ß» wird zu «SS»). Alle sind in der Bubble-Schrift vorhanden.

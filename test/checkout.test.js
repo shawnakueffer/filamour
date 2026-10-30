@@ -81,8 +81,10 @@ test("Gratisversand ab der Grenze, sonst Versandkosten", () => {
   assert.deepEqual(small.shipping_address_collection.allowed_countries, ["CH", "LI"], "nur Schweiz und Liechtenstein");
   assert.match(small.custom_text.shipping_address.message, /nur in die Schweiz und nach Liechtenstein/);
   assert.equal(small.custom_text.submit.message, "Mit deiner Bestellung akzeptierst du unsere AGB: https://x.ch/rechtliches.html#agb");
-  const big = buildSession(validateCart({ items: [{ type: "frame", style: "wave", color: "bl-red", qty: 4 }] }).items, "https://x.ch");
-  assert.equal(big.shipping_options[0].shipping_rate_data.fixed_amount.amount, 0, "ab CHF 60 gratis");
+  const four = buildSession(validateCart({ items: [{ type: "frame", style: "wave", color: "bl-red", qty: 4 }] }).items, "https://x.ch"); // CHF 76
+  assert.equal(four.shipping_options[0].shipping_rate_data.fixed_amount.amount, 650, "unter CHF 100");
+  const big = buildSession(validateCart({ items: [{ type: "frame", style: "wave", color: "bl-red", qty: 6 }] }).items, "https://x.ch"); // CHF 114
+  assert.equal(big.shipping_options[0].shipping_rate_data.fixed_amount.amount, 0, "ab CHF 100 gratis");
 });
 
 test("Wandbild: ganze Bestellung wird abgeholt, ohne Adresse und Versandkosten", () => {
